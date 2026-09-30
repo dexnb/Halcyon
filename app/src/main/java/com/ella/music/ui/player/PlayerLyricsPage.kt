@@ -226,7 +226,7 @@ internal fun LyricsPlayerPage(
                             onLineClick = onLineClick,
                             onLineDoubleClick = onLineDoubleClick,
                             onLineLongClick = onLineLongClick,
-                            nonCurrentLineBlurEnabled = !useCustomPlayerBackground,
+                            nonCurrentLineBlurEnabled = true,
                             topContentPadding = 72.dp,
                             bottomContentPadding = 72.dp,
                             useFocusLeadingPadding = false,

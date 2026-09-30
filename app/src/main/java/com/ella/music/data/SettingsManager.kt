@@ -448,6 +448,7 @@ class SettingsManager(private val context: Context) :
         val KEY_HIDE_SYSTEM_BARS = booleanPreferencesKey("hide_system_bars")
         val KEY_PLAYER_DYNAMIC_FLOW_ENABLED = booleanPreferencesKey("player_dynamic_flow_enabled")
         val KEY_PLAYER_APPLE_FLOW_SPEED = intPreferencesKey("player_apple_flow_speed")
+        val KEY_AUDIO_VISUALIZER_RAINBOW = booleanPreferencesKey("audio_visualizer_rainbow")
         val KEY_AUDIO_VISUALIZER_ENABLED = booleanPreferencesKey("audio_visualizer_enabled")
         val KEY_AUDIO_VISUALIZER_BLUR = intPreferencesKey("audio_visualizer_blur")
         val KEY_HOME_FEATURE_STYLE = intPreferencesKey("home_feature_style")
@@ -511,6 +512,7 @@ class SettingsManager(private val context: Context) :
         val KEY_USB_DAC_MODE = booleanPreferencesKey("usb_dac_mode")
         val KEY_DYNAMIC_COVER_ENABLED = booleanPreferencesKey("dynamic_cover_enabled")
         val KEY_MUSIC_VIDEO_SYNC_ENABLED = booleanPreferencesKey("music_video_sync_enabled")
+        val KEY_VIDEO_HOLD_SPEED_PERCENT = intPreferencesKey("video_hold_speed_percent")
         val KEY_MUSIC_VIDEO_CAPTURE_SUBTITLES = booleanPreferencesKey("music_video_capture_subtitles")
         val KEY_MUSIC_VIDEO_STRETCH_ENABLED = booleanPreferencesKey("music_video_stretch_enabled")
         val KEY_MUSIC_VIDEO_ORIENTATION = intPreferencesKey("music_video_orientation")
@@ -647,6 +649,8 @@ class SettingsManager(private val context: Context) :
         val KEY_OPEN_PLAYER_FROM_NOTIFICATION = booleanPreferencesKey("open_player_from_notification")
         val KEY_STARTUP_AUTO_PLAY = booleanPreferencesKey("startup_auto_play")
         val KEY_STARTUP_PLAY_MODE = intPreferencesKey("startup_play_mode")
+        // Open the app straight into the now-playing surface (settings → 底部导航 → 启动页).
+        val KEY_STARTUP_OPEN_PLAYER = booleanPreferencesKey("startup_open_player")
         val KEY_BLUETOOTH_AUTO_PLAY = booleanPreferencesKey("bluetooth_auto_play")
         val KEY_LYRIC_FONT_NAME = stringPreferencesKey("lyric_font_name")
         val KEY_LYRIC_FONT_PATH = stringPreferencesKey("lyric_font_path")
@@ -821,12 +825,14 @@ class SettingsManager(private val context: Context) :
         const val PLAYER_LANDSCAPE_STYLE_WIDE = 0
         const val PLAYER_LANDSCAPE_STYLE_COVER_FLOW = 2
         const val PLAYER_LANDSCAPE_STYLE_MUSIC_VIDEO = 3
+        const val PLAYER_LANDSCAPE_STYLE_CLASSIC_SPLIT = 4
         const val DEFAULT_PLAYER_LANDSCAPE_STYLE = PLAYER_LANDSCAPE_STYLE_WIDE
 
         fun normalizePlayerLandscapeStyle(style: Int?): Int = when (style) {
             PLAYER_LANDSCAPE_STYLE_WIDE,
             PLAYER_LANDSCAPE_STYLE_COVER_FLOW,
-            PLAYER_LANDSCAPE_STYLE_MUSIC_VIDEO -> style
+            PLAYER_LANDSCAPE_STYLE_MUSIC_VIDEO,
+            PLAYER_LANDSCAPE_STYLE_CLASSIC_SPLIT -> style
             else -> DEFAULT_PLAYER_LANDSCAPE_STYLE
         }
 
@@ -1140,6 +1146,7 @@ class SettingsManager(private val context: Context) :
         const val APP_ICON_STYLE_DEFAULT = "default"
         const val APP_ICON_STYLE_ANIME = "anime"
         const val APP_ICON_STYLE_LOLI = "loli"
+        const val APP_ICON_STYLE_TRADITIONAL = "traditional"
         const val BOTTOM_DOCK_ITEM_HOME = "home"
         const val BOTTOM_DOCK_ITEM_LIBRARY = "library"
         const val BOTTOM_DOCK_ITEM_SEARCH = "search"
@@ -1716,6 +1723,7 @@ class SettingsManager(private val context: Context) :
             setBoolean(KEY_HIDE_SYSTEM_BARS)
             setBoolean(KEY_PLAYER_DYNAMIC_FLOW_ENABLED)
             setInt(KEY_PLAYER_APPLE_FLOW_SPEED)
+            setBoolean(KEY_AUDIO_VISUALIZER_RAINBOW)
             setBoolean(KEY_AUDIO_VISUALIZER_ENABLED)
             setInt(KEY_AUDIO_VISUALIZER_STYLE)
             setInt(KEY_AUDIO_VISUALIZER_HEIGHT)
@@ -1770,6 +1778,7 @@ class SettingsManager(private val context: Context) :
             setBoolean(KEY_OPEN_PLAYER_ON_PLAY)
             setBoolean(KEY_OPEN_PLAYER_FROM_NOTIFICATION)
             setBoolean(KEY_STARTUP_AUTO_PLAY)
+            setBoolean(KEY_STARTUP_OPEN_PLAYER)
             setBoolean(KEY_HOME_AI_MIX_VISIBLE)
             setBoolean(KEY_CONTINUE_PLAYBACK_ROW_VISIBLE)
             setBoolean(KEY_MCP_SERVER_ENABLED)
@@ -1850,6 +1859,7 @@ class SettingsManager(private val context: Context) :
             setInt(KEY_PLAYER_PAGE_STYLE)
             setInt(KEY_PLAYER_LANDSCAPE_STYLE)
             setInt(KEY_MUSIC_VIDEO_ORIENTATION)
+            setInt(KEY_VIDEO_HOLD_SPEED_PERCENT)
             setInt(KEY_PLAYER_LYRIC_TEXT_ALIGN)
             setInt(KEY_PLAYER_MINI_LYRIC_SCALE)
             setInt(KEY_PLAYER_MINI_LYRIC_PRIMARY_SIZE)

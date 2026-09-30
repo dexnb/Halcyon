@@ -146,7 +146,7 @@ internal object PerformanceFloatingToolbarManager {
             owner.installOn(this)
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setContent {
-                MiuixTheme {
+                com.ella.music.ui.theme.EllaTheme {
                     val sampler = PerformanceTracker.get(context)
                     val snapshot by sampler.snapshot
                     PerformanceFloatingToolbarContent(

@@ -57,4 +57,26 @@ class KaraokePositionInterpolatorTest {
         }
         assertTrue(display >= 1_100L)
     }
+    @Test
+    fun aStalledPlayerCannotRevealTheNextSustainedWord() {
+        var display = 1_000L
+        val futureWord = AppleMusicRenderWord(com.ella.music.data.model.LyricWord("again", 1_200L, 3_000L), 3_000L)
+        repeat(180) {
+            display = nextSmoothLyricPositionMs(display, 1_000L, 16L, true)
+            assertTrue(display <= 1_150L)
+            assertEquals(0f, futureWord.karaokeProgress(display, true), 0f)
+            assertTrue(karaokeHaloMaskStops(futureWord.karaokeProgress(display, true), false, .85f)
+                .all { it.second.alpha == 0f })
+        }
+    }
+
+    @Test
+    fun interpolationRecoversWhenSamplesResumeAndStillHandlesBackwardSeeks() {
+        var display = 1_000L
+        repeat(60) { display = nextSmoothLyricPositionMs(display, 1_000L, 16L, true) }
+        val resumed = nextSmoothLyricPositionMs(display, 1_200L, 16L, true)
+        assertTrue(resumed >= display)
+        assertTrue(resumed <= 1_350L)
+        assertEquals(500L, nextSmoothLyricPositionMs(5_000L, 500L, 16L, true))
+    }
 }

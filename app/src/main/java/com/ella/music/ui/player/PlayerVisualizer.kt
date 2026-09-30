@@ -57,10 +57,12 @@ internal fun AudioVisualizer(
     if (!enabled) return
     val context = LocalContext.current
     val settingsManager = remember(context) { SettingsManager.getInstance(context) }
+    val rainbow by settingsManager.audioVisualizerRainbow.collectAsState(initial = false)
     val blurRadius by settingsManager.audioVisualizerBlur.collectAsState(initial = 0)
-    val style by settingsManager.audioVisualizerStyle.collectAsState(
+    val selectedStyle by settingsManager.audioVisualizerStyle.collectAsState(
         initial = SettingsManager.DEFAULT_AUDIO_VISUALIZER_STYLE
     )
+    val style = selectedStyle
     val heightPercent by settingsManager.audioVisualizerHeight.collectAsState(
         initial = SettingsManager.DEFAULT_AUDIO_VISUALIZER_HEIGHT
     )
@@ -74,6 +76,7 @@ internal fun AudioVisualizer(
     val coverMotion = coverHost.motion
     val coverSlotsActive = coverStyle && coverOverlayAllowed
     SideEffect {
+        coverHost.rainbow = rainbow
         coverHost.active = coverSlotsActive
         coverHost.playing = isPlaying
         coverHost.opacity = opacity
@@ -189,7 +192,7 @@ internal fun AudioVisualizer(
     // Every style shares the flow curve's default height (25% of the player surface), scaled
     // by the user's visualizer-height percentage. Styles draw relative to this box.
     val visualizerModifier = modifier.fillMaxWidth().fillMaxHeight(audioVisualizerHeightFraction(heightPercent))
-    Canvas(modifier = visualizerModifier
+    Canvas(modifier = visualizerModifier.rainbowVisualizer(rainbow)
         .then(if (blurRadius > 0) Modifier.blur(blurRadius.dp, BlurredEdgeTreatment.Unbounded) else Modifier)
         .onSizeChanged { viewport = it }.graphicsLayer {
         alpha = (if (isPlaying) 1f else 0.42f) * opacity.coerceIn(0f, 1f)

@@ -167,6 +167,8 @@ interface PlayerUiSettingsAccess {
     val systemBarsReserveSpace: Flow<Boolean>
     val playerDynamicFlowEnabled: Flow<Boolean>
     val playerAppleFlowSpeed: Flow<Int>
+    val audioVisualizerRainbow: Flow<Boolean>
+    suspend fun setAudioVisualizerRainbow(enabled: Boolean)
     val audioVisualizerEnabled: Flow<Boolean>
     val audioVisualizerBlur: Flow<Int>
     suspend fun setAudioVisualizerBlur(radius: Int)
@@ -180,6 +182,7 @@ interface PlayerUiSettingsAccess {
     val playerWaveformPeakHeight: Flow<Int>
     val dynamicCoverEnabled: Flow<Boolean>
     val musicVideoSyncEnabled: Flow<Boolean>
+    val videoHoldSpeedPercent: Flow<Int>
     val musicVideoCaptureSubtitles: Flow<Boolean>
     val musicVideoStretchEnabled: Flow<Boolean>
     val musicVideoOrientation: Flow<Int>
@@ -238,6 +241,7 @@ interface PlayerUiSettingsAccess {
     suspend fun setPlayerWaveformPeakHeight(percent: Int)
     suspend fun setDynamicCoverEnabled(enabled: Boolean)
     suspend fun setMusicVideoSyncEnabled(enabled: Boolean)
+    suspend fun setVideoHoldSpeedPercent(percent: Int)
     suspend fun setMusicVideoCaptureSubtitles(enabled: Boolean)
     suspend fun setMusicVideoStretchEnabled(enabled: Boolean)
     suspend fun setMusicVideoOrientation(orientation: Int)
@@ -456,6 +460,11 @@ internal class PlayerUiSettingsAccessImpl(private val context: Context) : Player
                 ?.coerceIn(5, 60)
                 ?: SettingsManager.DEFAULT_PLAYER_APPLE_FLOW_SPEED
         }
+    override val audioVisualizerRainbow: Flow<Boolean> =
+        context.dataStore.data.map { it[SettingsManager.KEY_AUDIO_VISUALIZER_RAINBOW] ?: false }
+    override suspend fun setAudioVisualizerRainbow(enabled: Boolean) {
+        context.dataStore.edit { it[SettingsManager.KEY_AUDIO_VISUALIZER_RAINBOW] = enabled }
+    }
     override val audioVisualizerEnabled: Flow<Boolean> =
         context.dataStore.data.map { it[KEY_AUDIO_VISUALIZER_ENABLED] ?: false }
     override val audioVisualizerBlur: Flow<Int> = context.dataStore.data.map {
@@ -500,6 +509,9 @@ internal class PlayerUiSettingsAccessImpl(private val context: Context) : Player
             it[KEY_MUSIC_VIDEO_SYNC_ENABLED]
                 ?: SettingsManager.DEFAULT_MUSIC_VIDEO_SYNC_ENABLED
         }
+    override val videoHoldSpeedPercent: Flow<Int> = context.dataStore.data.map {
+        normalizeVideoHoldSpeedPercent(it[SettingsManager.KEY_VIDEO_HOLD_SPEED_PERCENT] ?: 200)
+    }
     override val musicVideoCaptureSubtitles: Flow<Boolean> =
         context.dataStore.data.map { it[KEY_MUSIC_VIDEO_CAPTURE_SUBTITLES] ?: false }
     override val musicVideoStretchEnabled: Flow<Boolean> =
@@ -756,6 +768,9 @@ internal class PlayerUiSettingsAccessImpl(private val context: Context) : Player
         context.dataStore.edit { it[KEY_MUSIC_VIDEO_SYNC_ENABLED] = enabled }
     }
 
+    override suspend fun setVideoHoldSpeedPercent(percent: Int) {
+        context.dataStore.edit { it[SettingsManager.KEY_VIDEO_HOLD_SPEED_PERCENT] = normalizeVideoHoldSpeedPercent(percent) }
+    }
     override suspend fun setMusicVideoCaptureSubtitles(enabled: Boolean) {
         context.dataStore.edit { it[KEY_MUSIC_VIDEO_CAPTURE_SUBTITLES] = enabled }
     }

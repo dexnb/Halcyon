@@ -191,10 +191,13 @@ internal fun List<LyricLine>.interludes(): List<AppleMusicInterlude> {
         lines.first().takeIf { it.timeMs >= INTERLUDE_MIN_GAP_MS }?.let { firstLine ->
             add(AppleMusicInterlude(startMs = 0L, endMs = firstLine.timeMs, nextLineIndex = 0))
         }
+        var coveredUntil = 0L
         for (index in 1..lines.lastIndex) {
             val previous = lines[index - 1]
             val next = lines[index]
-            val gapStart = previous.primaryEndMs(nextLine = next)
+            // A shorter overlapping vocal cannot start an interlude while another is singing.
+            coveredUntil = maxOf(coveredUntil, previous.primaryEndMs(nextLine = next))
+            val gapStart = coveredUntil
             if (next.timeMs - gapStart >= INTERLUDE_MIN_GAP_MS) {
                 add(AppleMusicInterlude(startMs = gapStart, endMs = next.timeMs, nextLineIndex = index))
             }

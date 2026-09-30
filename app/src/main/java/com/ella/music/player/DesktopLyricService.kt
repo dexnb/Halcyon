@@ -358,7 +358,7 @@ class DesktopLyricService : Service() {
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             type,
-            if (desktopLyricPassThroughTouches(statusBarMode)) {
+            if (desktopLyricPassThroughTouches(statusBarMode, locked)) {
                 baseFlags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
             } else {
                 baseFlags
@@ -549,7 +549,7 @@ class DesktopLyricService : Service() {
         )
         if (!lock && revealControls) scheduleControlsAutoHide()
         val params = layoutParams ?: return
-        params.alpha = 1f
+        params.alpha = if (desktopLyricPassThroughTouches(statusBarMode, locked) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) getSystemService(android.hardware.input.InputManager::class.java).maximumObscuringOpacityForTouch else 1f
         params.dimAmount = 0f
         params.buttonBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
         params.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
@@ -558,7 +558,7 @@ class DesktopLyricService : Service() {
             params.flags = params.flags and WindowManager.LayoutParams.FLAG_BLUR_BEHIND.inv()
             params.setBlurBehindRadius(0)
         }
-        params.flags = if (desktopLyricPassThroughTouches(statusBarMode)) {
+        params.flags = if (desktopLyricPassThroughTouches(statusBarMode, locked)) {
             params.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         } else {
             params.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
@@ -574,12 +574,12 @@ class DesktopLyricService : Service() {
     private fun restoreLockedLyricOpacity() {
         val view = rootView ?: return
         val params = layoutParams ?: return
-        params.alpha = 1f
+        params.alpha = if (desktopLyricPassThroughTouches(statusBarMode, locked) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) getSystemService(android.hardware.input.InputManager::class.java).maximumObscuringOpacityForTouch else 1f
         params.dimAmount = 0f
         view.alpha = 1f
         lyricView?.alpha = 1f
         view.post {
-            params.alpha = 1f
+            params.alpha = if (desktopLyricPassThroughTouches(statusBarMode, locked) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) getSystemService(android.hardware.input.InputManager::class.java).maximumObscuringOpacityForTouch else 1f
             params.dimAmount = 0f
             view.alpha = 1f
             lyricView?.alpha = 1f

@@ -92,11 +92,12 @@ internal fun Modifier.playerCoverGestures(
     val previousLabel = stringResource(R.string.common_previous)
     val nextLabel = stringResource(R.string.common_next)
     val measurer = rememberTextMeasurer()
-    val hintStyle = remember(hintColor) {
-        TextStyle(fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = hintColor)
+    val appStyle = top.yukonga.miuix.kmp.theme.MiuixTheme.textStyles.main
+    val hintStyle = remember(hintColor, appStyle) {
+        appStyle.copy(fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = hintColor)
     }
-    val titleStyle = remember(hintColor) {
-        TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Normal, color = hintColor)
+    val titleStyle = remember(hintColor, appStyle) {
+        appStyle.copy(fontSize = 11.sp, fontWeight = FontWeight.Normal, color = hintColor)
     }
     val maxTitleWidthPx = with(LocalDensity.current) { 140.dp.toPx() }.toInt()
     val previousHint = remember(previousLabel, hintStyle) { measurer.measure(previousLabel, hintStyle) }

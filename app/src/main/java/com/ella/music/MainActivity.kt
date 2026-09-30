@@ -322,6 +322,8 @@ class MainActivity : ComponentActivity() {
                 keyColor = coverSeed,
                 systemDarkOverride = systemDark
             ) {
+                com.ella.music.ui.player.NeteaseWebSheetHost()
+                com.ella.music.ui.player.NeteaseNativeCommentsHost(monetSong)
                 val televisionDevice = remember { isTelevisionDevice() }
                 val televisionFocusRequester = remember { FocusRequester() }
                 val rootHiddenBarsModifier = Modifier

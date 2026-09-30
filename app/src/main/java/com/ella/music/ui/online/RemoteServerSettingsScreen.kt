@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.ella.music.R
 import com.ella.music.data.SettingsManager
+import com.ella.music.data.isInsecureHttpUrl
 import com.ella.music.data.remote.EmbyService
 import com.ella.music.data.remote.NavidromeService
 import com.ella.music.data.remote.RemoteMusicProvider
@@ -422,6 +423,16 @@ fun RemoteServerEditorScreen(
                 ) {
                     WebDavTextField(stringResource(R.string.remote_server_name_label), name, onValueChange = { name = it })
                     WebDavTextField(stringResource(R.string.webdav_url), url, onValueChange = { url = it })
+                    // Plain HTTP is supported on purpose (a self-hosted machine without a
+                    // certificate), so say out loud what that costs instead of refusing it.
+                    if (isInsecureHttpUrl(url) || isInsecureHttpUrl(secondaryUrl)) {
+                        Text(
+                            text = stringResource(R.string.remote_server_http_warning),
+                            color = MiuixTheme.colorScheme.primary,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 6.dp)
+                        )
+                    }
                     if (isSubsonicLike) {
                         WebDavTextField(
                             stringResource(R.string.remote_server_secondary_url_label),

@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -98,7 +100,8 @@ internal fun PlayerScreenPageHost(
             // The hidden (alpha 0) cover must not claim the cover-overlay visualizer, so it falls
             // back to the bottom overlay above the lyric page.
             androidx.compose.runtime.CompositionLocalProvider(
-                LocalPlayerCoverVisualizerHost provides LocalPlayerCoverVisualizerHost.current.takeUnless { showLyrics }
+                LocalPlayerCoverVisualizerHost provides LocalPlayerCoverVisualizerHost.current.takeUnless { showLyrics },
+                LocalPlayerSurfaceActive provides (playerVisible && !showLyrics)
             ) {
             coverPage(
                 onShowImmersiveLyrics,
@@ -135,10 +138,14 @@ internal fun PlayerScreenPageHost(
             beyondViewportPageCount = 1
         ) { page ->
             when (page) {
-                PLAYER_PAGE_COVER -> coverPage(
-                    onShowPagedLyrics,
-                    Modifier.fillMaxSize()
-                )
+                PLAYER_PAGE_COVER -> {
+                    val active by remember(pagerState, playerVisible) { derivedStateOf {
+                        playerVisible && (pagerState.currentPage == PLAYER_PAGE_COVER || pagerState.isScrollInProgress)
+                    } }
+                    CompositionLocalProvider(LocalPlayerSurfaceActive provides active) {
+                        coverPage(onShowPagedLyrics, Modifier.fillMaxSize())
+                    }
+                }
                 PLAYER_PAGE_LYRICS -> lyricsPage(
                     onDismissPagedLyrics,
                     false,

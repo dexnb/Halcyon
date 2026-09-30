@@ -610,6 +610,11 @@ fun AlbumDetailScreen(
                     albumCoverModel = albumPreviewModel,
                     hasNeteaseAlbum = !neteaseAlbumUrl.isNullOrBlank(),
                     onNeteaseAlbumClick = { neteaseAlbumUrl?.let { com.ella.music.data.netease.NeteaseLinks.openWebUrl(context, it) } },
+                    onNeteaseCommentsClick = {
+                        neteaseAlbumUrl?.let(com.ella.music.data.netease.NeteaseLinks::parseWebUrl)?.second?.let {
+                            com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.AlbumComment, it)
+                        }
+                    },
                     onAlbumArtistClick = {
                         val albumArtist = album?.albumArtist?.takeIf { it.isNotBlank() }
                             ?: return@AlbumHeader
@@ -666,6 +671,12 @@ fun AlbumDetailScreen(
                         albumDuration.formatPlaybackDuration(),
                         com.ella.music.ui.components.sortLabel(sortMode.labelRes, sortMode.isDescending())
                     ),
+                    leadingContent = {
+                        com.ella.music.ui.components.ShuffleAllSummaryButton(
+                            visible = !albumUsesImmersiveHeader && sortedAlbumSongs.isNotEmpty(),
+                            onClick = ::shuffleAlbumAndStart
+                        )
+                    },
                 )
             }
 

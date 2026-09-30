@@ -1,6 +1,7 @@
 package com.ella.music.ui.player
 
 import androidx.compose.ui.graphics.Color
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -69,6 +70,79 @@ class AppleMusicKaraokeStopsTest {
     }
 
 
+
+    @Test
+    fun wholeLineRainbowFillStopsStayOrdered() {
+        var progress = 0f
+        while (progress <= 1f) {
+            listOf(0.15f, 0.38f).forEach { feather ->
+                var offset = 0f
+                while (offset < 1_000f) {
+                    karaokeRainbowLineFillStops(
+                        progress = progress,
+                        baseAlpha = 1f,
+                        isRtl = false,
+                        wordWidth = 100f,
+                        lineWidth = 1_000f,
+                        lineOffsetX = offset,
+                        feather = feather
+                    ).assertAscending("line-ltr@$progress/$offset/$feather")
+                    karaokeRainbowLineFillStops(
+                        progress = progress,
+                        baseAlpha = 1f,
+                        isRtl = true,
+                        wordWidth = 100f,
+                        lineWidth = 1_000f,
+                        lineOffsetX = offset,
+                        feather = feather
+                    ).assertAscending("line-rtl@$progress/$offset/$feather")
+                    offset += 150f
+                }
+            }
+            progress += 0.05f
+        }
+    }
+
+    @Test
+    fun wholeLineRainbowSamplesOneSpectrumForEveryUnit() {
+        // 整句彩虹: a unit's hue must come from its position on the whole line, so neighbouring
+        // units continue the same gradient instead of restarting ROYGBIV on every character.
+        val lineWidth = 700f
+        val wordWidth = 100f
+        var index = 0
+        var opaqueStops = 0
+        while (index * wordWidth < lineWidth) {
+            val offset = index * wordWidth
+            karaokeRainbowLineFillStops(
+                progress = 1f,
+                baseAlpha = 1f,
+                isRtl = false,
+                wordWidth = wordWidth,
+                lineWidth = lineWidth,
+                lineOffsetX = offset
+            ).filter { it.second.alpha > 0.99f }.forEach { (fraction, color) ->
+                opaqueStops++
+                assertEquals(
+                    "hue at line fraction $fraction for unit $index",
+                    karaokeRainbowColor(fraction, 1f),
+                    color
+                )
+            }
+            index++
+        }
+        assertTrue("expected fully sung stops across the line", opaqueStops > 0)
+    }
+
+    @Test
+    fun wholeLineRainbowClampsDegenerateGeometry() {
+        // A unit as wide as its line, or one without measured geometry yet, must stay in 0..1.
+        arrayOf(0f, 40f, 1_000f).forEach { lineWidth ->
+            karaokeRainbowLineFillStops(0.5f, 1f, false, 1_000f, lineWidth, 0f)
+                .assertAscending("degenerate-ltr@$lineWidth")
+            karaokeRainbowLineFillStops(0.5f, 1f, true, 1_000f, lineWidth, 0f)
+                .assertAscending("degenerate-rtl@$lineWidth")
+        }
+    }
 
     @Test
     fun spectrumRainbowHasSevenStopsAndContinuousHue() {

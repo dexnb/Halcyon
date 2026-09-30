@@ -216,7 +216,7 @@ private fun AudioOutputInfoRow(
                 lineHeight = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = MiuixTheme.colorScheme.onSurface,
-                style = TextStyle(
+                style = MiuixTheme.textStyles.main.copy(
                     textDirection = if (forceLtrValue) TextDirection.Ltr else TextDirection.Content
                 ),
                 modifier = Modifier.padding(top = 3.dp)

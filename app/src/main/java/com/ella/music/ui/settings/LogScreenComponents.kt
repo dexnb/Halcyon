@@ -174,7 +174,7 @@ internal fun AppLogDetailSheet(
                             .fillMaxWidth()
                             .padding(top = 4.dp),
                         color = MiuixTheme.colorScheme.onSurface,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = MiuixTheme.textStyles.main.fontFamily
                     )
                 }
             }

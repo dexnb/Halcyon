@@ -93,9 +93,21 @@ class CastingDeviceActivity : FragmentActivity() {
             val settings = remember { SettingsManager.getInstance(this) }
             val themeMode by settings.themeMode.collectAsState(initial = THEME_FOLLOW_SYSTEM)
             val monetMode by settings.monetColorMode.collectAsState(initial = 0)
+            val legacyFont by settings.lyricFontPath.collectAsState(initial = "")
+            val westernFont by settings.globalWesternFontPath.collectAsState(initial = "")
+            val cjkFont by settings.globalCjkFontPath.collectAsState(initial = "")
+            val appFontWeight by settings.lyricFontWeight.collectAsState(initial = 700)
+            val appFontPath = remember(legacyFont, westernFont, cjkFont) {
+                com.ella.music.ui.components.ScriptFontPaths(
+                    westernFont.ifBlank { legacyFont.ifBlank { com.ella.music.ui.player.ensureBundledInterPath(this@CastingDeviceActivity) } },
+                    cjkFont.ifBlank { com.ella.music.ui.player.ensureBundledMiSansBoldPath(this@CastingDeviceActivity) }
+                ).encode()
+            }
             val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
             EllaTheme(
                 themeMode = themeMode,
+                appFontPath = appFontPath,
+                appFontWeight = appFontWeight,
                 monetMode = if (monetMode == MONET_COVER) 0 else monetMode,
                 systemDarkOverride = systemDark
             ) {

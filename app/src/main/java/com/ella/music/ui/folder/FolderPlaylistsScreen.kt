@@ -163,6 +163,7 @@ fun FolderPlaylistsScreen(
     var pendingDelete by remember { mutableStateOf<FolderPlaylist?>(null) }
     var searchExpanded by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    val folderDisplayColumns = rememberFolderDisplaySettings().columns
     val listState = rememberLazyListState()
     RestoreListScrollAfterSearch(
         searchExpanded = searchExpanded,
@@ -397,6 +398,7 @@ fun FolderPlaylistsScreen(
                 }
             },
             actions = {
+
                 if (selection.selectionMode) {
                     IconButton(onClick = {
                         val keys = selection.selectedIdsInSelectionOrder()
@@ -628,11 +630,24 @@ fun FolderPlaylistsScreen(
             }
             Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
             LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 130.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                if (folderDisplayColumns > 1 && !selection.selectionMode) {
+                    items(reorderablePlaylists.chunked(folderDisplayColumns), key = { it.first().id }) { row ->
+                        AdaptiveFolderRow(row, folderDisplayColumns, { it.id }) { playlist ->
+                            FolderPlaylistTile(playlist.name, songCountMap[playlist] ?: 0,
+                                coverModelMap[playlist],
+                                onClick = { onOpenPlaylist(playlist.id) },
+                                onLongClick = { selection.selectionMode = true; selection.toggleSelection(playlist.id) },
+                                onMore = { moreMenuTarget = playlist },
+                                onSync = { scope.launch { mainViewModel.refreshFolderPlaylistFolders(playlist.folders) } })
+                        }
+                    }
+                } else {
                 itemsIndexed(reorderablePlaylists, key = { _, playlist -> playlist.id }) { _, playlist ->
                     val songCount = songCountMap[playlist] ?: 0
                     val duration = durationMap[playlist] ?: 0L
@@ -689,6 +704,7 @@ fun FolderPlaylistsScreen(
                             } else null
                         )
                     }
+                }
                 }
             }
             FloatingSelectionControls(

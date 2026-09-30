@@ -359,6 +359,7 @@ internal val generatedSettingsSearchCatalog = listOf(
     SettingsSearchDefinition(R.string.settings_bottom_bar_liquid_refraction_height, R.string.settings_bottom_bar_liquid_refraction_height_summary, target = SettingsSearchTarget.BottomNavigation, sheet = ""),
     SettingsSearchDefinition(R.string.settings_bottom_bar_liquid_refraction_amount, R.string.settings_bottom_bar_liquid_refraction_amount_summary, target = SettingsSearchTarget.BottomNavigation, sheet = ""),
     SettingsSearchDefinition(R.string.settings_bottom_bar_liquid_chromatic_aberration, R.string.settings_bottom_bar_liquid_chromatic_aberration_summary, target = SettingsSearchTarget.BottomNavigation, sheet = ""),
+    SettingsSearchDefinition(R.string.settings_startup_open_player, R.string.settings_startup_open_player_summary, target = SettingsSearchTarget.BottomNavigation, sheet = ""),
     SettingsSearchDefinition(R.string.settings_home_search_target, R.string.settings_home_search_target_summary, target = SettingsSearchTarget.BottomNavigation, sheet = ""),
     SettingsSearchDefinition(R.string.settings_bottom_dock_merge_search, R.string.settings_bottom_dock_merge_search_summary, target = SettingsSearchTarget.BottomNavigation, sheet = ""),
     SettingsSearchDefinition(R.string.settings_bottom_dock_items, R.string.settings_bottom_dock_selection_count, target = SettingsSearchTarget.BottomNavigation, sheet = ""),

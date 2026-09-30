@@ -403,11 +403,11 @@ internal fun buildTasteProfile(
     )
 }
 
-internal fun buildLibraryAnalysis(
+internal suspend fun buildLibraryAnalysis(
     songs: List<Song>,
     mainViewModel: MainViewModel
 ): LibraryAnalysis {
-    val rows = songs.map { song -> SongWithInfo(song, mainViewModel.getAudioInfo(song)) }
+    val rows = loadLibraryQualityRows(songs, mainViewModel::getAudioQualityInfo)
     return LibraryAnalysis(
         formatBuckets = rows.toBuckets { formatLabel(it.song, it.info) },
         qualityBuckets = rows.toBuckets { qualityLabel(it.song, it.info) }
@@ -435,7 +435,7 @@ internal fun readCachedLibraryAnalysis(
         val file = libraryAnalysisCacheFile(context)
         if (!file.exists()) return@runCatching null
         val root = JSONObject(file.readText())
-        if (root.optInt("version", 1) < 3) return@runCatching null
+        if (root.optInt("version", 1) != 4) return@runCatching null
         if (root.optString("key") != cacheKey) return@runCatching null
         root.optJSONObject("analysis")?.toLibraryAnalysis()
     }.getOrNull()?.also { LibraryAnalysisSessionCache.put(cacheKey, it) }
@@ -449,7 +449,7 @@ internal fun writeCachedLibraryAnalysis(
     runCatching {
         val file = libraryAnalysisCacheFile(context)
         val root = JSONObject()
-            .put("version", 3)
+            .put("version", 4)
             .put("key", songs.libraryAnalysisCacheKey())
             .put("updatedAt", System.currentTimeMillis())
             .put("analysis", analysis.toJson())
@@ -459,41 +459,56 @@ internal fun writeCachedLibraryAnalysis(
     }
 }
 
-internal fun prewarmLibraryAnalysisCache(
+internal suspend fun prewarmLibraryAnalysisCache(
     context: Context,
     songs: List<Song>,
     mainViewModel: MainViewModel
 ) {
-    if (songs.isEmpty() || readCachedLibraryAnalysis(context, songs) != null) return
-    val analysis = buildLibraryAnalysis(songs, mainViewModel)
-    writeCachedLibraryAnalysis(context, songs, analysis)
+    if (songs.isNotEmpty()) getOrBuildLibraryAnalysis(context, songs, mainViewModel)
+}
+
+internal fun invalidateLibraryAnalysisCache(context: Context) {
+    LibraryAnalysisSessionCache.clear()
+    libraryAnalysisCacheFile(context).delete()
 }
 
 private fun libraryAnalysisCacheFile(context: Context): File =
     File(context.applicationContext.filesDir, "library_analysis_cache.json")
 
 internal object LibraryAnalysisSessionCache {
-    @Volatile private var key: String? = null
-    @Volatile private var analysis: LibraryAnalysis? = null
-
-    fun get(cacheKey: String): LibraryAnalysis? = analysis.takeIf { key == cacheKey }
-
-    fun put(cacheKey: String, value: LibraryAnalysis) {
-        key = cacheKey
-        analysis = value
-    }
+    @Volatile private var snapshot: Pair<String, LibraryAnalysis>? = null
+    fun get(cacheKey: String): LibraryAnalysis? = snapshot?.takeIf { it.first == cacheKey }?.second
+    fun clear() { snapshot = null }
+    fun put(cacheKey: String, value: LibraryAnalysis) { snapshot = cacheKey to value }
 }
 
 internal fun List<Song>.libraryAnalysisCacheKey(): String {
-    var idHash = 1125899906842597L
-    var modifiedHash = 1469598103934665603L
-    var sizeSum = 0L
+    var sum = 0L
+    var xor = 0L
     for (song in this) {
-        idHash = 31L * idHash + song.id
-        modifiedHash = 1099511628211L * (modifiedHash xor song.dateModified)
-        sizeSum += song.fileSize
+        var hash = 1469598103934665603L
+        fun mix(value: Long) { hash = (hash xor value) * 1099511628211L }
+        mix(song.id); mix(song.dateModified); mix(song.fileSize); mix(song.duration)
+        song.path.forEach { mix(it.code.toLong()) }
+        mix(-1L)
+        song.mimeType.forEach { mix(it.code.toLong()) }
+        sum += hash
+        xor = xor xor java.lang.Long.rotateLeft(hash, (song.id and 63L).toInt())
     }
-    return "$size-$idHash-$modifiedHash-$sizeSum"
+    return "$size:$sum:$xor"
+}
+
+private val libraryAnalysisBuildMutex = kotlinx.coroutines.sync.Mutex()
+
+internal suspend fun getOrBuildLibraryAnalysis(context: Context, songs: List<Song>, mainViewModel: MainViewModel): LibraryAnalysis {
+    libraryAnalysisBuildMutex.lock()
+    try {
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            readCachedLibraryAnalysis(context, songs) ?: buildLibraryAnalysis(songs, mainViewModel).also {
+                writeCachedLibraryAnalysis(context, songs, it)
+            }
+        }
+    } finally { libraryAnalysisBuildMutex.unlock() }
 }
 
 private fun LibraryAnalysis.toJson(): JSONObject =

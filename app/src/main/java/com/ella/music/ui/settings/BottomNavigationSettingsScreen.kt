@@ -87,6 +87,7 @@ fun BottomNavigationSettingsScreen(onBack: () -> Unit) {
     val startupItem by settingsManager.bottomDockStartupItem.collectAsState(
         initial = SettingsManager.DEFAULT_BOTTOM_DOCK_STARTUP_ITEM
     )
+    val startupOpenPlayer by settingsManager.startupOpenPlayer.collectAsState(initial = false)
     val bottomBarCornerRadius by settingsManager.bottomBarCornerRadius.collectAsState(
         initial = SettingsManager.DEFAULT_BOTTOM_BAR_CORNER_RADIUS_DP
     )
@@ -339,6 +340,20 @@ fun BottomNavigationSettingsScreen(onBack: () -> Unit) {
                         }
                     }
                 }
+            }
+
+            SettingsCardGroup {
+                // search-anchor:start
+                SettingsSearchAnchor(R.string.settings_startup_open_player) {
+                SwitchPreference(
+                    title = stringResource(R.string.settings_startup_open_player),
+                    summary = stringResource(R.string.settings_startup_open_player_summary),
+                    checked = startupOpenPlayer,
+                    onCheckedChange = { enabled ->
+                        scope.launch { settingsManager.setStartupOpenPlayer(enabled) }
+                    }
+                )
+                } // search-anchor:end
             }
 
             var showReorderSheet by remember { mutableStateOf(false) }

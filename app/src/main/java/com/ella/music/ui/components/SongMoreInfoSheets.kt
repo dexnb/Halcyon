@@ -223,12 +223,14 @@ fun SongInfoSheet(
             }
             neteaseInfo.albumId.takeIf { it.isNotBlank() }?.let { id ->
                 SongMenuItem(stringResource(R.string.player_netease_album_page), onClick = { com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.Album, id) })
+                SongMenuItem(stringResource(R.string.netease_link_album_comments), onClick = { com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.AlbumComment, id) })
             }
             neteaseInfo.mvId.takeIf { it.isNotBlank() }?.let { id ->
                 SongMenuItem(
                     stringResource(R.string.player_netease_music_video),
                     onClick = { com.ella.music.MusicVideoLauncher.openNetease(context, song, id) }
                 )
+                SongMenuItem(stringResource(R.string.netease_link_mv_comments), onClick = { com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.MusicVideoComment, id) })
             }
             SongInfoRow(stringResource(R.string.song_more_raw_netease_key), neteaseInfo.raw)
             neteaseInfo.decodedJson.takeIf { it.isNotBlank() }?.let {

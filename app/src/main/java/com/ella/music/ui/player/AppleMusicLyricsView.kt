@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import com.ella.music.data.SettingsManager
+import com.ella.music.data.model.isSingingAt
 import com.ella.music.data.model.LyricLine
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -314,7 +315,7 @@ internal fun AppleMusicLyricsView(
     val focusOffsetPx = focusOffsetDp?.let { with(density) { it.toPx() } }
     val autoScrollShift = remember(listState) { LyricAutoScrollShift() }
     LaunchedEffect(pageVisible, scrollTargetIndex, userDragging, deferAutoScroll, focusOffsetNudgePx, focusOffsetPx) {
-        if (userDragging || deferAutoScroll) return@LaunchedEffect
+        if (!pageVisible || userDragging || deferAutoScroll) return@LaunchedEffect
         // Do not issue the first scroll before LazyColumn has a viewport; that was making the
         // focus line land under the page header until the user manually scrolled.
         val viewportHeight = snapshotFlow {
@@ -334,10 +335,6 @@ internal fun AppleMusicLyricsView(
             return@LaunchedEffect
         }
 
-        if (!pageVisible) {
-            listState.scrollToItem(scrollTargetIndex, -desiredItemOffset.toInt())
-            return@LaunchedEffect
-        }
 
         // Move the layout target once; each visible row follows with its own retained spring.
         // A single LazyColumn spring moves all lines as a rigid block and cannot produce the wave.
@@ -431,7 +428,17 @@ internal fun AppleMusicLyricsView(
                     }
                 }
                 item(key = "${line.timeMs}-$index") {
-                    val duetActive = line.isDuetLine() && line.isActiveAt(smoothPositionMs)
+                    val followingLine = remember(lyrics, index) {
+                        (index + 1 until lyrics.size).firstOrNull { lyrics[it].timeMs > line.timeMs }?.let(lyrics::get)
+                    }
+                    val simultaneous = !line.isTtml && (line.words.isNotEmpty() ||
+                        lyrics.getOrNull(index - 1)?.timeMs == line.timeMs || lyrics.getOrNull(index + 1)?.timeMs == line.timeMs)
+                    val duetActive by remember(line, followingLine, simultaneous) {
+                        derivedStateOf {
+                            (line.isTtml || line.isDuetLine() || simultaneous) &&
+                                line.isSingingAt(smoothPositionMs, nextLine = followingLine)
+                        }
+                    }
                     val lineIsActive = activeInterlude == null && (index == activeIndex || duetActive)
                     val presentation = linePresentation?.invoke(index, line)
                     AppleMusicLyricLine(
@@ -634,7 +641,9 @@ internal fun nextSmoothLyricPositionMs(
     val delta = sampledMs - predicted
     return when {
         abs(delta) > seekThresholdMs -> sampledMs
-        delta < 0L && -delta <= backwardToleranceMs -> predicted
+        // A late/stalled sample must not let the render clock sing future words.
+        // Keep at most one sampling interval plus scheduling tolerance of interpolation.
+        delta < 0L -> predicted.coerceAtMost(sampledMs + backwardToleranceMs.coerceIn(0L, 150L))
         delta > 80L -> predicted + (delta / 4L)
         else -> predicted
     }

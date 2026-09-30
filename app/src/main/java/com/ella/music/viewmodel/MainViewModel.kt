@@ -694,6 +694,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getReplayGain(song)
     }
 
+    fun getAudioQualityInfo(song: Song): AudioInfo = repository.getAudioQualityInfo(song)
+    val audioQualityRevision: Long get() = repository.audioQualityRevision
+
     fun getAudioInfo(song: Song): AudioInfo {
         return repository.getAudioInfo(song)
     }

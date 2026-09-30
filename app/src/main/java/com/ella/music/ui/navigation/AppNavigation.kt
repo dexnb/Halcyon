@@ -200,6 +200,8 @@ sealed class Screen(val route: String) {
     }
     data object SettingsWizard : Screen("settings_wizard")
     data object SettingsMaintenance : Screen("settings_maintenance")
+    data object OtherSettings : Screen("other_settings")
+    data object VideoPlayer : Screen("video_player")
     data object PerformanceDiagnostics : Screen("performance_diagnostics")
     data object AppearanceSubpage : Screen("appearance_subpage/{page}?highlight={highlight}") {
         fun createRoute(page: String, highlight: String = ""): String {
@@ -761,11 +763,21 @@ fun AppNavigation(
                 },
                 onNavigateToSetupWizard = { navController.navigate(Screen.SettingsWizard.route) },
                 onNavigateToMaintenance = { navController.navigate(Screen.SettingsMaintenance.route) },
+                onNavigateToOther = { navController.navigate(Screen.OtherSettings.route) },
                 onBack = { navController.popBackStack() },
                 showBackButton = !(fromDock && isDockItem(SettingsManager.BOTTOM_DOCK_ITEM_SETTINGS)),
                 mainViewModel = mainViewModel,
                 playerViewModel = playerViewModel
             )
+        }
+
+        composable(Screen.OtherSettings.route) {
+            com.ella.music.ui.settings.OtherSettingsScreen(
+                onBack = { navController.popBackStack() },
+                onVideo = { navController.navigate(Screen.VideoPlayer.route) })
+        }
+        composable(Screen.VideoPlayer.route) {
+            com.ella.music.ui.video.VideoToolsScreen(onBack = { navController.popBackStack() })
         }
 
         composable(

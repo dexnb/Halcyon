@@ -193,6 +193,7 @@ fun EllaMiuixDialog(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
+    val inheritedDensity = LocalDensity.current
     WindowDialog(
         show = show,
         title = title,
@@ -205,7 +206,8 @@ fun EllaMiuixDialog(
             CompositionLocalProvider(
                 LocalSettingsCardFrosting provides null,
                 LocalSharedAppBackgroundVisible provides false,
-                LocalInDialog provides true
+                LocalInDialog provides true,
+                LocalDensity provides inheritedDensity,
             ) {
                 ApplyHalcyonSystemBarsToCurrentWindow()
                 content()
@@ -227,6 +229,7 @@ fun EllaMiuixWideDialog(
     val windowSize = androidx.compose.ui.platform.LocalWindowInfo.current.containerDpSize
     val isLandscape = windowSize.width > windowSize.height
 
+    val inheritedDensity = LocalDensity.current
     WindowDialog(
         show = show,
         title = if (isLandscape) null else title,
@@ -239,7 +242,8 @@ fun EllaMiuixWideDialog(
             CompositionLocalProvider(
                 LocalSettingsCardFrosting provides null,
                 LocalSharedAppBackgroundVisible provides false,
-                LocalInDialog provides true
+                LocalInDialog provides true,
+                LocalDensity provides inheritedDensity,
             ) {
                 ApplyHalcyonSystemBarsToCurrentWindow()
                 if (isLandscape) {

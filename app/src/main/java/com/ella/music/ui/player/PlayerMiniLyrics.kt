@@ -253,7 +253,8 @@ internal fun MiniLyricsPreview(
         lyrics = previewLyrics,
         currentIndex = previewCurrentIndex,
         currentPositionMs = currentPositionMs,
-        isPlaying = isPlaying,
+        isPlaying = isPlaying && LocalPlayerSurfaceActive.current,
+        pageVisible = LocalPlayerSurfaceActive.current,
         isPaused = isPaused,
         // Pausing the cover page should keep the mini lyric focused on the current line. The
         // full lyrics page intentionally reveals all rows while paused for easier reading.

@@ -850,7 +850,7 @@ private fun DrawScope.drawRoundedWaveform(
 
     val dragFocus = if (isDragging) 1f else 0f
     val needleWidth = (1.48f + dragFocus * 0.36f) * density
-    val needleHeight = size.height * 1.36f
+    val needleHeight = size.height * 1.12f
     val needleTop = (size.height - needleHeight) * 0.5f
     drawRoundRect(
         color = colors.needle.copy(alpha = 0.98f),

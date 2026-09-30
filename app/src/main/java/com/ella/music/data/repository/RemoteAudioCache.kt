@@ -2,7 +2,7 @@ package com.ella.music.data.repository
 
 import android.content.Context
 import android.util.Log
-import com.ella.music.data.blockCredentialedHttpRequests
+import com.ella.music.data.allowUserConfiguredCleartext
 import com.ella.music.data.isHttpAudioSource
 import com.ella.music.data.InputTooLargeException
 import com.ella.music.data.copyToBoundedOrThrow
@@ -51,7 +51,7 @@ object RemoteAudioCache {
             .writeTimeout(60, TimeUnit.SECONDS)
             .followRedirects(true)
             .followSslRedirects(true)
-            .blockCredentialedHttpRequests()
+            .allowUserConfiguredCleartext()
             .build()
     }
 
