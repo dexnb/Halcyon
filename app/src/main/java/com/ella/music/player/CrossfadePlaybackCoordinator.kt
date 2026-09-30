@@ -12,6 +12,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MediaSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -47,7 +48,8 @@ internal class CrossfadePlaybackCoordinator(
     private val onPrimaryPromoted: (ExoPlayer) -> Unit,
     private val onIncomingAudible: (targetIndex: Int, positionMs: Long, playbackSpeed: Float) -> Unit,
     private val onIncomingFinished: () -> Unit,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val mediaSourceFactory: MediaSource.Factory = DefaultMediaSourceFactory(dataSourceFactory)
 ) {
     private var audioAttributes: AudioAttributes = audioAttributes
     private data class ActiveTransition(
@@ -314,7 +316,7 @@ internal class CrossfadePlaybackCoordinator(
             .setAudioAttributes(audioAttributes, false)
             .setHandleAudioBecomingNoisy(false)
             .setWakeMode(C.WAKE_MODE_LOCAL)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .setMediaSourceFactory(mediaSourceFactory)
             .build()
             .also { secondary = it }
         val queue = List(primary.mediaItemCount) { index -> primary.getMediaItemAt(index) }
