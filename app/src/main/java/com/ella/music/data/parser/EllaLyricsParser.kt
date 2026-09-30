@@ -315,6 +315,7 @@ internal object EllaLyricsParser {
                 timeMs = start,
                 text = text,
                 words = words.toDisplayWords(text),
+                hasExplicitWordTiming = words.size > 1 || timedWordMarkerPattern.matchAt(content, 0) != null,
                 agent = agent,
                 endMs = words.lastOrNull()?.endMs
             )
@@ -475,6 +476,11 @@ internal object EllaLyricsParser {
             .values
             .flatMap { group ->
                 if (group.size == 1) return@flatMap listOf(group.first())
+                // Two independently timed vocal rows must not become a translation pair.
+                if (group.count { it.hasExplicitWordTiming && it.text.isUsefulMainText() } > 1 &&
+                    group.none { it.text.isLikelyWholeLinePronunciation(group.first().text) && it !== group.first() }) {
+                    return@flatMap group
+                }
                 if (group.shouldKeepIndependentDuetLines()) {
                     return@flatMap group.sortedBy { it.agentSortOrder() }
                 }
@@ -687,9 +693,6 @@ internal object EllaLyricsParser {
         creditPrefixPattern.containsMatchIn(
             lrcTimePattern.replace(line.trim(), "").trim()
         )
-
-    private fun String.isPronunciationLine(): Boolean =
-        isKanaPronunciationLine() || isLatinPronunciationLine()
 
     private fun String.isKanaPronunciationLine(): Boolean {
         val text = cleanLyricText()

@@ -87,19 +87,6 @@ class MusicFreePluginService(private val context: Context? = null) {
         )
     }
 
-    @Deprecated("Use importPlugins so repository links and single scripts are handled consistently.")
-    suspend fun importPlugin(url: String): Pair<String, String> = withContext(Dispatchers.IO) {
-        val request = Request.Builder()
-            .url(url.trim().requireHttpsUrl("MusicFree source"))
-            .header("User-Agent", USER_AGENT)
-            .header("Cache-Control", "no-cache")
-            .build()
-        importClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) error("导入失败: HTTP ${response.code}")
-            importPluginScript(response.body?.byteStream()?.use { it.readUtf8Bounded(9_000_000L) }.orEmpty(), allowRuntimeInspect = context != null)
-        }
-    }
-
     fun importPluginScript(
         script: String,
         fallbackName: String = "",

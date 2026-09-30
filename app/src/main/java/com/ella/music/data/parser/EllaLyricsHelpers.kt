@@ -5,7 +5,6 @@ import com.ella.music.data.model.LyricWord
 
 internal val lrcGenericMetaPattern = Regex("""^\[(?!bg:)[A-Za-z][A-Za-z0-9 _\-]*:[^\]]*]$""", RegexOption.IGNORE_CASE)
 
-
 internal fun String.parseFlexibleTime(): Int {
     val value = trim().replace(',', '.')
     if (value.isBlank()) return 0
@@ -54,7 +53,20 @@ internal fun String.decodeHtmlCompat(): String =
 internal fun List<LyricWord>.joinLyricText(): String {
     val raw = joinToString("") { it.text }.cleanLyricText()
     if (raw.isBlank() || raw.hasCjk() || raw.contains(' ')) return raw
-    return map { it.text.cleanLyricText() }.filter { it.isNotBlank() }.joinToString(" ")
+    return joinLatinLyricUnits()
+}
+
+/** A hyphen connects timed sung syllables; it is not a separate display word. */
+internal fun List<LyricWord>.joinLatinLyricUnits(): String = buildString {
+    var previous = ""
+    this@joinLatinLyricUnits.forEach { word ->
+        val text = word.text.cleanLyricText()
+        if (text.isNotBlank()) {
+            if (isNotEmpty() && !previous.endsWith('-') && !text.startsWith('-')) append(' ')
+            append(text)
+            previous = text
+        }
+    }
 }
 
 internal fun List<LyricWord>.toDisplayWords(lineText: String): List<LyricWord> {
@@ -149,14 +161,6 @@ internal fun Char.isCjkChar(): Boolean =
         Character.UnicodeBlock.HANGUL_SYLLABLES
     )
 
-internal fun Char.isKanjiChar(): Boolean =
-    Character.UnicodeBlock.of(this) in setOf(
-        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS,
-        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A,
-        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B,
-        Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
-    )
-
 internal fun Char.isKanjiOrHangul(): Boolean =
     Character.UnicodeBlock.of(this) in setOf(
         Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS,
@@ -183,4 +187,3 @@ internal fun String.isRtlText(): Boolean {
     }
     return rtlCount > 0 && rtlCount >= ltrCount
 }
-

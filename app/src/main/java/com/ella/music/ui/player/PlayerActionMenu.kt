@@ -81,6 +81,7 @@ internal fun PlayerActionMenu(
     onAddToQueue: () -> Unit,
     onPlayNext: () -> Unit,
     onShare: () -> Unit,
+    onLyricShare: () -> Unit,
     onSetRating: () -> Unit,
     onAiInterpret: () -> Unit,
     onSpectrum: () -> Unit,
@@ -120,6 +121,13 @@ internal fun PlayerActionMenu(
 ) {
     val context = LocalContext.current
     val settingsManager = remember(context) { SettingsManager.getInstance(context) }
+    val commentIds by androidx.compose.runtime.produceState<Pair<String, String>>("" to "", song?.path, song?.dateModified, song?.onlineId, song?.onlineMvId) {
+        value = if (song == null) "" to "" else if (song.onlineSource == "netease") song.onlineId to song.onlineMvId else
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val info = com.ella.music.data.decodeNeteaseKey(MusicRepository.getInstance(context).getSongTagInfo(song).neteaseKey)
+                info?.musicId.orEmpty() to info?.mvId.orEmpty()
+            }
+    }
     val neteaseMvId = com.ella.music.ui.components.rememberNeteaseMvId(song)
     val musicVideoTarget = rememberPlayerMusicVideoTarget(song, knownNeteaseMvId = neteaseMvId)
     val openMusicVideo: () -> Unit = {
@@ -247,6 +255,14 @@ internal fun PlayerActionMenu(
                 }
                 Spacer(modifier = Modifier.height(14.dp))
                 PlayerActionMenuGroup {
+                    if (commentIds.first.isNotBlank()) PlayerActionMenuItem(
+                        stringResource(R.string.player_view_song_comments),
+                        { onClose(); com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.Comment, commentIds.first) }
+                    )
+                    if ((commentIds.second.toLongOrNull() ?: 0) > 0) PlayerActionMenuItem(
+                        stringResource(R.string.player_view_mv_comments),
+                        { onClose(); com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.MusicVideoComment, commentIds.second) }
+                    )
                     visibleActions.forEach { actionId ->
                         val icon = actionMenuIcon(actionId)
                         when (actionId) {
@@ -281,6 +297,9 @@ internal fun PlayerActionMenu(
                                 stringResource(R.string.common_share),
                                 onShare,
                                 icon = icon
+                            )
+                            PlayerExtraActionIds.LYRIC_SHARE -> PlayerActionMenuItem(
+                                stringResource(R.string.lyric_share_chooser_title), onLyricShare, icon = icon
                             )
                             ActionMenuIds.AI -> PlayerActionMenuItem(
                                 stringResource(R.string.song_more_ai_title),

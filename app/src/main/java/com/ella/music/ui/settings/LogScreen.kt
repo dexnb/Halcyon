@@ -55,7 +55,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import java.io.File
@@ -402,7 +401,7 @@ fun LogScreen(
                             Text(
                                 text = crashChunks[index],
                                 fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = MiuixTheme.textStyles.main.fontFamily,
                                 color = MiuixTheme.colorScheme.onSurface
                             )
                         }

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.ella.music.data.musicfree.MusicFreeOnlineSong
 
 class MusicFreeOnlineViewModel : ViewModel() {
+    internal val searchRequests = com.ella.music.ui.online.OnlineProviderSearchRequests()
     var importUrl by mutableStateOf("")
     var searchQuery by mutableStateOf("")
     var importExpanded by mutableStateOf(false)

@@ -8,21 +8,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.documentfile.provider.DocumentFile
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.verticalScroll
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
@@ -35,15 +30,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ella.music.R
 import com.ella.music.data.SettingsManager
 import com.ella.music.data.lastfm.DEFAULT_LAST_FM_WIKI_REGION
@@ -57,8 +48,6 @@ import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.Switch
-import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.preference.ArrowPreference
@@ -829,7 +818,9 @@ internal fun SettingsMusicVideoSection(highlightKey: String? = null) {
                     com.ella.music.data.netease.NeteaseLinkKind.Artist to R.string.netease_link_kind_artist,
                     com.ella.music.data.netease.NeteaseLinkKind.ArtistWiki to R.string.netease_link_artist_wiki,
                     com.ella.music.data.netease.NeteaseLinkKind.Album to R.string.netease_link_kind_album,
-                    com.ella.music.data.netease.NeteaseLinkKind.MusicVideo to R.string.netease_link_kind_mv
+                    com.ella.music.data.netease.NeteaseLinkKind.MusicVideo to R.string.netease_link_kind_mv,
+                    com.ella.music.data.netease.NeteaseLinkKind.AlbumComment to R.string.netease_link_album_comments,
+                    com.ella.music.data.netease.NeteaseLinkKind.MusicVideoComment to R.string.netease_link_mv_comments
                 ).forEach { (kind, labelRes) ->
                     SplitSettingTextField(
                         label = stringResource(labelRes),

@@ -54,7 +54,6 @@ import com.ella.music.data.model.UserPlaylist
 import com.ella.music.data.model.formatPlaybackDuration
 import com.ella.music.data.model.albumIdentityId
 import com.ella.music.data.model.playlistIdentityKey
-import com.ella.music.data.matchesArtistName
 import com.ella.music.data.artistNamesForSong
 import com.ella.music.data.splitArtistNames
 import com.ella.music.data.splitGenreNames
@@ -99,13 +98,9 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.basic.Search
-import top.yukonga.miuix.kmp.icon.extended.Add
-import top.yukonga.miuix.kmp.icon.extended.AddFolder
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.icon.extended.Download
-import top.yukonga.miuix.kmp.icon.extended.Forward
-import top.yukonga.miuix.kmp.icon.extended.Play
 import top.yukonga.miuix.kmp.icon.extended.SelectAll
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.ui.graphics.Color
@@ -610,6 +605,11 @@ fun AlbumDetailScreen(
                     albumCoverModel = albumPreviewModel,
                     hasNeteaseAlbum = !neteaseAlbumUrl.isNullOrBlank(),
                     onNeteaseAlbumClick = { neteaseAlbumUrl?.let { com.ella.music.data.netease.NeteaseLinks.openWebUrl(context, it) } },
+                    onNeteaseCommentsClick = {
+                        neteaseAlbumUrl?.let(com.ella.music.data.netease.NeteaseLinks::parseWebUrl)?.second?.let {
+                            com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.AlbumComment, it)
+                        }
+                    },
                     onAlbumArtistClick = {
                         val albumArtist = album?.albumArtist?.takeIf { it.isNotBlank() }
                             ?: return@AlbumHeader
@@ -666,6 +666,12 @@ fun AlbumDetailScreen(
                         albumDuration.formatPlaybackDuration(),
                         com.ella.music.ui.components.sortLabel(sortMode.labelRes, sortMode.isDescending())
                     ),
+                    leadingContent = {
+                        com.ella.music.ui.components.ShuffleAllSummaryButton(
+                            visible = !albumUsesImmersiveHeader && sortedAlbumSongs.isNotEmpty(),
+                            onClick = ::shuffleAlbumAndStart
+                        )
+                    },
                 )
             }
 

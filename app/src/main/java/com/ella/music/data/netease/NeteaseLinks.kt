@@ -13,7 +13,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Destinations reachable from a 163 key / NetEase id. */
 internal enum class NeteaseLinkKind(val key: String) {
-    Song("song"), Comment("comment"), Artist("artist"), ArtistWiki("artistwiki"), Album("album"), MusicVideo("mv")
+    Song("song"), Comment("comment"), Artist("artist"), ArtistWiki("artistwiki"), Album("album"), MusicVideo("mv"), AlbumComment("album_comment"), MusicVideoComment("mv_comment")
 }
 
 /** Where 163 key links open. Presets follow the prefixes documented by NetEase's web and app schemes. */
@@ -46,17 +46,20 @@ internal object NeteaseLinks {
         NeteaseLinkKind.Artist to "https://y.music.163.com/m/artist?id=",
         NeteaseLinkKind.ArtistWiki to "https://music.163.com/st/artistwiki?artistId=",
         NeteaseLinkKind.Album to "https://y.music.163.com/m/album?id=",
-        NeteaseLinkKind.MusicVideo to "https://y.music.163.com/m/mv?id="
+        NeteaseLinkKind.MusicVideo to "https://y.music.163.com/m/mv?id=",
+        NeteaseLinkKind.AlbumComment to "https://music.163.com/#/album?id=",
+        NeteaseLinkKind.MusicVideoComment to "https://music.163.com/#/mv?id="
     )
 
     private fun appPrefixes(scheme: String) = mapOf(
         NeteaseLinkKind.Song to "$scheme://song/",
         NeteaseLinkKind.Comment to "$scheme://comment?threadId=R_SO_4_",
         NeteaseLinkKind.Artist to "$scheme://artist/",
-        // The app scheme has no wiki page; the web wiki is the documented destination.
-        NeteaseLinkKind.ArtistWiki to webPrefixes.getValue(NeteaseLinkKind.ArtistWiki),
+        NeteaseLinkKind.ArtistWiki to "$scheme://rnpage?component=music-reactnative-artistwiki&artistId=",
         NeteaseLinkKind.Album to "$scheme://album/",
-        NeteaseLinkKind.MusicVideo to "$scheme://mv/"
+        NeteaseLinkKind.MusicVideo to "$scheme://mv/",
+        NeteaseLinkKind.AlbumComment to "$scheme://comment?threadId=R_AL_3_",
+        NeteaseLinkKind.MusicVideoComment to "$scheme://comment?threadId=R_MV_5_"
     )
 
     fun defaultPrefix(target: NeteaseLinkTarget, kind: NeteaseLinkKind): String = when (target) {
@@ -73,19 +76,14 @@ internal object NeteaseLinks {
         return if (ID in template) template.replace(ID, cleanId) else template + cleanId
     }
 
-    /**
-     * Comments open in the NetEase app (or a custom template) only when the user chose an app
-     * target or set a custom comment link; otherwise Halcyon's own comment sheet is used, since
-     * the NetEase website has no standalone comment page.
-     */
-    fun commentsOpenExternally(context: Context): Boolean {
-        val settings = current(context)
-        return when (settings.target) {
-            NeteaseLinkTarget.Web -> false
-            NeteaseLinkTarget.Custom -> !settings.custom[NeteaseLinkKind.Comment].isNullOrBlank()
-            else -> true
-        }
-    }
+    fun commentsOpenExternally(context: Context): Boolean = current(context).target != NeteaseLinkTarget.Web
+
+    val commentSheetTarget = MutableStateFlow<NeteaseCommentTarget?>(null)
+
+    val webSheetUrl = MutableStateFlow<String?>(null)
+    private fun inAppWebKind(kind: NeteaseLinkKind): Boolean = kind in setOf(
+        NeteaseLinkKind.Album, NeteaseLinkKind.MusicVideo
+    )
 
     /** Web fallback used when the chosen app scheme has no handler on this device. */
     fun webUrl(kind: NeteaseLinkKind, id: String): String? = build(NeteaseLinkSettings(), kind, id)
@@ -125,10 +123,27 @@ internal object NeteaseLinks {
 
     /** Opens [kind]/[id] with the user's link settings, falling back to the web page if no app handles it. */
     fun open(context: Context, kind: NeteaseLinkKind, id: String) {
+        val resource = kind.commentResource()
+        if (resource != null && (id.toLongOrNull() ?: 0L) <= 0L) return
+        if (resource != null && !commentsOpenExternally(context)) {
+            commentSheetTarget.value = NeteaseCommentTarget(id, resource)
+            return
+        }
         val url = build(current(context), kind, id) ?: return
+        if (inAppWebKind(kind) && (url.startsWith("https://") || url.startsWith("http://"))) {
+            webSheetUrl.value = url
+            return
+        }
         if (launch(context, url)) return
+        if (resource != null) {
+            commentSheetTarget.value = NeteaseCommentTarget(id, resource)
+            return
+        }
         val fallback = webUrl(kind, id)
-        if (fallback != null && fallback != url && launch(context, fallback)) return
+        if (fallback != null && fallback != url) {
+            if (inAppWebKind(kind)) { webSheetUrl.value = fallback; return }
+            if (launch(context, fallback)) return
+        }
         Toast.makeText(context, R.string.netease_link_open_failed, Toast.LENGTH_SHORT).show()
     }
 
@@ -157,11 +172,15 @@ internal object NeteaseLinks {
     }
 
     private fun launch(context: Context, url: String): Boolean = try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+        val intent = if (url.startsWith("intent:", ignoreCase = true)) Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+            else Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        context.startActivity(intent.apply {
             if (context !is android.app.Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
         true
     } catch (_: ActivityNotFoundException) {
+        false
+    } catch (_: java.net.URISyntaxException) {
         false
     } catch (_: SecurityException) {
         false

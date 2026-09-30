@@ -233,7 +233,7 @@ internal fun parseTtml(content: String): LrcParser.LrcResult? {
                 !collectedText.hasCjk() &&
                 words.size > 1
             ) {
-                words.joinToString(" ") { it.text.cleanLyricText() }.cleanLyricText()
+                words.joinLatinLyricUnits()
             } else {
                 collectedText
             }
@@ -666,22 +666,18 @@ private fun Element.parseTtmlBackground(
     val cleanedWords = words
         .map { word ->
             val cleaned = word.text.removeBackgroundParentheses()
-            if (cleaned.endsWith('-') && cleaned.length > 1) {
-                word.copy(text = cleaned.dropLast(1).trimEnd() + " - ")
-            } else {
-                word.copy(text = cleaned)
-            }
+            word.copy(text = cleaned)
         }
         .filter { it.text.isNotBlank() }
     // If the collected text has no spaces but we have multiple words, the spans were
     // likely adjacent without inter-span whitespace. Rebuild the display text by
     // joining the individual word texts with spaces so it renders correctly.
     val rawDisplayText = if (cleanedWords.size > 1 && text.isNotBlank() && !text.hasCjk() && !text.contains(' ')) {
-        cleanedWords.joinToString(" ") { it.text.cleanLyricText() }.cleanLyricText()
+        cleanedWords.joinLatinLyricUnits()
     } else {
         text
     }
-    val displayText = rawDisplayText.replace(Regex("""(\S+)-\s*(\S+)"""), "$1 - $2")
+    val displayText = rawDisplayText
     val bgStart = timeAttr("begin", clock) ?: cleanedWords.minOfOrNull { it.startMs }
     val bgEnd = timeAttr("end", clock) ?: cleanedWords.maxOfOrNull { it.endMs } ?: fallbackEnd
     // When x-bg has no inner timed spans but has overall begin/end timing,

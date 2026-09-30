@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -38,7 +37,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.flow.collectLatest
 import top.yukonga.miuix.kmp.icon.extended.SelectAll
@@ -49,7 +47,6 @@ import com.ella.music.ui.components.ShuffleAllSummaryButton
 import com.ella.music.ui.components.SongSelectionActionRow
 import com.ella.music.ui.components.EllaSearchBar
 import com.ella.music.ui.components.isAppWallpaperVisible
-import com.ella.music.ui.components.LibrarySelectionState
 import com.ella.music.ui.components.ContinuePlaybackRow
 import com.ella.music.ui.components.shareLocalSongs
 import com.ella.music.data.CategoryResumeKeys
@@ -61,7 +58,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -72,7 +68,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,7 +84,6 @@ import com.ella.music.data.model.UserPlaylist
 import com.ella.music.data.model.albumIdentityId
 import com.ella.music.data.model.formatPlaybackDuration
 import com.ella.music.data.model.playlistIdentityKey
-import com.ella.music.data.splitGenreNames
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -103,7 +97,6 @@ import com.ella.music.ui.components.EllaMiuixDialog
 import com.ella.music.ui.components.LibraryEntityAction
 import com.ella.music.ui.components.LibraryEntityActionSheet
 import com.ella.music.ui.components.LibraryEntityActions
-import com.ella.music.ui.components.SongInfoSheet
 import com.ella.music.ui.components.SongMoreActionHost
 import com.ella.music.ui.components.actionMenuIcon
 import com.ella.music.ui.components.createPlaylistOrShowDuplicateToast
@@ -140,8 +133,6 @@ import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.icon.extended.Settings
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.basic.TabRow
-import top.yukonga.miuix.kmp.basic.TabRowDefaults
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -843,8 +834,6 @@ fun RecentPlaybackScreen(
     }
 
     }
-
-
 
         // Multi-select share / playlist pickers are wired through existing song action hosts below.
     SongMoreActionHost(
@@ -1662,20 +1651,6 @@ internal fun resolveRecentPlaybackEntries(
         .map { entry -> ResolvedRecentEntry(entry, lookup.resolve(entry)) }
 }
 
-internal fun buildRecentPlaybackRows(
-    history: List<PlaybackHistoryEntry>,
-    songs: List<Song>,
-    playlists: List<UserPlaylist>,
-    folderPlaylists: List<FolderPlaylist>,
-    tab: RecentPlaybackTab
-): List<RecentPlaybackRow> {
-    val lookup = RecentSongLookup(songs)
-    val resolved = history
-        .sortedByDescending(PlaybackHistoryEntry::playedAt)
-        .map { entry -> ResolvedRecentEntry(entry, lookup.resolve(entry)) }
-    return buildRecentPlaybackRowsForResolved(resolved, songs, playlists, folderPlaylists, tab)
-}
-
 internal fun buildRecentPlaybackRowsForResolved(
     resolved: List<ResolvedRecentEntry>,
     allSongs: List<Song>,
@@ -1714,7 +1689,8 @@ internal fun buildRecentPlaybackRowsForResolved(
             val category = recentCategoryFromSource(source) ?: return@mapNotNull null
             val (kind, id) = category
             if (tab != RecentPlaybackTab.Collection && tab != kind) return@mapNotNull null
-            val latest = entries.first()
+            val latestEntry = com.ella.music.data.latestCategoryPlayback(entries.map { it.entry }, source) ?: return@mapNotNull null
+            val latest = entries.first { it.entry.entryId == latestEntry.entryId }
             val albumId = if (kind == RecentPlaybackTab.Album) id.toLongOrNull() ?: 0L else 0L
             val members = when (kind) {
                 RecentPlaybackTab.Playlist -> {
@@ -1837,7 +1813,6 @@ private fun isPlayDayToday(timestampMs: Long): Boolean {
 private fun recentPlaybackSectionDate(timestampMs: Long): String =
     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(timestampMs))
 
-
 private fun RecentPlaybackTab.countDescriptionRes(): Int = when (this) {
     RecentPlaybackTab.Collection -> R.string.recent_playback_count_collection
     RecentPlaybackTab.Song -> R.string.recent_playback_count_song
@@ -1876,7 +1851,6 @@ private fun formatCollectionTitle(tab: RecentPlaybackTab, name: String): String 
     }
     return "$prefix：$name"
 }
-
 
 private fun recentRowDisplayName(row: RecentPlaybackRow): String {
     val title = row.title
@@ -2120,4 +2094,3 @@ private fun buildRecentEntityActions(
         )
     }
 }
-

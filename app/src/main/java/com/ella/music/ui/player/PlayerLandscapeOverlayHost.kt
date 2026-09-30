@@ -53,6 +53,7 @@ internal fun PlayerLandscapeOverlayHost(
     showTotalDuration: Boolean,
     queueExpanded: Boolean,
     playlist: List<Song>,
+    selectedQueueIndex: Int = -1,
     audioSessionId: Int,
     visualizerEnabled: Boolean,
     visualizerOpacity: Float,
@@ -125,6 +126,15 @@ internal fun PlayerLandscapeOverlayHost(
             }
         }
     }
+    if (layoutStyle == SettingsManager.PLAYER_LANDSCAPE_STYLE_CLASSIC_SPLIT) {
+        ClassicSplitLandscapePlayer(song, embeddedCover, paletteBitmap, beautifulLyricsBackground, landscapeDynamicCoverSource,
+            isPlaying, currentPosition, palette, lyrics, currentLyricIndex,
+            showTranslation, showPronunciation, fontFamily, translationFontFamily, fontWeight, fontScale,
+            secondaryFontScale, primaryTextSizeSp, secondaryTextSizeSp, isFavorite,
+            onToggleFavorite, onLyricLineClick, onLyricLineLongClick,
+            onPrevious, onPlayPause, onNext, onArtist, onDismiss, onDynamicCoverFailed)
+        return
+    }
     LandscapeCoverPlaybackOverlay(
         song = song,
         embeddedCover = embeddedCover,
@@ -153,6 +163,7 @@ internal fun PlayerLandscapeOverlayHost(
         showTotalDuration = showTotalDuration,
         queueExpanded = queueExpanded,
         playlist = playlist,
+        selectedQueueIndex = selectedQueueIndex,
         audioSessionId = audioSessionId,
         visualizerEnabled = visualizerEnabled,
         visualizerOpacity = visualizerOpacity,
