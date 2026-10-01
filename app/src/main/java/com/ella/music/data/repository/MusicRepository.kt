@@ -810,17 +810,20 @@ class MusicRepository(private val context: Context) {
         return if (value == Long.MIN_VALUE) 1L else kotlin.math.abs(value).takeIf { it != 0L } ?: 1L
     }
 
-    private suspend fun neteaseLyricsSong(song: Song): Song =
-        if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE)
+    private suspend fun onlineLyricsSong(song: Song): Song = when {
+        song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE ->
             com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).lyrics(song)
-        else song
+        song.onlineSource == SettingsManager.LIBRARY_SOURCE_BILIBILI ->
+            com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context).lyrics(song)
+        else -> song
+    }
 
     suspend fun getLyrics(
         song: Song,
         sourceMode: Int = SettingsManager.LYRIC_SOURCE_AUTO
-    ): List<LyricLine> = lyricsManager.getLyrics(neteaseLyricsSong(song), sourceMode)
+    ): List<LyricLine> = lyricsManager.getLyrics(onlineLyricsSong(song), sourceMode)
 
-    suspend fun reloadLyrics(song: Song, sourceMode: Int): List<LyricLine> = lyricsManager.reloadLyrics(neteaseLyricsSong(song), sourceMode)
+    suspend fun reloadLyrics(song: Song, sourceMode: Int): List<LyricLine> = lyricsManager.reloadLyrics(onlineLyricsSong(song), sourceMode)
 
     suspend fun getLyricFormatAvailability(song: Song): LyricFormatAvailability = lyricsManager.getLyricFormatAvailability(song)
 

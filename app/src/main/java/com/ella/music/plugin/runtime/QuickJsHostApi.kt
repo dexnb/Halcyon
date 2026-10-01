@@ -617,7 +617,7 @@ class QuickJsHostApi(
 
 data class HostAppInfo(
     val name: String = "Halcyon",
-    val packageName: String = "com.ella.music",
+    val packageName: String = "com.halcyon.dexnb",
     val versionName: String = "0.0.0",
     val versionCode: Long = 0,
     val buildType: String = "unknown",

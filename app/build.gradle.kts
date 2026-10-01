@@ -122,7 +122,7 @@ android {
         System.getenv("ALLOW_DEBUG_SIGNED_RELEASE").equals("true", ignoreCase = true)
 
     defaultConfig {
-        applicationId = "com.ella.music"
+        applicationId = "com.halcyon.dexnb"
         minSdk = 29
         targetSdk = 37
         versionCode = 40

@@ -19,7 +19,7 @@ on:
           - release
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-build-${{ github.ref }}
@@ -96,3 +96,19 @@ jobs:
             app/build/outputs/renamed-apk/debug/*arm64-v8a*.APK
             app/build/outputs/renamed-apk/release/*arm64-v8a*.APK
           if-no-files-found: error
+
+      - name: Publish release APK
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_type == 'release' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 1.2.10-${{ github.run_number }}
+          name: Halcyon arm64-v8a release (build ${{ github.run_number }})
+          body: |
+            自动构建的 arm64-v8a release APK（调试密钥签名，仅供测试/尝鲜）。
+          files: |
+            app/build/outputs/apk/release/*arm64-v8a*.apk
+            app/build/outputs/renamed-apk/release/*arm64-v8a*.APK
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

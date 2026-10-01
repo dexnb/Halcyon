@@ -102,6 +102,14 @@ class BilibiliLibraryStore private constructor(private val context: Context) {
         return client.resolveStream(bvid)
     }
 
+    /** 取视频 CC 字幕并写入 onlineLyrics（与网易云 lyrics 同模式）。 */
+    suspend fun lyrics(song: Song): Song {
+        return try {
+            val lrc = client.fetchLyrics(song.onlineId)
+            if (lrc.isNullOrBlank()) song else song.copy(onlineLyrics = lrc)
+        } catch (cancel: CancellationException) { throw cancel } catch (_: Exception) { song }
+    }
+
     private fun cache(userId: Long) = AtomicFile(File(context.filesDir, "remote_library_bilibili_$userId.json"))
 
     private fun readCache(userId: Long): List<Song>? = runCatching {

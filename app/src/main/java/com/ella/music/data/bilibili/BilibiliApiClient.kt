@@ -2,7 +2,6 @@ package com.ella.music.data.bilibili
 
 import android.content.Context
 import com.ella.music.data.AppNetworkLoggingInterceptor
-import com.ella.music.data.model.LyricLine
 import com.ella.music.data.model.Song
 import java.io.IOException
 import java.net.URLEncoder
@@ -174,7 +173,8 @@ internal class BilibiliApiClient(context: Context) {
 
     // ---- 歌词（CC 字幕）----
 
-    suspend fun fetchLyrics(bvid: String): List<LyricLine>? = withContext(Dispatchers.IO) {
+    /** 拉取视频 CC 字幕并转换为 LRC 文本（与网易云歌词同格式，交给歌词系统解析）。 */
+    suspend fun fetchLyrics(bvid: String): String? = withContext(Dispatchers.IO) {
         if (bvid.isBlank()) return@withContext null
         val account = accounts.account.value
         val view = get("/x/web-interface/view", mapOf("bvid" to bvid), account.cookie)
@@ -205,19 +205,27 @@ internal class BilibiliApiClient(context: Context) {
         return list.firstOrNull { it.optString("lan").contains("zh", ignoreCase = true) } ?: list.firstOrNull()
     }
 
-    private fun parseSubtitleBody(body: String): List<LyricLine>? {
+    private fun parseSubtitleBody(body: String): String? {
         val root = runCatching { JSONObject(body) }.getOrNull() ?: return null
         val items = root.optJSONArray("body") ?: return null
-        val lines = mutableListOf<LyricLine>()
+        val sb = StringBuilder()
         for (i in 0 until items.length()) {
             val item = items.optJSONObject(i) ?: continue
             val fromSec = item.optDouble("from", 0.0)
-            val toSec = item.optDouble("to", fromSec)
             val content = item.optString("content").trim()
             if (content.isBlank()) continue
-            lines += LyricLine(timeMs = (fromSec * 1000).toLong(), text = content, endMs = (toSec * 1000).toLong())
+            sb.append('[').append(formatLrcTime(fromSec)).append("] ").append(content).append('\n')
         }
-        return lines.takeIf { it.isNotEmpty() }
+        return sb.toString().takeIf { it.isNotBlank() }
+    }
+
+    private fun formatLrcTime(seconds: Double): String {
+        val total = seconds.toLong()
+        val mm = total / 60
+        val ss = total % 60
+        val hundredths = ((seconds - total) * 100).toInt().coerceIn(0, 99)
+        fun pad2(v: Long) = v.toString().padStart(2, '0')
+        return pad2(mm) + ":" + pad2(ss) + "." + pad2(hundredths.toLong())
     }
 
     // ---- 基础请求 ----
