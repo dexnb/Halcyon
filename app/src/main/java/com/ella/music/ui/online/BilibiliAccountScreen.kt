@@ -48,6 +48,7 @@ import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.preference.WindowSpinnerPreference
 
 @Composable
@@ -128,6 +129,66 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
                                 if (id > 0) store.refresh(true)
                                 message = context.getString(R.string.bilibili_connected)
                             }
+                        }
+                    )
+                }
+
+                // 字幕歌词配置（主行/副行/注音的语言优先级）
+                val mainLangOptions = listOf(
+                    "auto" to "自动", "zh" to "中文", "en" to "英文", "ja" to "日文", "ko" to "韩文", "other" to "其他"
+                )
+                val secondaryLangOptions = listOf(
+                    "none" to "无", "zh" to "中文", "en" to "英文", "ja" to "日文", "ko" to "韩文", "auto" to "自动"
+                )
+                val pronunciationLangOptions = listOf(
+                    "none" to "无", "ja" to "日文", "zh" to "中文", "en" to "英文", "ko" to "韩文", "auto" to "自动"
+                )
+                var mainLang by remember { mutableStateOf(store.subtitleMainLang()) }
+                var secondaryLang by remember { mutableStateOf(store.subtitleSecondaryLang()) }
+                var pronunciationLang by remember { mutableStateOf(store.subtitlePronunciationLang()) }
+                var preferNonAi by remember { mutableStateOf(store.subtitlePreferNonAi()) }
+
+                com.ella.music.ui.components.EllaSheetCardGroup {
+                    WindowSpinnerPreference(
+                        title = stringResource(R.string.bilibili_subtitle_main),
+                        summary = stringResource(R.string.bilibili_subtitle_main_summary),
+                        items = mainLangOptions.map { DropdownItem(title = it.second) },
+                        selectedIndex = mainLangOptions.indexOfFirst { it.first == mainLang }.coerceAtLeast(0),
+                        onSelectedIndexChange = { idx ->
+                            val v = mainLangOptions.getOrNull(idx)?.first ?: "auto"
+                            mainLang = v
+                            scope.launch { store.setSubtitleMainLang(v) }
+                        }
+                    )
+                    WindowSpinnerPreference(
+                        title = stringResource(R.string.bilibili_subtitle_secondary),
+                        summary = stringResource(R.string.bilibili_subtitle_secondary_summary),
+                        items = secondaryLangOptions.map { DropdownItem(title = it.second) },
+                        selectedIndex = secondaryLangOptions.indexOfFirst { it.first == secondaryLang }.coerceAtLeast(0),
+                        onSelectedIndexChange = { idx ->
+                            val v = secondaryLangOptions.getOrNull(idx)?.first ?: "zh"
+                            secondaryLang = v
+                            scope.launch { store.setSubtitleSecondaryLang(v) }
+                        }
+                    )
+                    WindowSpinnerPreference(
+                        title = stringResource(R.string.bilibili_subtitle_pronunciation),
+                        summary = stringResource(R.string.bilibili_subtitle_pronunciation_summary),
+                        items = pronunciationLangOptions.map { DropdownItem(title = it.second) },
+                        selectedIndex = pronunciationLangOptions.indexOfFirst { it.first == pronunciationLang }.coerceAtLeast(0),
+                        onSelectedIndexChange = { idx ->
+                            val v = pronunciationLangOptions.getOrNull(idx)?.first ?: "none"
+                            pronunciationLang = v
+                            scope.launch { store.setSubtitlePronunciationLang(v) }
+                        }
+                    )
+                    SwitchPreference(
+                        title = stringResource(R.string.bilibili_subtitle_prefer_non_ai),
+                        summary = stringResource(R.string.bilibili_subtitle_prefer_non_ai_summary),
+                        checked = preferNonAi,
+                        onCheckedChange = { v ->
+                            preferNonAi = v
+                            scope.launch { store.setSubtitlePreferNonAi(v) }
                         }
                     )
                 }

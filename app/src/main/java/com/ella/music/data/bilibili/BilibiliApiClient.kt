@@ -19,6 +19,7 @@ internal const val BILIBILI_SCHEME = "halcyon-bilibili"
 internal const val BILIBILI_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
 data class BilibiliFavoriteFolder(val id: Long, val title: String, val mediaCount: Int)
+data class BilibiliSubtitleTrack(val id: Long, val lan: String, val lanDoc: String, val isAi: Boolean, val lrc: String)
 internal data class BilibiliLoginQr(val url: String, val qrcodeKey: String)
 internal data class BilibiliLoginPoll(val code: Int, val cookies: String)
 
@@ -171,38 +172,48 @@ internal class BilibiliApiClient(context: Context) {
             ?: throw IOException("Audio stream unavailable")
     }
 
-    // ---- 歌词（CC 字幕）----
+    // ---- 字幕（CC 字幕）----
 
-    /** 拉取视频 CC 字幕并转换为 LRC 文本（与网易云歌词同格式，交给歌词系统解析）。 */
-    suspend fun fetchLyrics(bvid: String): String? = withContext(Dispatchers.IO) {
-        if (bvid.isBlank()) return@withContext null
+    /** 拉取视频的全部 CC 字幕轨道（含 AI 字幕），每个轨道转换为 LRC 文本。 */
+    suspend fun fetchSubtitles(bvid: String): List<BilibiliSubtitleTrack> = withContext(Dispatchers.IO) {
+        if (bvid.isBlank()) return@withContext emptyList()
         val account = accounts.account.value
         val view = get("/x/web-interface/view", mapOf("bvid" to bvid), account.cookie)
         val cid = view.optLong("cid").takeIf { it > 0 }
             ?: view.optJSONArray("pages")?.optJSONObject(0)?.optLong("cid")?.takeIf { it > 0 }
-            ?: return@withContext null
+            ?: return@withContext emptyList()
         val query = wbi.sign(mapOf("bvid" to bvid, "cid" to cid.toString()))
         val play = getRaw("/x/player/wbi/v2?$query", account.cookie)
         val subtitles = play.optJSONObject("subtitle")?.optJSONArray("subtitles")
-            ?: return@withContext null
-        val chosen = pickBestSubtitle(subtitles) ?: return@withContext null
-        val subtitleUrl = chosen.optString("subtitle_url").ifBlank { return@withContext null }
-        val full = if (subtitleUrl.startsWith("//")) "https:$subtitleUrl" else subtitleUrl
-        val request = Request.Builder().url(full)
-            .header("Referer", "https://www.bilibili.com/")
-            .header("User-Agent", BILIBILI_USER_AGENT)
-            .build()
-        val body = http.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) return@withContext null
-            response.body?.string().orEmpty()
+            ?: return@withContext emptyList()
+        val tracks = mutableListOf<BilibiliSubtitleTrack>()
+        for (i in 0 until subtitles.length()) {
+            val item = subtitles.optJSONObject(i) ?: continue
+            val subtitleUrl = item.optString("subtitle_url").ifBlank { continue }
+            val full = if (subtitleUrl.startsWith("//")) "https:$subtitleUrl" else subtitleUrl
+            val lrc = runCatching {
+                val request = Request.Builder().url(full)
+                    .header("Referer", "https://www.bilibili.com/")
+                    .header("User-Agent", BILIBILI_USER_AGENT)
+                    .build()
+                val body = http.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) return@runCatching ""
+                    response.body?.string().orEmpty()
+                }
+                parseSubtitleBody(body)
+            }.getOrNull().orEmpty()
+            if (lrc.isBlank()) continue
+            val type = item.optInt("type", 0)
+            val aiStatus = item.optInt("ai_status", 0)
+            tracks += BilibiliSubtitleTrack(
+                id = item.optLong("id").takeIf { it > 0 } ?: i.toLong(),
+                lan = item.optString("lan"),
+                lanDoc = item.optString("lan_doc").ifBlank { item.optString("lan") },
+                isAi = type == 1 || aiStatus > 0,
+                lrc = lrc
+            )
         }
-        parseSubtitleBody(body)
-    }
-
-    private fun pickBestSubtitle(subtitles: JSONArray): JSONObject? {
-        if (subtitles.length() == 0) return null
-        val list = (0 until subtitles.length()).map { subtitles.getJSONObject(it) }
-        return list.firstOrNull { it.optString("lan").contains("zh", ignoreCase = true) } ?: list.firstOrNull()
+        tracks
     }
 
     private fun parseSubtitleBody(body: String): String? {

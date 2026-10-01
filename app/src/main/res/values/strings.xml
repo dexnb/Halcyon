@@ -3051,6 +3051,14 @@
     <string name="bilibili_search_title">哔哩哔哩搜索</string>
     <string name="bilibili_search_more">加载更多</string>
     <string name="bilibili_config">哔哩哔哩配置</string>
+    <string name="bilibili_subtitle_main">主行字幕语言</string>
+    <string name="bilibili_subtitle_main_summary">主歌词对应的字幕语言，缺省自动回退下一个</string>
+    <string name="bilibili_subtitle_secondary">副行字幕语言</string>
+    <string name="bilibili_subtitle_secondary_summary">副歌词（翻译）对应的字幕语言</string>
+    <string name="bilibili_subtitle_pronunciation">注音字幕语言</string>
+    <string name="bilibili_subtitle_pronunciation_summary">罗马音/注音对应的字幕语言</string>
+    <string name="bilibili_subtitle_prefer_non_ai">优先非 AI 字幕</string>
+    <string name="bilibili_subtitle_prefer_non_ai_summary">优先使用人工字幕，AI 字幕作为回退（AI 字幕已标注）</string>
     <string name="bilibili_config_summary">管理哔哩哔哩账号Cookie及搜索偏好设置。</string>
     <string name="netease_quality_title">网易云音乐播放音质</string>
     <string name="netease_quality_summary">优先请求所选音质，不可用时降低音质；实际取决于账号权限和歌曲资源。切歌或重新打开歌曲后生效</string>

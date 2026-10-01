@@ -3049,6 +3049,14 @@
     <string name="bilibili_search_title">Bilibili search</string>
     <string name="bilibili_search_more">Load more</string>
     <string name="bilibili_config">Bilibili configuration</string>
+    <string name="bilibili_subtitle_main">Main subtitle language</string>
+    <string name="bilibili_subtitle_main_summary">Subtitle language used for the main lyrics; falls back to the next one if missing</string>
+    <string name="bilibili_subtitle_secondary">Secondary subtitle language</string>
+    <string name="bilibili_subtitle_secondary_summary">Subtitle language used for the secondary (translation) lyrics</string>
+    <string name="bilibili_subtitle_pronunciation">Pronunciation subtitle language</string>
+    <string name="bilibili_subtitle_pronunciation_summary">Subtitle language used for romaji / pronunciation</string>
+    <string name="bilibili_subtitle_prefer_non_ai">Prefer non-AI subtitles</string>
+    <string name="bilibili_subtitle_prefer_non_ai_summary">Prefer human-made subtitles, fall back to AI subtitles (AI subtitles are marked)</string>
     <string name="bilibili_config_summary">Manage Bilibili account cookie and search preferences.</string>
     <string name="netease_quality_title">NetEase Music playback quality</string>
     <string name="netease_quality_summary">Prefer the selected quality, falling back when unavailable. Availability depends on account and track. Applies when opening a track again.</string>

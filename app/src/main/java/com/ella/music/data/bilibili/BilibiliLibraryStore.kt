@@ -96,18 +96,54 @@ class BilibiliLibraryStore private constructor(private val context: Context) {
         clearMemory()
     }
 
+    // ---- 字幕歌词配置（主行/副行/注音的语言优先级）----
+
+    fun subtitleMainLang(): String = prefs.getString("subtitle_main", "auto") ?: "auto"
+    fun subtitleSecondaryLang(): String = prefs.getString("subtitle_secondary", "zh") ?: "zh"
+    fun subtitlePronunciationLang(): String = prefs.getString("subtitle_pronunciation", "none") ?: "none"
+    fun subtitlePreferNonAi(): Boolean = prefs.getBoolean("subtitle_prefer_non_ai", true)
+
+    fun setSubtitleMainLang(v: String) { prefs.edit().putString("subtitle_main", v).apply() }
+    fun setSubtitleSecondaryLang(v: String) { prefs.edit().putString("subtitle_secondary", v).apply() }
+    fun setSubtitlePronunciationLang(v: String) { prefs.edit().putString("subtitle_pronunciation", v).apply() }
+    fun setSubtitlePreferNonAi(v: Boolean) { prefs.edit().putBoolean("subtitle_prefer_non_ai", v).apply() }
+
     suspend fun streamUrl(bvid: String): String {
         val account = accounts.account.value
         if (!account.loggedIn) throw IOException(context.getString(R.string.bilibili_session_expired))
         return client.resolveStream(bvid)
     }
 
-    /** 取视频 CC 字幕并写入 onlineLyrics（与网易云 lyrics 同模式）。 */
+    /** 取视频全部 CC 字幕并按用户配置映射到 主歌词/副歌词/罗马音。 */
     suspend fun lyrics(song: Song): Song {
         return try {
-            val lrc = client.fetchLyrics(song.onlineId)
-            if (lrc.isNullOrBlank()) song else song.copy(onlineLyrics = lrc)
+            val tracks = client.fetchSubtitles(song.onlineId)
+            if (tracks.isEmpty()) return song
+            val preferNonAi = subtitlePreferNonAi()
+            val sorted = tracks.sortedWith(
+                compareBy<BilibiliSubtitleTrack> { if (preferNonAi && it.isAi) 1 else 0 }.thenBy { it.id }
+            )
+            val main = pickSubtitleTrack(sorted, subtitleMainLang(), emptySet())
+            val secondary = pickSubtitleTrack(sorted, subtitleSecondaryLang(), setOfNotNull(main?.id))
+            val pronunciation = pickSubtitleTrack(sorted, subtitlePronunciationLang(), setOfNotNull(main?.id, secondary?.id))
+            song.copy(
+                onlineLyrics = main?.lrc ?: "",
+                onlineLyricTranslation = secondary?.lrc ?: "",
+                onlineLyricPronunciation = pronunciation?.lrc ?: ""
+            )
         } catch (cancel: CancellationException) { throw cancel } catch (_: Exception) { song }
+    }
+
+    private fun pickSubtitleTrack(tracks: List<BilibiliSubtitleTrack>, lang: String, usedIds: Set<Long>): BilibiliSubtitleTrack? {
+        if (lang == "none") return null
+        val available = tracks.filter { it.id !in usedIds }
+        if (available.isEmpty()) return null
+        if (lang == "auto") return available.first()
+        val target = lang.lowercase()
+        return available.firstOrNull { t ->
+            val lan = t.lan.lowercase()
+            lan == target || lan.startsWith(target + "-") || lan.startsWith("ai-" + target)
+        } ?: available.first()
     }
 
     private fun cache(userId: Long) = AtomicFile(File(context.filesDir, "remote_library_bilibili_$userId.json"))
