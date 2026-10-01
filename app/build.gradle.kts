@@ -307,6 +307,8 @@ dependencies {
     implementation(libs.miuix.blur)
     implementation(libs.miuix.preference)
     implementation("androidx.webkit:webkit:1.12.1")
+    // Bilibili 扫码登录二维码生成
+    implementation("com.google.zxing:core:3.5.3")
 
     // MCP Server
     implementation(libs.mcp.server)

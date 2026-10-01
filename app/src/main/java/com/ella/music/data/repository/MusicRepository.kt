@@ -659,7 +659,7 @@ class MusicRepository(private val context: Context) {
             return publishLibrarySnapshot(generation, cached)
         }
 
-        if (source != SettingsManager.LIBRARY_SOURCE_NETEASE && !forceRefresh && applyCache()) {
+        if (source != SettingsManager.LIBRARY_SOURCE_NETEASE && source != SettingsManager.LIBRARY_SOURCE_BILIBILI && !forceRefresh && applyCache()) {
             return@withContext MusicScanSummary(total = _songs.value.size)
         }
         if (!isCurrentLibrarySnapshotLoad(generation)) {
@@ -670,6 +670,9 @@ class MusicRepository(private val context: Context) {
             when (source) {
                 SettingsManager.LIBRARY_SOURCE_NETEASE -> {
                     com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).refresh(forceRefresh)
+                }
+                SettingsManager.LIBRARY_SOURCE_BILIBILI -> {
+                    com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context).refresh(forceRefresh)
                 }
                 SettingsManager.LIBRARY_SOURCE_NAVIDROME -> {
                     val config = settingsManager.navidromeConfig.first()
@@ -1283,7 +1286,8 @@ class MusicRepository(private val context: Context) {
 
     suspend fun resolveSongForPlayback(song: Song): Song = withContext(Dispatchers.IO) {
         // Media3 resolves this stable URI at each open, including queue advance and seek.
-        if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE) return@withContext song
+        if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE ||
+            song.onlineSource == SettingsManager.LIBRARY_SOURCE_BILIBILI) return@withContext song
         try {
             song.ensureWebDavMetadataCached(
                 allowFullDownload = song.isWebDavRemoteSong() &&

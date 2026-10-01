@@ -60,6 +60,17 @@ fun Song.isNeteaseStream(): Boolean {
     return !localFile
 }
 
+/**
+ * True for a Bilibili track played straight from the network.
+ */
+fun Song.isBilibiliStream(): Boolean {
+    if (onlineSource != "bilibili") return false
+    val localFile = path.startsWith("/") ||
+        path.startsWith("file:", ignoreCase = true) ||
+        path.startsWith("content:", ignoreCase = true)
+    return !localFile
+}
+
 fun Song.albumIdentityId(): Long {
     val albumName = LibraryNormalizer.cleanedAlbumText(album).ifBlank { "Unknown Album" }
     val albumOwner = LibraryNormalizer.cleanedArtistText(albumArtist)

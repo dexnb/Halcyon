@@ -1116,12 +1116,14 @@ class SettingsManager(private val context: Context) :
         const val LIBRARY_SOURCE_LOCAL = "local"
         const val LIBRARY_SOURCE_NAVIDROME = "navidrome"
         const val LIBRARY_SOURCE_NETEASE = "netease"
+        const val LIBRARY_SOURCE_BILIBILI = "bilibili"
         const val LIBRARY_SOURCE_OPENSUBSONIC = "opensubsonic"
         const val LIBRARY_SOURCE_EMBY = "emby"
         const val LIBRARY_SOURCE_WEBDAV = "webdav"
 
         fun normalizeLibrarySource(source: String): String = when (source) {
             LIBRARY_SOURCE_NETEASE -> LIBRARY_SOURCE_NETEASE
+            LIBRARY_SOURCE_BILIBILI -> LIBRARY_SOURCE_BILIBILI
             LIBRARY_SOURCE_NAVIDROME -> LIBRARY_SOURCE_NAVIDROME
             LIBRARY_SOURCE_OPENSUBSONIC -> LIBRARY_SOURCE_OPENSUBSONIC
             LIBRARY_SOURCE_EMBY -> LIBRARY_SOURCE_EMBY

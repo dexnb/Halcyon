@@ -436,7 +436,8 @@ fun EllaApp(
     val scanToastLibrarySource by settingsManager.librarySource.collectAsState(initial = "")
     LaunchedEffect(isScanning) {
         // NetEase syncs favourites rather than scanning files; its refreshes stay silent.
-        if (scanToastLibrarySource == SettingsManager.LIBRARY_SOURCE_NETEASE) {
+        if (scanToastLibrarySource == SettingsManager.LIBRARY_SOURCE_NETEASE ||
+            scanToastLibrarySource == SettingsManager.LIBRARY_SOURCE_BILIBILI) {
             scanBurstActive = false
             return@LaunchedEffect
         }
@@ -787,6 +788,7 @@ fun EllaApp(
     val searchLibrarySource by settingsManager.librarySource.collectAsState(initial = SettingsManager.LIBRARY_SOURCE_LOCAL)
     val homeSearchRoute = when (com.ella.music.data.resolveHomeSearchTarget(searchLibrarySource, homeSearchPreference)) {
         "netease" -> Screen.NeteaseSearch.route
+        "bilibili" -> Screen.BilibiliSearch.route
         "lx" -> Screen.LxOnline.route
         "musicfree" -> Screen.MusicFreeOnline.route
         else -> Screen.LibrarySearch.createRoute(localOnly = true)

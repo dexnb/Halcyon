@@ -2,6 +2,7 @@ package com.ella.music.data
 
 import com.ella.music.data.model.Song
 import com.ella.music.data.model.isNeteaseStream
+import com.ella.music.data.model.isBilibiliStream
 
 data class ActionMenuLayout(
     val order: List<String>,
@@ -86,7 +87,7 @@ object ActionMenuIds {
 
     /** Whether [id] can act on [song]; a null song keeps every action (nothing to gate on). */
     fun isAvailableFor(id: String, song: Song?): Boolean =
-        song == null || id !in localFileOnlyActions || !song.isNeteaseStream()
+        song == null || id !in localFileOnlyActions || !song.isNeteaseStream() || !song.isBilibiliStream()
 
     val playerShortcutDefaults = listOf(
         SPEED, EQUALIZER, TIMER, ADD_TO_PLAYLIST, PLAY_NEXT

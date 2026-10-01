@@ -213,6 +213,7 @@ sealed class Screen(val route: String) {
     data object MusicFreeOnline : Screen("musicfree_online")
     data object MusicFreePlugins : Screen("musicfree_plugins")
     data object NeteaseSearch : Screen("netease_search")
+    data object BilibiliSearch : Screen("bilibili_search")
     data object LxOnline : Screen("lx_online")
     data object LxSourceSettings : Screen("lx_source_settings")
     data object NavidromeServerSettings : Screen("navidrome_server_settings")
@@ -1092,6 +1093,15 @@ fun AppNavigation(
 
         composable(Screen.NeteaseSearch.route) {
             com.ella.music.ui.online.NeteaseSearchScreen(
+                mainViewModel, playerViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToAlbum = { navController.navigate(Screen.AlbumDetail.createRoute(it)) },
+                onNavigateToArtist = { navController.navigate(Screen.ArtistDetail.createRoute(it)) },
+                onNavigateToPlayer = onNavigateToPlayer
+            )
+        }
+        composable(Screen.BilibiliSearch.route) {
+            com.ella.music.ui.online.BilibiliSearchScreen(
                 mainViewModel, playerViewModel,
                 onBack = { navController.popBackStack() },
                 onNavigateToAlbum = { navController.navigate(Screen.AlbumDetail.createRoute(it)) },

@@ -226,6 +226,16 @@ class PlaybackService : MediaLibraryService() {
         }
         val httpDataSourceFactory = OkHttpDataSource.Factory(
             WebDavClient.newAuthenticatedOkHttpClient { webDavConfig }
+                .newBuilder()
+                .addInterceptor { chain ->
+                    val host = chain.request().url.host.orEmpty()
+                    if (host.endsWith("bilivideo.com") || host.endsWith("hdslb.com") ||
+                        host.endsWith(".bilibili.com") || host == "bilibili.com") {
+                        chain.proceed(chain.request().newBuilder()
+                            .header("Referer", "https://www.bilibili.com/").build())
+                    } else chain.proceed(chain.request())
+                }
+                .build()
         )
         serviceScope.launch {
             settingsManager.previousButtonAction.collect { action ->
@@ -335,6 +345,12 @@ class PlaybackService : MediaLibraryService() {
                 val id = dataSpec.uri.lastPathSegment.orEmpty()
                 val url = runBlocking(Dispatchers.IO) {
                     com.ella.music.data.netease.NeteaseLibraryStore.getInstance(this@PlaybackService).streamUrl(id)
+                }
+                dataSpec.withUri(android.net.Uri.parse(url))
+            } else if (dataSpec.uri.scheme == "halcyon-bilibili") {
+                val id = dataSpec.uri.lastPathSegment.orEmpty()
+                val url = runBlocking(Dispatchers.IO) {
+                    com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(this@PlaybackService).streamUrl(id)
                 }
                 dataSpec.withUri(android.net.Uri.parse(url))
             } else dataSpec

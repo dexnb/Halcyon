@@ -151,6 +151,7 @@ internal fun SettingsLibrarySourceSection(
     val settingsManager = remember { SettingsManager.getInstance(context) }
     val librarySource by settingsManager.librarySource.collectAsState(initial = "")
     var showNeteaseAccount by remember { mutableStateOf(false) }
+    var showBilibiliAccount by remember { mutableStateOf(false) }
     val neteaseSearchRequest = SettingsSearchFocus.request
     LaunchedEffect(neteaseSearchRequest) {
         if (neteaseSearchRequest?.sheet == "netease_quality") showNeteaseAccount = true
@@ -158,9 +159,13 @@ internal fun SettingsLibrarySourceSection(
     if (showNeteaseAccount) {
         com.ella.music.ui.online.NeteaseAccountScreen(onDismiss = { showNeteaseAccount = false }, mainViewModel = mainViewModel)
     }
+    if (showBilibiliAccount) {
+        com.ella.music.ui.online.BilibiliAccountScreen(onDismiss = { showBilibiliAccount = false }, mainViewModel = mainViewModel)
+    }
     val librarySourceOptions = listOf(
         SettingsManager.LIBRARY_SOURCE_LOCAL to stringResource(R.string.settings_library_source_local),
         SettingsManager.LIBRARY_SOURCE_NETEASE to stringResource(R.string.netease_title),
+        SettingsManager.LIBRARY_SOURCE_BILIBILI to stringResource(R.string.bilibili_title),
         SettingsManager.LIBRARY_SOURCE_NAVIDROME to stringResource(R.string.remote_source_navidrome),
         SettingsManager.LIBRARY_SOURCE_OPENSUBSONIC to stringResource(R.string.remote_source_opensubsonic),
         SettingsManager.LIBRARY_SOURCE_EMBY to stringResource(R.string.remote_source_emby),
@@ -189,6 +194,10 @@ internal fun SettingsLibrarySourceSection(
                                 if (source == SettingsManager.LIBRARY_SOURCE_NETEASE &&
                                     !com.ella.music.data.netease.NeteaseAccountStore.getInstance(context).account.value.loggedIn) {
                                     showNeteaseAccount = true
+                                }
+                                if (source == SettingsManager.LIBRARY_SOURCE_BILIBILI &&
+                                    !com.ella.music.data.bilibili.BilibiliAccountStore.getInstance(context).account.value.loggedIn) {
+                                    showBilibiliAccount = true
                                 }
                                 if (mainViewModel != null) {
                                     mainViewModel.setLibrarySource(source)
