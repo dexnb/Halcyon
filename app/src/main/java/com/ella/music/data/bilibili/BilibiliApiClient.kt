@@ -2,6 +2,7 @@ package com.ella.music.data.bilibili
 
 import android.content.Context
 import com.ella.music.data.AppNetworkLoggingInterceptor
+import com.ella.music.data.model.LyricLine
 import com.ella.music.data.model.Song
 import java.io.IOException
 import java.net.URLEncoder
@@ -169,6 +170,54 @@ internal class BilibiliApiClient(context: Context) {
             ?: audio0?.optJSONArray("backupUrl")?.optString(0)?.takeIf { it.isNotBlank() }
             ?: play.optJSONArray("durl")?.optJSONObject(0)?.optString("url")?.takeIf { it.isNotBlank() }
             ?: throw IOException("Audio stream unavailable")
+    }
+
+    // ---- 歌词（CC 字幕）----
+
+    suspend fun fetchLyrics(bvid: String): List<LyricLine>? = withContext(Dispatchers.IO) {
+        if (bvid.isBlank()) return@withContext null
+        val account = accounts.account.value
+        val view = get("/x/web-interface/view", mapOf("bvid" to bvid), account.cookie)
+        val cid = view.optLong("cid").takeIf { it > 0 }
+            ?: view.optJSONArray("pages")?.optJSONObject(0)?.optLong("cid")?.takeIf { it > 0 }
+            ?: return@withContext null
+        val query = wbi.sign(mapOf("bvid" to bvid, "cid" to cid.toString()))
+        val play = getRaw("/x/player/wbi/v2?$query", account.cookie)
+        val subtitles = play.optJSONObject("subtitle")?.optJSONArray("subtitles")
+            ?: return@withContext null
+        val chosen = pickBestSubtitle(subtitles) ?: return@withContext null
+        val subtitleUrl = chosen.optString("subtitle_url").ifBlank { return@withContext null }
+        val full = if (subtitleUrl.startsWith("//")) "https:$subtitleUrl" else subtitleUrl
+        val request = Request.Builder().url(full)
+            .header("Referer", "https://www.bilibili.com/")
+            .header("User-Agent", BILIBILI_USER_AGENT)
+            .build()
+        val body = http.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) return@withContext null
+            response.body?.string().orEmpty()
+        }
+        parseSubtitleBody(body)
+    }
+
+    private fun pickBestSubtitle(subtitles: JSONArray): JSONObject? {
+        if (subtitles.length() == 0) return null
+        val list = (0 until subtitles.length()).map { subtitles.getJSONObject(it) }
+        return list.firstOrNull { it.optString("lan").contains("zh", ignoreCase = true) } ?: list.firstOrNull()
+    }
+
+    private fun parseSubtitleBody(body: String): List<LyricLine>? {
+        val root = runCatching { JSONObject(body) }.getOrNull() ?: return null
+        val items = root.optJSONArray("body") ?: return null
+        val lines = mutableListOf<LyricLine>()
+        for (i in 0 until items.length()) {
+            val item = items.optJSONObject(i) ?: continue
+            val fromSec = item.optDouble("from", 0.0)
+            val toSec = item.optDouble("to", fromSec)
+            val content = item.optString("content").trim()
+            if (content.isBlank()) continue
+            lines += LyricLine(timeMs = (fromSec * 1000).toLong(), text = content, endMs = (toSec * 1000).toLong())
+        }
+        return lines.takeIf { it.isNotEmpty() }
     }
 
     // ---- 基础请求 ----

@@ -273,6 +273,13 @@ internal class MusicLyricsManager(
                     ?.let { return it }
             }
         }
+        if (song.onlineSource == com.ella.music.data.bilibili.BILIBILI_SOURCE && song.onlineId.isNotBlank()) {
+            runCatching {
+                com.ella.music.data.bilibili.BilibiliApiClient(context).fetchLyrics(song.onlineId)
+            }.getOrNull()
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { return it }
+        }
         if (song.onlineId.isBlank() && song.onlineSource.isBlank()) return null
         val script = settingsManager.lxSourceScript.first()
         if (song.onlineSource.isNotBlank()) {

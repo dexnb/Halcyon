@@ -3050,6 +3050,8 @@
     <string name="bilibili_playback_note">仅播放视频中的音频轨道；部分受版权保护的音频可能无法解析。</string>
     <string name="bilibili_search_title">哔哩哔哩搜索</string>
     <string name="bilibili_search_more">加载更多</string>
+    <string name="bilibili_config">哔哩哔哩配置</string>
+    <string name="bilibili_config_summary">管理哔哩哔哩账号Cookie及搜索偏好设置。</string>
     <string name="netease_quality_title">网易云音乐播放音质</string>
     <string name="netease_quality_summary">优先请求所选音质，不可用时降低音质；实际取决于账号权限和歌曲资源。切歌或重新打开歌曲后生效</string>
     <string name="netease_quality_auto">自动（最高可用立体声音质）</string>

@@ -3048,6 +3048,8 @@
     <string name="bilibili_playback_note">Only the audio track of videos is played; some protected audio may fail to resolve.</string>
     <string name="bilibili_search_title">Bilibili search</string>
     <string name="bilibili_search_more">Load more</string>
+    <string name="bilibili_config">Bilibili configuration</string>
+    <string name="bilibili_config_summary">Manage Bilibili account cookie and search preferences.</string>
     <string name="netease_quality_title">NetEase Music playback quality</string>
     <string name="netease_quality_summary">Prefer the selected quality, falling back when unavailable. Availability depends on account and track. Applies when opening a track again.</string>
     <string name="netease_quality_auto">Auto (highest available stereo quality)</string>

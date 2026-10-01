@@ -239,6 +239,15 @@ internal fun SettingsLibrarySourceSection(
             } // search-anchor:end
 
             // search-anchor:start
+            SettingsSearchAnchor(R.string.bilibili_config) {
+            ArrowPreference(
+                title = stringResource(R.string.bilibili_config),
+                summary = stringResource(R.string.bilibili_config_summary),
+                onClick = { showBilibiliAccount = true }
+            )
+            } // search-anchor:end
+
+            // search-anchor:start
             SettingsSearchAnchor(R.string.remote_server_manage_title) {
             ArrowPreference(
                 title = stringResource(R.string.remote_server_manage_title, stringResource(R.string.remote_source_opensubsonic)),
