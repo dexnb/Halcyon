@@ -18,7 +18,7 @@ internal const val BILIBILI_SOURCE = "bilibili"
 internal const val BILIBILI_SCHEME = "halcyon-bilibili"
 internal const val BILIBILI_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-internal data class BilibiliFavoriteFolder(val id: Long, val title: String, val mediaCount: Int)
+data class BilibiliFavoriteFolder(val id: Long, val title: String, val mediaCount: Int)
 internal data class BilibiliLoginQr(val url: String, val qrcodeKey: String)
 internal data class BilibiliLoginPoll(val code: Int, val cookies: String)
 
@@ -68,7 +68,7 @@ internal class BilibiliApiClient(context: Context) {
             val body = response.body?.string().orEmpty()
             val root = JSONObject(body)
             val data = root.optJSONObject("data") ?: JSONObject()
-            val cookies = response.headers().values("Set-Cookie").joinToString("; ") { it.substringBefore(';') }
+            val cookies = response.headers.values("Set-Cookie").joinToString("; ") { it.substringBefore(';') }
             BilibiliLoginPoll(code = data.optInt("code", -1), cookies = cookies)
         }
     }
