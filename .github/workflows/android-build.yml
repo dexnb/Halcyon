@@ -115,10 +115,77 @@ jobs:
           tag_name: 1.2.10-${{ github.run_number }}
           name: Halcyon arm64-v8a release (build ${{ github.run_number }})
           body: |
-            自动构建的 arm64-v8a release APK（调试密钥签名，仅供测试/尝鲜）。
+            自动构建的 arm64-v8a 正式签名 release APK。
           files: |
             app/build/outputs/apk/release/*arm64-v8a*.apk
             app/build/outputs/renamed-apk/release/*arm64-v8a*.APK
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build multi-package release APKs
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_type == 'release' }}
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          RELEASE_STORE_FILE: ${{ github.workspace }}/release.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          set -e
+          mkdir -p pkg-apks
+          build_pkg() {
+            local pkg="$1"
+            local name="$2"
+            echo ">>> 构建 $name ($pkg)"
+            ./gradlew --no-daemon :app:assembleRelease -PellaAbi=arm64-v8a -PappId="$pkg" --stacktrace
+            local apk
+            apk=$(ls app/build/outputs/apk/release/*arm64-v8a*.apk | head -1)
+            cp "$apk" "pkg-apks/Halcyon-1.2.10-${name}-arm64-v8a-release.apk"
+          }
+          build_pkg "com.kugou.android" "酷狗音乐"
+          build_pkg "com.kugou.android.lite" "酷狗音乐概念版"
+          build_pkg "com.tencent.qqmusic" "QQ音乐"
+          build_pkg "com.netease.cloudmusic" "网易云音乐"
+          ls -lh pkg-apks/
+
+      - name: Generate multi-package release body
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_type == 'release' }}
+        run: |
+          TAG="1.2.10-${{ github.run_number }}-pkg"
+          python3 - "$TAG" <<'PYEOF'
+          import sys, urllib.parse
+          tag = sys.argv[1]
+          apps = [
+              ("酷狗音乐", "com.kugou.android"),
+              ("酷狗音乐概念版", "com.kugou.android.lite"),
+              ("QQ音乐", "com.tencent.qqmusic"),
+              ("网易云音乐", "com.netease.cloudmusic"),
+          ]
+          lines = ["## 不同包名版本（ColorOS 锁屏岛歌词白名单）", ""]
+          lines.append("将 Halcyon 伪装成各大音乐 App 的包名，安装后 ColorOS 锁屏岛会将其识别为对应 App 并显示歌词。")
+          lines.append("")
+          lines.append("| 音乐软件 | 包名 | 下载 |")
+          lines.append("|---|---|---|")
+          for name, pkg in apps:
+              fname = f"Halcyon-1.2.10-{name}-arm64-v8a-release.apk"
+              url = f"https://github.com/dexnb/Halcyon/releases/download/{tag}/{urllib.parse.quote(fname)}"
+              lines.append(f"| {name} | `{pkg}` | [下载]({url}) |")
+          lines.append("")
+          lines.append("> 与原版 Halcyon 功能完全一致，仅修改了应用包名，用于 ColorOS 锁屏岛歌词白名单识别。")
+          open("pkg-body.md", "w", encoding="utf-8").write("\n".join(lines))
+          print("\n".join(lines))
+          PYEOF
+
+      - name: Publish multi-package release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_type == 'release' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 1.2.10-${{ github.run_number }}-pkg
+          name: Halcyon 多包名版本（ColorOS 锁屏岛歌词白名单）
+          body_path: pkg-body.md
+          files: |
+            pkg-apks/*.apk
           draft: false
           prerelease: false
         env:

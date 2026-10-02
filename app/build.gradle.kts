@@ -26,6 +26,8 @@ val configuredAbis = providers.gradleProperty("ellaAbi")
     ?.ifEmpty { null }
     ?: supportedAbis
 
+val appId = providers.gradleProperty("appId").orNull ?: "com.halcyon.dexnb"
+
 fun variantChannelMarker(variantName: String): String =
     when (variantName.lowercase(Locale.US)) {
         "debug" -> "d"
@@ -122,7 +124,7 @@ android {
         System.getenv("ALLOW_DEBUG_SIGNED_RELEASE").equals("true", ignoreCase = true)
 
     defaultConfig {
-        applicationId = "com.halcyon.dexnb"
+        applicationId = appId
         minSdk = 29
         targetSdk = 37
         versionCode = 40
