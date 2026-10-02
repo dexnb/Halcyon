@@ -17,6 +17,11 @@ on:
         options:
           - debug
           - release
+      build_variants:
+        description: "构建多包名版本（不同包名 APK，仅 release 生效）"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -44,7 +49,12 @@ jobs:
             TYPE="${{ inputs.build_type }}"
           fi
           VERSION=$(grep -oP 'appVersionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -1)
+          VARIANTS="true"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VARIANTS="${{ inputs.build_variants }}"
+          fi
           echo "type=$TYPE" >> "$GITHUB_OUTPUT"
+          echo "variants=$VARIANTS" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "构建类型: $TYPE, 版本: $VERSION"
@@ -141,7 +151,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build multi-package release APKs
-        if: ${{ steps.meta.outputs.type == 'release' }}
+        if: ${{ steps.meta.outputs.type == 'release' && steps.meta.outputs.variants == 'true' }}
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
           RELEASE_STORE_FILE: ${{ github.workspace }}/release.jks
@@ -167,7 +177,7 @@ jobs:
           ls -lh pkg-apks/
 
       - name: Generate multi-package release body
-        if: ${{ steps.meta.outputs.type == 'release' }}
+        if: ${{ steps.meta.outputs.type == 'release' && steps.meta.outputs.variants == 'true' }}
         run: |
           TAG="${{ steps.meta.outputs.version }}-${{ github.run_number }}-pkg"
           python3 - "$TAG" "$VERSION" <<'PYEOF'
@@ -196,7 +206,7 @@ jobs:
           PYEOF
 
       - name: Publish multi-package release
-        if: ${{ steps.meta.outputs.type == 'release' }}
+        if: ${{ steps.meta.outputs.type == 'release' && steps.meta.outputs.variants == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.version }}-${{ github.run_number }}-pkg
