@@ -1,0 +1,64 @@
+name: Upstream Sync
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/Kifranei/Halcyon.git || true
+          git fetch upstream main
+
+      - name: Detect upstream updates
+        id: detect
+        run: |
+          UPSTREAM=$(git rev-parse upstream/main)
+          MERGE_BASE=$(git merge-base upstream/main HEAD)
+          if [ "$UPSTREAM" = "$MERGE_BASE" ]; then
+            echo "没有上游更新，跳过构建。"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "检测到上游更新: $UPSTREAM"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Merge upstream (keep local bilibili changes)
+        id: merge
+        if: steps.detect.outputs.changed == 'true'
+        run: |
+          if git merge upstream/main --no-edit -X ours -m "chore: sync upstream $(date -u +%Y-%m-%d)"; then
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::合并冲突，需人工处理"
+            git merge --abort || true
+          fi
+
+      - name: Push and trigger build
+        if: steps.merge.outputs.merged == 'true'
+        run: |
+          VERSION=$(grep -oP 'appVersionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -1)
+          git push origin main
+          TAG="build-${VERSION}-$(date -u +%Y%m%d%H%M%S)"
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "已打 tag: $TAG，触发自动构建（release + 多包名）"
