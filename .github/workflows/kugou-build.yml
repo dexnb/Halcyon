@@ -1,0 +1,168 @@
+name: Kugou Package Build
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kugou-package-build
+  cancel-in-progress: false
+
+jobs:
+  build-kugou:
+    name: Build com.kugou.android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - name: Check latest upstream release (incl. prerelease)
+        id: upstream
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          RELEASES=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/Kifranei/Halcyon/releases?per_page=15")
+          TAG=$(echo "$RELEASES" | jq -r '[.[] | select(.draft == false)][0].tag_name')
+          if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
+            echo "上游没有任何 release，跳过构建。"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          PRE=$(echo "$RELEASES" | jq -r '[.[] | select(.draft == false)][0].prerelease')
+          MARK=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/ref/tags/kugou-${TAG}")
+          echo "上游最新 release: $TAG (prerelease=$PRE, 构建标记检查=$MARK)"
+          if [ "$MARK" = "200" ]; then
+            echo "该版本已构建过（存在 kugou-${TAG} 标记），跳过。"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "skip=false"
+            echo "tag=$TAG"
+            echo "pre=$PRE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Merge upstream code locally (不推送，仅用于本次构建)
+        if: steps.upstream.outputs.skip == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/Kifranei/Halcyon.git || true
+          git fetch upstream main
+          if git merge upstream/main --no-edit -X ours; then
+            echo "已合并上游 main 到本地构建树"
+          else
+            echo "::warning::本地合并冲突，改用当前 main 代码构建"
+            git merge --abort || true
+          fi
+
+      - name: Determine version
+        id: meta
+        if: steps.upstream.outputs.skip == 'false'
+        run: |
+          VERSION=$(grep -oP 'appVersionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -1)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "构建版本: $VERSION"
+
+      - name: Set up JDK 21
+        if: steps.upstream.outputs.skip == 'false'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Set up Android SDK
+        if: steps.upstream.outputs.skip == 'false'
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+
+      - name: Install Android SDK packages
+        if: steps.upstream.outputs.skip == 'false'
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager \
+            "platform-tools" \
+            "cmake;3.22.1" \
+            "ndk;28.2.13676358"
+          if ! sdkmanager --channel=3 "platforms;android-37"; then
+            echo "platforms;android-37 is unavailable from sdkmanager; using android-36 as a CI compatibility platform."
+            sdkmanager "platforms;android-36"
+            mkdir -p "$ANDROID_HOME/platforms/android-37"
+            cp -a "$ANDROID_HOME/platforms/android-36/." "$ANDROID_HOME/platforms/android-37/"
+            sed -i 's/AndroidVersion.ApiLevel=36/AndroidVersion.ApiLevel=37/' "$ANDROID_HOME/platforms/android-37/source.properties"
+          fi
+          sdkmanager --channel=3 "build-tools;37.0.0" || sdkmanager "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        if: steps.upstream.outputs.skip == 'false'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        if: steps.upstream.outputs.skip == 'false'
+        run: chmod +x ./gradlew
+
+      - name: Decode release keystore
+        if: steps.upstream.outputs.skip == 'false'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > release.jks
+          ls -l release.jks
+
+      - name: Build com.kugou.android release APK
+        if: steps.upstream.outputs.skip == 'false'
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          RELEASE_STORE_FILE: ${{ github.workspace }}/release.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          set -e
+          ./gradlew --no-daemon :app:assembleRelease -PellaAbi=arm64-v8a -PappId="com.kugou.android" --stacktrace
+          mkdir -p pkg-apks
+          APK=$(ls app/build/outputs/apk/release/*arm64-v8a*.apk | head -1)
+          cp "$APK" "pkg-apks/Halcyon-${{ steps.meta.outputs.version }}-KugouMusic-arm64-v8a-release.apk"
+          ls -lh pkg-apks/
+
+      - name: Upload artifact
+        if: steps.upstream.outputs.skip == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Halcyon-KugouMusic-${{ steps.upstream.outputs.tag }}
+          path: pkg-apks/*.apk
+          if-no-files-found: error
+
+      - name: Publish release
+        if: steps.upstream.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: kugou-${{ steps.upstream.outputs.tag }}
+          name: Halcyon 酷狗包名版 com.kugou.android（上游 ${{ steps.upstream.outputs.tag }}）
+          body: |
+            由上游 release **${{ steps.upstream.outputs.tag }}** 自动触发的独立构建（预览版同样触发）。
+
+            - 包名：`com.kugou.android`
+            - 架构：arm64-v8a
+            - 版本：${{ steps.meta.outputs.version }}
+          files: |
+            pkg-apks/*.apk
+          draft: false
+          prerelease: ${{ steps.upstream.outputs.pre == 'true' }}
+          overwrite_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
