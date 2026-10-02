@@ -7,9 +7,48 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Kifranei/Halcyon/releases"><img src="https://img.shields.io/github/v/release/Kifranei/Halcyon?style=flat&color=6750A4" alt="Version"></a>
-  <a href="https://github.com/Kifranei/Halcyon/releases"><img src="https://img.shields.io/github/downloads/Kifranei/Halcyon/total?style=flat&color=orange" alt="Downloads"></a>
-  <a href="https://github.com/Kifranei/Halcyon/commits"><img src="https://img.shields.io/github/last-commit/Kifranei/Halcyon?style=flat" alt="Last Commit"></a>
+  <b>上游仓库：</b> <a href="https://github.com/dexnb/Halcyon">Kifranei/Halcyon</a> | 
+  <b>本仓库：</b> <a href="https://github.com/dexnb/Halcyon">dexnb/Halcyon</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/dexnb/Halcyon/releases"><img src="https://img.shields.io/github/v/release/dexnb/Halcyon?style=flat&color=6750A4" alt="Version"></a>
+  <a href="https://github.com/dexnb/Halcyon/releases"><img src="https://img.shields.io/github/downloads/dexnb/Halcyon/total?style=flat&color=orange" alt="Downloads"></a>
+  <a href="https://github.com/dexnb/Halcyon/commits"><img src="https://img.shields.io/github/last-commit/dexnb/Halcyon?style=flat" alt="Last Commit"></a>
+  <a href="README_en.md"><img src="https://img.shields.io/badge/Document-English-blue.svg" alt="EN"></a>
+</p>
+
+<p align="center">
+  <a href="https://qm.qq.com/q/6MHSXRrjTq"><img src="https://img.shields.io/badge/QQ交流群-0084FF?style=flat&logo=qq&logoColor=white" alt="QQ Group"></a>
+  <a href="https://t.me/HalcyonPlayer"><img src="https://img.shields.io/badge/Telegram-0084FF?style=flat&logo=telegram&logoColor=white" alt="Telegram"></a>
+</p>
+
+<p align="center">
+  <b>本地音乐 · 在线曲库 · 动态播放页 · 逐字歌词 · 桌面歌词 · 状态栏歌词 · 多语言界面</b>
+</p>
+
+---
+
+## ✨ 项目简介
+
+**Halcyon** 是一款基于 **Jetpack Compose、Miuix 和 AndroidX Media3** 构建的 Android 本地音乐播放器。
+
+它以本地音乐和歌词体验为核心，提供 MIUI / HyperOS 风格界面、Compose 逐字歌词、桌面歌词、状态栏歌词、动态封面、应用内均衡器、Monet 动态取色、在线歌词匹配、WebDAV / Navidrome / Emby 远程曲库、在线音乐账号与在线音源插件、Last.fm 听歌历史、音乐库统计、完整应用数据备份和高度可定制的播放页体验。
+
+---
+
+## 🚀 功能特性<!--suppress ALL -->
+
+<h1 align="center">Halcyon</h1>
+
+<p align="center">
+  <b>一款贴近 MIUI / HyperOS 体验的 Android 音乐播放器</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/dexnb/Halcyon/releases"><img src="https://img.shields.io/github/v/release/Kifranei/Halcyon?style=flat&color=6750A4" alt="Version"></a>
+  <a href="https://github.com/dexnb/Halcyon/releases"><img src="https://img.shields.io/github/downloads/Kifranei/Halcyon/total?style=flat&color=orange" alt="Downloads"></a>
+  <a href="https://github.com/dexnb/Halcyon/commits"><img src="https://img.shields.io/github/last-commit/Kifranei/Halcyon?style=flat" alt="Last Commit"></a>
   <a href="README_en.md"><img src="https://img.shields.io/badge/Document-English-blue.svg" alt="EN"></a>
 </p>
 
@@ -158,7 +197,7 @@
 
 ## 📦 下载
 
-请从 [Releases](https://github.com/Kifranei/Halcyon/releases) 下载最新版本。
+请从 [Releases](https://github.com/dexnb/Halcyon/releases) 下载最新版本。
 
 首次使用建议流程：
 
@@ -276,7 +315,7 @@ Halcyon 支持 LunaBeat 的 `mv_offsets.json`。可以把文件放在本地 MV �
 ## 🛠 构建
 
 ```bash
-git clone https://github.com/Kifranei/Halcyon.git
+git clone https://github.com/dexnb/Halcyon.git
 cd Halcyon
 ./gradlew :app:assembleDebug -PellaAbi=arm64-v8a
 ```
@@ -284,7 +323,7 @@ cd Halcyon
 Windows PowerShell：
 
 ```powershell
-git clone https://github.com/Kifranei/Halcyon.git
+git clone https://github.com/dexnb/Halcyon.git
 cd Halcyon
 .\gradlew.bat :app:assembleDebug -PellaAbi=arm64-v8a
 ```
@@ -363,7 +402,7 @@ lyrico-audiotag/src/main/jniLibs/arm64-v8a/liblyrico_taglib.so
 ## 👀 访问统计
 
 <p align="center">
-  <img src="https://count.getloli.com/get/@kifranei_halcyon?theme=capoo-2" alt="Visitor Count" />
+  <img src="https://count.getloli.com/get/@dexnb_halcyon?theme=capoo-2" alt="Visitor Count" />
 </p>
 
 ---
