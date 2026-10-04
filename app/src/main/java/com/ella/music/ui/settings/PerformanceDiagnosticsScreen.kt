@@ -851,7 +851,7 @@ internal fun PerformanceDiagnosticsScreen(
             SelectionContainer {
                 Text(
                     text = formatPerformanceLogLine(entry),
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = MiuixTheme.textStyles.main.fontFamily,
                     fontSize = 13.sp,
                     color = MiuixTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
@@ -873,7 +873,7 @@ private fun PerformanceLogItem(
         ) {
             Text(
                 text = formatPerformanceLogLine(entry),
-                fontFamily = FontFamily.Monospace,
+                fontFamily = MiuixTheme.textStyles.main.fontFamily,
                 fontSize = 12.sp,
                 lineHeight = 17.sp,
                 color = if (entry.level == "W") MiuixTheme.colorScheme.error

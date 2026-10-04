@@ -428,7 +428,7 @@ private fun HomeShortcutTile(
     }
     Column(
         modifier = modifier
-            .combinedClickable(onClick = tile.onClick, onLongClick = onPinClick)
+            .combinedClickable(interactionSource = null, indication = null, onClick = tile.onClick, onLongClick = onPinClick)
             .padding(bottom = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -599,7 +599,7 @@ private fun HomeTile(
             .clip(RoundedCornerShape(16.dp))
             .background(background)
             .then(if (featureStyle == 2) Modifier.border(1.dp, homeTileAccents[accentIndex % homeTileAccents.size].copy(alpha = .34f), RoundedCornerShape(16.dp)) else Modifier)
-            .then(if (interactive) Modifier.combinedClickable(onClick = onClick, onLongClick = onPinClick) else Modifier)
+            .then(if (interactive) Modifier.combinedClickable(interactionSource = null, indication = null, onClick = onClick, onLongClick = onPinClick) else Modifier)
             .padding(14.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {

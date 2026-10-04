@@ -591,62 +591,91 @@ private fun AppleMusicKaraokeGlyphs(
                     drawStyle = Stroke(width = outlineWidth)
                 )
             }
-            if (glowColor != null && glowRadius > 0f) {
-                drawText(
-                    textLayoutResult = layout,
-                    color = Color.Transparent,
-                    shadow = Shadow(
-                        color = glowColor.copy(alpha = glowColor.alpha * baseAlpha),
-                        offset = Offset.Zero,
-                        blurRadius = glowRadius
-                    )
-                )
-            }
             val envelope = if (referenceMotion && active && renderWord.sustainEndMs != null) {
                 appleReferenceEmphasis(clock - word.startMs, renderWord.sustainDurationMs)
             } else renderWord.sustainGlowAlpha(clock, active)
             val glow = envelope * effectiveSustainGlowScale.coerceIn(0f, glowCap)
             val fontSizePx = baseStyle.fontSize.toPx().coerceAtLeast(1f)
-            val feather = DefaultKaraokeFeather
-            val trailSheenGlow = glow
+            val wordWidth = layout.size.width.toFloat().coerceAtLeast(1f)
+            val feather = (30.dp.toPx() / wordWidth).coerceIn(0.15f, 0.85f)
+            val revealStops = karaokeHaloMaskStops(progress, isRtl, feather)
 
-            if (glow > 0f) {
-                // A long held note grows a soft halo around the glyph before the fill reaches it.
-                val durationScale = ((sustainDurationMs - 600L).coerceAtLeast(0L) / 2_400f)
-                    .coerceIn(0f, 1f)
-                val hdrGain = if (hdrHighlightEnabled && active) LyricHdrWindow.gain.floatValue else 1f
-                if (hdrGain > 1.01f) {
-                    // Real HDR: Compose text shadows are clamped to 8-bit sRGB, so draw the halo from the
-                    // glyph outlines with an extended-range colour that exceeds SDR white.
-                    hdrHalo.draw(
-                        scope = this,
-                        layout = layout,
-                        typeface = hdrTypeface,
-                        fontSizePx = baseStyle.fontSize.toPx(),
-                        letterSpacingEm = if (baseStyle.letterSpacing.isEm) baseStyle.letterSpacing.value
-                            else if (baseStyle.letterSpacing.isSp && baseStyle.fontSize.isSp && baseStyle.fontSize.value > 0f)
-                                baseStyle.letterSpacing.value / baseStyle.fontSize.value
-                            else 0f,
-                        color = contentColor,
-                        alpha = ((0.32f + durationScale * 0.14f) * glow * baseAlpha).coerceIn(0f, 1f),
-                        blurRadius = (8f + durationScale * 6f) * glow,
-                        gain = hdrGain
+            // Text-style glow obeys the same onset and feather as sustained-note glow.
+            if (glowColor != null && glowRadius > 0f && progress > 0f) {
+                val bounds = androidx.compose.ui.geometry.Rect(
+                    -glowRadius * 2f, -layout.size.height.toFloat(),
+                    wordWidth + glowRadius * 2f, layout.size.height * 2f
+                )
+                val canvas = drawContext.canvas
+                canvas.saveLayer(bounds, androidx.compose.ui.graphics.Paint())
+                try {
+                    drawText(textLayoutResult = layout, color = Color.Transparent,
+                        shadow = Shadow(glowColor.copy(alpha = glowColor.alpha * baseAlpha), Offset.Zero, glowRadius))
+                    if (progress < 1f) drawRect(
+                        brush = Brush.horizontalGradient(colorStops = revealStops, startX = 0f, endX = wordWidth),
+                        topLeft = bounds.topLeft, size = bounds.size,
+                        blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
                     )
-                } else {
-                    val haloColor = contentColor.withHdrHighlightBoost(hdrHighlightEnabled && active)
-                    drawText(
-                        textLayoutResult = layout,
-                        color = haloColor.copy(
-                            alpha = ((0.05f + durationScale * 0.08f) * glow * baseAlpha).coerceIn(0f, 1f)
-                        ),
-                        shadow = Shadow(
-                            color = haloColor.copy(
-                                alpha = ((0.32f + durationScale * 0.14f) * glow * baseAlpha).coerceIn(0f, 1f)
-                            ),
-                            offset = Offset.Zero,
-                            blurRadius = (8f + durationScale * 6f) * glow
+                } finally { canvas.restore() }
+            }
+            if (glow > 0f && progress > 0f) {
+                val haloWidth = layout.size.width.toFloat().coerceAtLeast(1f)
+                val haloBounds = androidx.compose.ui.geometry.Rect(
+                    -24.dp.toPx(), -layout.size.height.toFloat(),
+                    haloWidth + 24.dp.toPx(), layout.size.height * 2f
+                )
+                val haloCanvas = drawContext.canvas
+                haloCanvas.saveLayer(haloBounds, androidx.compose.ui.graphics.Paint())
+                try {
+                    // Only the sung letters contribute to a held-note halo.
+                    val durationScale = ((sustainDurationMs - 600L).coerceAtLeast(0L) / 2_400f)
+                        .coerceIn(0f, 1f)
+                    val hdrGain = if (hdrHighlightEnabled && active) LyricHdrWindow.gain.floatValue else 1f
+                    if (hdrGain > 1.01f) {
+                        // Real HDR: Compose text shadows are clamped to 8-bit sRGB, so draw the halo from the
+                        // glyph outlines with an extended-range colour that exceeds SDR white.
+                        hdrHalo.draw(
+                            scope = this,
+                            layout = layout,
+                            typeface = hdrTypeface,
+                            fontSizePx = baseStyle.fontSize.toPx(),
+                            letterSpacingEm = if (baseStyle.letterSpacing.isEm) baseStyle.letterSpacing.value
+                                else if (baseStyle.letterSpacing.isSp && baseStyle.fontSize.isSp && baseStyle.fontSize.value > 0f)
+                                    baseStyle.letterSpacing.value / baseStyle.fontSize.value
+                                else 0f,
+                            color = contentColor,
+                            alpha = ((0.32f + durationScale * 0.14f) * glow * baseAlpha).coerceIn(0f, 1f),
+                            blurRadius = (8f + durationScale * 6f) * glow,
+                            gain = hdrGain
                         )
-                    )
+                    } else {
+                        val haloColor = contentColor.withHdrHighlightBoost(hdrHighlightEnabled && active)
+                        drawText(
+                            textLayoutResult = layout,
+                            color = haloColor.copy(
+                                alpha = ((0.05f + durationScale * 0.08f) * glow * baseAlpha).coerceIn(0f, 1f)
+                            ),
+                            shadow = Shadow(
+                                color = haloColor.copy(
+                                    alpha = ((0.32f + durationScale * 0.14f) * glow * baseAlpha).coerceIn(0f, 1f)
+                                ),
+                                offset = Offset.Zero,
+                                blurRadius = (8f + durationScale * 6f) * glow
+                            )
+                        )
+                    }
+                    if (progress < 1f) {
+                        drawRect(
+                            brush = Brush.horizontalGradient(
+                                colorStops = revealStops,
+                                startX = 0f, endX = haloWidth
+                            ),
+                            topLeft = haloBounds.topLeft, size = haloBounds.size,
+                            blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
+                        )
+                    }
+                } finally {
+                    haloCanvas.restore()
                 }
             }
             val glowShadow = glow.takeIf { it > 0.05f }?.let { glowAlpha ->
@@ -797,6 +826,8 @@ private fun AppleMusicKaraokeGlyphs(
                                 endX = wordWidth
                             )
                         )
+                    } finally {
+                        fillCanvas.restore()
                     }
                 }
             }
@@ -860,7 +891,7 @@ private fun AppleMusicKaraokeGlyphs(
     }
 }
 
-private fun AppleMusicRenderWord.karaokeProgress(positionMs: Long, active: Boolean): Float =
+internal fun AppleMusicRenderWord.karaokeProgress(positionMs: Long, active: Boolean): Float =
     if (active) {
         ((positionMs - word.startMs).toFloat() / (word.endMs - word.startMs).coerceAtLeast(1L))
             .coerceIn(0f, 1f)
@@ -870,6 +901,13 @@ private fun AppleMusicRenderWord.karaokeProgress(positionMs: Long, active: Boole
 
 internal const val DefaultKaraokeDimAlphaFactor = 0.36f
 internal const val DefaultKaraokeFeather = 0.15f
+
+/** Feather behind the sung edge; even a wide halo must not reveal unsung letter contours. */
+internal fun karaokeHaloMaskStops(progress: Float, isRtl: Boolean, feather: Float): Array<Pair<Float, Color>> = when {
+    progress <= 0f -> arrayOf(0f to Color.Transparent, 1f to Color.Transparent)
+    progress >= 1f -> arrayOf(0f to Color.White, 1f to Color.White)
+    else -> karaokeFillStops(progress, Color.White, isRtl, feather)
+}
 
 /**
  * Classic 七彩 / ROYGBIV spectrum anchors (赤橙黄绿青蓝紫).
@@ -1493,7 +1531,7 @@ private fun AppleMusicRenderWord.sustainGlowAlpha(positionMs: Long, active: Bool
     }.coerceIn(0f, 1f)
 }
 
-private data class AppleMusicRenderWord(
+internal data class AppleMusicRenderWord(
     val word: LyricWord,
     val sustainEndMs: Long? = null
 ) {

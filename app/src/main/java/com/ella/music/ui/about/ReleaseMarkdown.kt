@@ -46,7 +46,7 @@ internal fun ReleaseMarkdown(
                     is MarkdownBlock.Heading -> {
                         BasicText(
                             text = inlineMarkdown(block.text, accent, codeBackground),
-                            style = TextStyle(
+                            style = MiuixTheme.textStyles.main.copy(
                                 color = primary,
                                 fontSize = if (block.level <= 2) 18.sp else 15.sp,
                                 lineHeight = if (block.level <= 2) 24.sp else 21.sp,
@@ -57,7 +57,7 @@ internal fun ReleaseMarkdown(
                     is MarkdownBlock.Paragraph -> {
                         BasicText(
                             text = inlineMarkdown(block.text, accent, codeBackground),
-                            style = TextStyle(
+                            style = MiuixTheme.textStyles.main.copy(
                                 color = secondary,
                                 fontSize = 13.sp,
                                 lineHeight = 19.sp
@@ -74,7 +74,7 @@ internal fun ReleaseMarkdown(
                             )
                             BasicText(
                                 text = inlineMarkdown(block.text, accent, codeBackground),
-                                style = TextStyle(
+                                style = MiuixTheme.textStyles.main.copy(
                                     color = secondary,
                                     fontSize = 13.sp,
                                     lineHeight = 19.sp
@@ -93,7 +93,7 @@ internal fun ReleaseMarkdown(
                             )
                             BasicText(
                                 text = inlineMarkdown(block.text, accent, codeBackground),
-                                style = TextStyle(
+                                style = MiuixTheme.textStyles.main.copy(
                                     color = secondary,
                                     fontSize = 13.sp,
                                     lineHeight = 19.sp
@@ -111,7 +111,7 @@ internal fun ReleaseMarkdown(
                         ) {
                             BasicText(
                                 text = inlineMarkdown(block.text, accent, codeBackground),
-                                style = TextStyle(
+                                style = MiuixTheme.textStyles.main.copy(
                                     color = secondary,
                                     fontSize = 13.sp,
                                     lineHeight = 19.sp
@@ -122,7 +122,7 @@ internal fun ReleaseMarkdown(
                     is MarkdownBlock.Code -> {
                         BasicText(
                             text = block.text,
-                            style = TextStyle(
+                            style = MiuixTheme.textStyles.main.copy(
                                 color = primary,
                                 fontSize = 12.sp,
                                 lineHeight = 18.sp

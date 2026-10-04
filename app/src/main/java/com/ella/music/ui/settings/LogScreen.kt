@@ -402,7 +402,7 @@ fun LogScreen(
                             Text(
                                 text = crashChunks[index],
                                 fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = MiuixTheme.textStyles.main.fontFamily,
                                 color = MiuixTheme.colorScheme.onSurface
                             )
                         }

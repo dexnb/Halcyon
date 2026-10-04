@@ -63,6 +63,9 @@ internal fun FolderListRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val display = rememberFolderDisplaySettings()
+    val scale = display.sizePercent / 100f
+
     val context = LocalContext.current
     val frosting = LocalSettingsCardFrosting.current
     val cardModifier = frostedCardModifier(
@@ -82,24 +85,21 @@ internal fun FolderListRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .combinedClickable(
+                .combinedClickable(interactionSource = null, indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick
                 )
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = (14 * scale).dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            FolderOutlineIcon(
-                tint = MiuixTheme.colorScheme.primary,
-                modifier = Modifier.size(42.dp)
-            )
+            FolderHierarchyCover(folder, Modifier.size((42 * scale).dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = folder.name,
-                        fontSize = 17.sp,
-                        lineHeight = 22.sp,
+                        fontSize = (17 * scale).sp,
+                        lineHeight = (22 * scale).sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MiuixTheme.colorScheme.onSurface,
                         maxLines = 2,
@@ -120,8 +120,8 @@ internal fun FolderListRow(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "${folder.summaryFor(context, sortMode)} · ${folder.path}",
-                    fontSize = 13.sp,
-                    lineHeight = 17.sp,
+                    fontSize = (13 * scale).sp,
+                    lineHeight = (17 * scale).sp,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis

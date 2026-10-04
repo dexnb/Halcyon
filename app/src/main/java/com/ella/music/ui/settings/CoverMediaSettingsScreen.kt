@@ -829,7 +829,9 @@ internal fun SettingsMusicVideoSection(highlightKey: String? = null) {
                     com.ella.music.data.netease.NeteaseLinkKind.Artist to R.string.netease_link_kind_artist,
                     com.ella.music.data.netease.NeteaseLinkKind.ArtistWiki to R.string.netease_link_artist_wiki,
                     com.ella.music.data.netease.NeteaseLinkKind.Album to R.string.netease_link_kind_album,
-                    com.ella.music.data.netease.NeteaseLinkKind.MusicVideo to R.string.netease_link_kind_mv
+                    com.ella.music.data.netease.NeteaseLinkKind.MusicVideo to R.string.netease_link_kind_mv,
+                    com.ella.music.data.netease.NeteaseLinkKind.AlbumComment to R.string.netease_link_album_comments,
+                    com.ella.music.data.netease.NeteaseLinkKind.MusicVideoComment to R.string.netease_link_mv_comments
                 ).forEach { (kind, labelRes) ->
                     SplitSettingTextField(
                         label = stringResource(labelRes),

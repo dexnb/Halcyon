@@ -187,7 +187,7 @@ private fun KtvOutlinedText(
             fontWeight = FontWeight.ExtraBold,
             textAlign = textAlign,
             maxLines = 4,
-            style = TextStyle(drawStyle = Stroke(width = 5f)),
+            style = top.yukonga.miuix.kmp.theme.MiuixTheme.textStyles.main.copy(drawStyle = Stroke(width = 5f)),
             modifier = modifier.fillMaxWidth()
         )
     }

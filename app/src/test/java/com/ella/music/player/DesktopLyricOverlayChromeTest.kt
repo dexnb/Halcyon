@@ -31,9 +31,10 @@ class DesktopLyricOverlayChromeTest {
     }
 
     @Test
-    fun lockedDesktopLyricsKeepTheV126OverlayWindowBehavior() {
+    fun lockedLyricsPassTouchesThroughAndKeepCompactWindow() {
         assertFalse(desktopLyricPassThroughTouches(statusBarMode = false))
         assertTrue(desktopLyricPassThroughTouches(statusBarMode = true))
+        assertTrue(desktopLyricPassThroughTouches(statusBarMode = false, locked = true))
         assertTrue(desktopLyricUsesCompactWindow(locked = true, statusBarMode = false))
         assertFalse(desktopLyricUsesCompactWindow(locked = false, statusBarMode = false))
         assertFalse(desktopLyricUsesCompactWindow(locked = true, statusBarMode = true))

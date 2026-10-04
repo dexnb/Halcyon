@@ -107,6 +107,7 @@ abstract class CopyRenamedApksTask : DefaultTask() {
 android {
     namespace = "com.ella.music"
     compileSdk = 37
+    testOptions { unitTests.isIncludeAndroidResources = true }
     val releaseStoreFile = System.getenv("RELEASE_STORE_FILE")
         ?.takeIf { it.isNotBlank() }
         ?.let { file(it) }
@@ -279,6 +280,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.datasource.okhttp)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.ui)
@@ -325,5 +327,6 @@ dependencies {
     compileOnly(project(":hidden-api"))
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.17")
     testImplementation("org.json:json:20240303")
 }

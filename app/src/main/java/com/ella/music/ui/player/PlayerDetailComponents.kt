@@ -33,7 +33,7 @@ import com.ella.music.data.NeteaseArtist
 import com.ella.music.data.model.formatPlaybackDuration
 import com.ella.music.ui.components.SafeCoverImage
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import com.ella.music.ui.components.EllaMiuixBottomSheet
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -285,7 +285,7 @@ internal fun PlayerDetailNeteaseArtistPickerSheet(
 ) {
     if (artists.isEmpty()) return
 
-    WindowBottomSheet(
+    EllaMiuixBottomSheet(
         show = true,
         onDismissRequest = onDismiss
     ) {

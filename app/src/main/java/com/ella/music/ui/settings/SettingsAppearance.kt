@@ -471,7 +471,9 @@ internal fun SettingsAppearanceSection(
         SettingsManager.PLAYER_LANDSCAPE_STYLE_COVER_FLOW to
             stringResource(R.string.settings_player_landscape_style_cover_flow),
         SettingsManager.PLAYER_LANDSCAPE_STYLE_MUSIC_VIDEO to
-            stringResource(R.string.settings_player_landscape_style_music_video)
+            stringResource(R.string.settings_player_landscape_style_music_video),
+        SettingsManager.PLAYER_LANDSCAPE_STYLE_CLASSIC_SPLIT to
+            stringResource(R.string.settings_player_landscape_style_classic_split)
     )
     val bgEffectOptions = remember {
         listOf(
@@ -661,7 +663,8 @@ internal fun SettingsAppearanceSection(
     val appIconOptions = listOf(
         SettingsManager.APP_ICON_STYLE_DEFAULT to stringResource(R.string.settings_app_icon_default),
         SettingsManager.APP_ICON_STYLE_ANIME to stringResource(R.string.settings_app_icon_anime),
-        SettingsManager.APP_ICON_STYLE_LOLI to stringResource(R.string.settings_app_icon_loli)
+        SettingsManager.APP_ICON_STYLE_LOLI to stringResource(R.string.settings_app_icon_loli),
+        SettingsManager.APP_ICON_STYLE_TRADITIONAL to stringResource(R.string.settings_app_icon_traditional)
     )
     val selectedAppIconIndex = appIconOptions.indexOfFirst { it.first == appIconStyle }
         .takeIf { it >= 0 }

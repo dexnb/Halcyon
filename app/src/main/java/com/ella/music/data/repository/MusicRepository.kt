@@ -203,6 +203,7 @@ class MusicRepository(private val context: Context) {
         scanner,
         audioTagRepository,
         metadataPathResolver = { song -> song.effectiveLocalPathForMetadata() },
+        qualityCacheFile = File(context.filesDir, "audio_quality_cache.json"),
         onlineStreamInfo = { song ->
             if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE && song.onlineId.isNotBlank())
                 com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).audioInfoFor(song.onlineId)
@@ -836,6 +837,8 @@ class MusicRepository(private val context: Context) {
         audioInfoProvider.getCachedReplayGain(song, mode)
 
     fun getAudioInfo(song: Song): AudioInfo = audioInfoProvider.getAudioInfo(song)
+    fun getAudioQualityInfo(song: Song): AudioInfo = audioInfoProvider.getAudioQualityInfo(song)
+    val audioQualityRevision: Long get() = audioInfoProvider.qualityRevision
 
     /** Cached tag info only; never touches the file (safe on the main thread). */
     fun peekSongTagInfo(song: Song): SongTagInfo? = tagInfoCache[song.metadataCacheKey()]
@@ -1242,6 +1245,7 @@ class MusicRepository(private val context: Context) {
         snapshotManager.clearMetadataCache(song)
         val metadataPrefix = "${song.metadataCachePrefix()}:"
         audioInfoProvider.clearMetadataCache(metadataPrefix)
+        com.ella.music.ui.analytics.invalidateLibraryAnalysisCache(context)
         tagInfoCache.removeKeysMatching { it.startsWith(metadataPrefix) || it.startsWith("${song.id}:") }
         audioTagRepository.clear(song.effectiveLocalPathForMetadataBlocking(settingsManager, httpClient, remoteAudioCacheDir, remoteMetadataHeaderCacheDir))
         if (song.isWebDavRemoteSong()) {

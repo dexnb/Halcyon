@@ -1714,7 +1714,8 @@ internal fun buildRecentPlaybackRowsForResolved(
             val category = recentCategoryFromSource(source) ?: return@mapNotNull null
             val (kind, id) = category
             if (tab != RecentPlaybackTab.Collection && tab != kind) return@mapNotNull null
-            val latest = entries.first()
+            val latestEntry = com.ella.music.data.latestCategoryPlayback(entries.map { it.entry }, source) ?: return@mapNotNull null
+            val latest = entries.first { it.entry.entryId == latestEntry.entryId }
             val albumId = if (kind == RecentPlaybackTab.Album) id.toLongOrNull() ?: 0L else 0L
             val members = when (kind) {
                 RecentPlaybackTab.Playlist -> {

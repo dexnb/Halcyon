@@ -776,7 +776,7 @@ fun EllaApp(
                 bottomDockSpecs[SettingsManager.BOTTOM_DOCK_ITEM_PLAYLISTS]
             )
         }
-    val railState = rememberNavigationRailState(NavigationRailValue.Expanded)
+    val railState = rememberNavigationRailState(NavigationRailValue.Collapsed)
     val currentTabRoute = currentRoute.toCurrentTabRoute()
     val renderedBottomBarGlassEffect = when (effectiveBottomBarStyle) {
         BottomBarStyle.Floating -> BottomBarGlassEffect.Blur
@@ -897,6 +897,10 @@ fun EllaApp(
             val librarySearchDockState = rememberLibrarySearchDockState()
             val sharedBackgroundBackdrop = rememberMiuixLayerBackdrop()
             val hasSharedBackground = wallpaperVisible || nowPlayingFlowVisible
+            // The dock still samples both page content and the now full-window background.
+            val contentWithBackgroundBackdrop = com.ella.music.ui.components.liquid.rememberCombinedBackdrop(
+                sharedBackgroundBackdrop, miuixBackdrop
+            )
             val blurSupported = remember { isRenderEffectSupported() }
             val cardBlendColors = remember(isDarkTheme) { aboutCardBlendColors(isDarkTheme) }
             val settingsFrosting = remember(sharedBackgroundBackdrop, blurSupported, cardBlendColors) {
@@ -919,12 +923,88 @@ fun EllaApp(
                 LocalBackdrop provides (if (hasSharedBackground) sharedBackgroundBackdrop else null),
                 LocalSettingsCardFrosting provides (if (hasSharedBackground) settingsFrosting else null)
             ) {
+            Box(Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxSize().then(
+                    if (hasSharedBackground) Modifier.layerMiuixBackdrop(sharedBackgroundBackdrop) else Modifier
+                )) {
+                    if (wallpaperVisible) {
+                        val wallpaperDimAlpha = appWallpaperDim.coerceIn(0, 80) / 100f
+                        val wallpaperWash = if (isDarkTheme) ComposeColor.Black else ComposeColor.White
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { alpha = appWallpaperOpacity.coerceIn(20, 100) / 100f }
+                        ) {
+                            SafeCoverImage(
+                                model = Uri.parse(appWallpaperUri),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                                sizePx = 1600,
+                                showDefaultPlaceholder = false
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                wallpaperWash.copy(alpha = wallpaperDimAlpha * 0.95f),
+                                                wallpaperWash.copy(alpha = wallpaperDimAlpha * 0.55f),
+                                                wallpaperWash.copy(alpha = (wallpaperDimAlpha * 1.15f).coerceAtMost(0.9f))
+                                            )
+                                        )
+                                    )
+                            )
+                        }
+                        val contentOverlayAlpha = appWallpaperContentOverlay.coerceIn(0, 80) / 100f
+                        val contentOverlayColor = if (isDarkTheme) {
+                            ComposeColor.Black.copy(alpha = (contentOverlayAlpha * 0.82f).coerceAtMost(0.70f))
+                        } else {
+                            ComposeColor.White.copy(alpha = (contentOverlayAlpha * 0.95f).coerceAtMost(0.78f))
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(contentOverlayColor)
+                        )
+                    } else if (nowPlayingFlowVisible) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            currentSong?.let { song ->
+                                AppNowPlayingFlowBackground(
+                                    song = song,
+                                    mainViewModel = mainViewModel,
+                                    currentPositionMs = currentPosition,
+                                    isPlaying = isPlaying,
+                                    light = !isDarkTheme,
+                                    modifier = Modifier.fillMaxSize(),
+                                    artwork = appNowPlayingArtwork
+                                )
+                            }
+                        }
+                        val contentOverlayAlpha = appWallpaperContentOverlay.coerceIn(0, 80) / 100f
+                        val contentOverlayColor = if (isDarkTheme) {
+                            ComposeColor.Black.copy(alpha = (contentOverlayAlpha * 0.82f).coerceAtMost(0.70f))
+                        } else {
+                            ComposeColor.White.copy(alpha = (contentOverlayAlpha * 0.95f).coerceAtMost(0.78f))
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(contentOverlayColor)
+                        )
+                    }
+                }
             // Keep one navigation/content composition across window changes; only the rail's
             // measured width changes, so page state and the mini-player survive rotation.
             Row(Modifier.fillMaxSize()) {
                 if (showNavigationRail) {
                     MainNavigationRail(
                         state = railState,
+                        backdrop = if (hasSharedBackground) sharedBackgroundBackdrop else null,
                         tabs = tabs,
                         currentTabRoute = currentTabRoute,
                         currentRoute = currentRoute,
@@ -954,78 +1034,6 @@ fun EllaApp(
                     .fillMaxSize()
                     .layerMiuixBackdrop(miuixBackdrop)
             ) {
-            if (wallpaperVisible) {
-                val wallpaperDimAlpha = appWallpaperDim.coerceIn(0, 80) / 100f
-                val wallpaperWash = if (isDarkTheme) ComposeColor.Black else ComposeColor.White
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .layerMiuixBackdrop(sharedBackgroundBackdrop)
-                        .graphicsLayer { alpha = appWallpaperOpacity.coerceIn(20, 100) / 100f }
-                ) {
-                    SafeCoverImage(
-                        model = Uri.parse(appWallpaperUri),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                        sizePx = 1600,
-                        showDefaultPlaceholder = false
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        wallpaperWash.copy(alpha = wallpaperDimAlpha * 0.95f),
-                                        wallpaperWash.copy(alpha = wallpaperDimAlpha * 0.55f),
-                                        wallpaperWash.copy(alpha = (wallpaperDimAlpha * 1.15f).coerceAtMost(0.9f))
-                                    )
-                                )
-                            )
-                    )
-                }
-                val contentOverlayAlpha = appWallpaperContentOverlay.coerceIn(0, 80) / 100f
-                val contentOverlayColor = if (isDarkTheme) {
-                    ComposeColor.Black.copy(alpha = (contentOverlayAlpha * 0.82f).coerceAtMost(0.70f))
-                } else {
-                    ComposeColor.White.copy(alpha = (contentOverlayAlpha * 0.95f).coerceAtMost(0.78f))
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(contentOverlayColor)
-                )
-            } else if (nowPlayingFlowVisible) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .layerMiuixBackdrop(sharedBackgroundBackdrop)
-                ) {
-                    currentSong?.let { song ->
-                        AppNowPlayingFlowBackground(
-                            song = song,
-                            mainViewModel = mainViewModel,
-                            currentPositionMs = currentPosition,
-                            isPlaying = isPlaying,
-                            light = !isDarkTheme,
-                            modifier = Modifier.fillMaxSize(),
-                            artwork = appNowPlayingArtwork
-                        )
-                    }
-                }
-                val contentOverlayAlpha = appWallpaperContentOverlay.coerceIn(0, 80) / 100f
-                val contentOverlayColor = if (isDarkTheme) {
-                    ComposeColor.Black.copy(alpha = (contentOverlayAlpha * 0.82f).coerceAtMost(0.70f))
-                } else {
-                    ComposeColor.White.copy(alpha = (contentOverlayAlpha * 0.95f).coerceAtMost(0.78f))
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(contentOverlayColor)
-                )
-            }
                 AppNavigation(
                     navController = navController,
                     mainViewModel = mainViewModel,
@@ -1060,7 +1068,7 @@ fun EllaApp(
                     currentRoute = currentRoute,
                     bottomDockMode = bottomDockMode,
                     canCompact = canCompactBottomDock,
-                    backdrop = miuixBackdrop,
+                    backdrop = if (hasSharedBackground) contentWithBackgroundBackdrop else miuixBackdrop,
                     bottomBarStyle = effectiveBottomBarStyle,
                     glassEffect = renderedBottomBarGlassEffect,
                     bottomBarCornerRadiusDp = bottomBarCornerRadius,
@@ -1117,6 +1125,7 @@ fun EllaApp(
                     }
                 )
                 }
+            }
             }
             if (playerResident) {
                 Box(

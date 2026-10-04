@@ -702,10 +702,10 @@ internal fun CoverPlayerPage(
                     androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
                 }
                 when {
-                    videoPlaybackActive && musicVideoVisible && musicVideoSource != null -> {
+                    musicVideoVisible && musicVideoSource != null -> {
                         DynamicCoverVideo(
                             source = musicVideoSource,
-                            isPlaying = isPlaying,
+                            isPlaying = isPlaying && videoPlaybackActive,
                             syncPositionMs = currentPosition,
                             syncDurationMs = duration,
                             onPlaybackError = { onDynamicCoverFailed(musicVideoSource.failureKey) },
@@ -714,10 +714,10 @@ internal fun CoverPlayerPage(
                             resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
                         )
                     }
-                    videoPlaybackActive && !musicVideoVisible && dynamicCoverSource != null -> {
+                    !musicVideoVisible && dynamicCoverSource != null -> {
                         DynamicCoverVideo(
                             source = dynamicCoverSource,
-                            isPlaying = isPlaying,
+                            isPlaying = isPlaying && videoPlaybackActive,
                             onPlaybackError = { onDynamicCoverFailed(dynamicCoverSource.failureKey) },
                             modifier = Modifier.fillMaxSize(),
                             cornerRadiusDp = cornerRadius.value,
@@ -2101,7 +2101,7 @@ internal fun CoverPlayerPage(
                         contentAlignment = Alignment.Center
                     ) {
                         // Keep MV silent and on the audio clock while its surface is hidden.
-                        if (videoPlaybackActive && musicVideoVisible) displayedMusicVideo?.let { source ->
+                        if (musicVideoVisible) displayedMusicVideo?.let { source ->
                             DynamicCoverVideo(
                                 source = source,
                                 isPlaying = isPlaying && videoPlaybackActive,
@@ -2115,7 +2115,7 @@ internal fun CoverPlayerPage(
                                 resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                             )
                         }
-                        if (videoPlaybackActive && !musicVideoVisible && displayedDynamicCover != null) {
+                        if (!musicVideoVisible && displayedDynamicCover != null) {
                             DynamicCoverVideo(
                                 source = displayedDynamicCover,
                                 isPlaying = isPlaying && videoPlaybackActive,
@@ -2387,7 +2387,7 @@ internal fun CoverPlayerPage(
                             contentAlignment = Alignment.Center
                         ) {
                             // Keep MV silent and synchronized behind the current cover.
-                            if (videoPlaybackActive && musicVideoVisible) displayedMusicVideo?.let { source ->
+                            if (musicVideoVisible) displayedMusicVideo?.let { source ->
                                 DynamicCoverVideo(
                                     source = source,
                                     isPlaying = isPlaying && videoPlaybackActive,
@@ -2401,7 +2401,7 @@ internal fun CoverPlayerPage(
                                     resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
                                 )
                             }
-                            if (videoPlaybackActive && !musicVideoVisible && displayedDynamicCover != null) {
+                            if (!musicVideoVisible && displayedDynamicCover != null) {
                                 DynamicCoverVideo(
                                     source = displayedDynamicCover,
                                     isPlaying = isPlaying && videoPlaybackActive,
