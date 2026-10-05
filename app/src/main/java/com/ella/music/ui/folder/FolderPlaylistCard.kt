@@ -30,7 +30,6 @@ import com.ella.music.ui.components.SelectionCheck
 import com.ella.music.ui.components.LocalSettingsCardFrosting
 import com.ella.music.ui.components.frostedCardColor
 import com.ella.music.ui.components.frostedCardModifier
-import com.ella.music.ui.playlist.wallpaperAwarePlaylistCardColor
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon

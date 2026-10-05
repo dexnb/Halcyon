@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,7 +54,6 @@ import com.ella.music.ui.components.EllaSmallTopAppBar
 import com.ella.music.ui.player.openPlatformOutputSwitcher
 import com.ella.music.ui.theme.EllaTheme
 import com.ella.music.ui.theme.MONET_COVER
-import com.ella.music.ui.theme.THEME_DARK
 import com.ella.music.ui.theme.THEME_FOLLOW_SYSTEM
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.launch

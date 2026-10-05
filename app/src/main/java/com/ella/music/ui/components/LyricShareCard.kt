@@ -315,12 +315,6 @@ internal fun copySelectedLyricText(
     }
 }.filter(String::isNotBlank).joinToString("\n")
 
-internal fun LyricLine.sharePrimaryText(): String {
-    return text.trim().ifBlank {
-        backgroundText?.trim().orEmpty()
-    }
-}
-
 internal fun LyricLine.toShareLyricBlock(
     includeOriginal: Boolean = true,
     includeTranslation: Boolean = true,
@@ -353,17 +347,8 @@ internal fun LyricLine.toShareLyricBlock(
     }
 }
 
-internal fun LyricLine.shareLyricFieldTexts(
-    includeOriginal: Boolean,
-    includeTranslation: Boolean,
-    includePronunciation: Boolean
-): List<String> = toShareLyricBlock(
-    includeOriginal = includeOriginal,
-    includeTranslation = includeTranslation,
-    includePronunciation = includePronunciation
-).let { block ->
-    if (block == null) emptyList() else listOf(block.primary) + block.secondary
-}
+internal fun lyricShareBrandName(context: Context, customInfo: String): String =
+    customInfo.trim().removePrefix("@").trim().ifBlank { context.getString(R.string.lyric_share_footer_default) }
 
 internal fun lyricShareBrandName(context: Context, customInfo: String): String =
     customInfo.trim().removePrefix("@").trim().ifBlank { context.getString(R.string.lyric_share_footer_default) }

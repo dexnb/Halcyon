@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -22,7 +21,6 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,7 +29,6 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -51,12 +48,14 @@ import com.ella.music.ui.player.AppleMusicSingleLyricLine
 
 /** Compose-backed renderer for the system overlay and status-bar lyric surfaces. */
 internal class DesktopComposeLyricView(context: Context) : FrameLayout(context) {
+    var livePositionProvider: (() -> Long?)? = null
     var windowTouchHandler: ((View, MotionEvent) -> Boolean)? = null
 
     private val composeLifecycleOwner = DesktopComposeLifecycleOwner()
     private var currentLine by mutableStateOf(
         LyricLine(timeMs = 0L, text = "Halcyon", endMs = 4_000L)
     )
+    private var currentInterlude by mutableStateOf<com.ella.music.ui.player.AppleMusicInterlude?>(null)
     private var currentPositionMs by mutableLongStateOf(0L)
     private var playbackRunning by mutableStateOf(true)
     private var fontScale by mutableFloatStateOf(1f)
@@ -231,9 +230,13 @@ internal class DesktopComposeLyricView(context: Context) : FrameLayout(context) 
         pronunciationWordEnds: LongArray,
         backgroundWordTexts: List<String>,
         backgroundWordStarts: LongArray,
-        backgroundWordEnds: LongArray
+        backgroundWordEnds: LongArray,
+        interludeStartMs: Long = -1L,
+        interludeEndMs: Long = -1L
     ) {
         currentPositionMs = positionMs
+        currentInterlude = if (interludeStartMs >= 0L && interludeEndMs > interludeStartMs)
+            com.ella.music.ui.player.AppleMusicInterlude(interludeStartMs, interludeEndMs, 0) else null
         val words = buildLyricWords(wordTexts, wordStarts, wordEnds)
         val pronunciationWords = buildLyricWords(
             pronunciationWordTexts,
@@ -333,15 +336,11 @@ internal class DesktopComposeLyricView(context: Context) : FrameLayout(context) 
         } else {
             emptyList()
         }
-        var smoothPositionMs by remember { mutableLongStateOf(currentPositionMs) }
-        LaunchedEffect(currentPositionMs, playbackRunning) {
-            val anchorPositionMs = currentPositionMs
-            val anchorFrameNs = withFrameNanos { it }
-            smoothPositionMs = anchorPositionMs
-            while (playbackRunning) {
-                val frameNs = withFrameNanos { it }
-                smoothPositionMs = anchorPositionMs + ((frameNs - anchorFrameNs) / 1_000_000L)
-            }
+        val position = com.ella.music.ui.player.rememberLyricFramePosition(
+            currentPositionMs, playbackRunning, provider = livePositionProvider)
+        val waiting = currentInterlude
+        val waitingActive by remember(waiting, position) {
+            androidx.compose.runtime.derivedStateOf { waiting?.isActiveAt(position.value) == true }
         }
         val fontFamily = remember(lyricFontPath, lyricFontWeight, lyricFontItalic) {
             FontFamily(
@@ -378,10 +377,20 @@ internal class DesktopComposeLyricView(context: Context) : FrameLayout(context) 
                 ),
             contentAlignment = verticalAlignment
         ) {
-            key(outlineEnabled) {
+            if (waiting != null && waitingActive) {
+                com.ella.music.ui.player.AppleMusicInterlude(
+                    interlude = waiting, positionMs = currentPositionMs, positionState = position,
+                    contentColor = Color(textColor).copy(alpha = opacityPercent / 100f),
+                    textAlign = when (effectiveAlign) {
+                        SettingsManager.PLAYER_LYRIC_ALIGN_RIGHT -> androidx.compose.ui.text.style.TextAlign.End
+                        SettingsManager.PLAYER_LYRIC_ALIGN_CENTER -> androidx.compose.ui.text.style.TextAlign.Center
+                        else -> androidx.compose.ui.text.style.TextAlign.Start
+                    }, touchFeedbackEnabled = false, onSeek = {}, compact = statusBarMode
+                )
+            } else key(outlineEnabled) {
                 AppleMusicSingleLyricLine(
                     line = line,
-                    currentPositionMs = smoothPositionMs,
+                    currentPositionMs = currentPositionMs, currentPositionState = position,
                     // In status-bar mode the selected secondary source is rendered by the dedicated
                     // status-bar path below. The normal lyric-line secondary slots stay reserved
                     // for the desktop floating-window renderer.
@@ -463,8 +472,6 @@ internal class DesktopComposeLyricView(context: Context) : FrameLayout(context) 
     }
 
     private fun Char.isLatinLetter(): Boolean = this in 'A'..'Z' || this in 'a'..'z'
-    private fun String?.isDuetAgent(): Boolean =
-        equals("v1", ignoreCase = true) || equals("v2", ignoreCase = true)
 }
 
 private class DesktopComposeLifecycleOwner :
@@ -502,16 +509,6 @@ private class DesktopComposeLifecycleOwner :
         registry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         viewModelStore.clear()
     }
-}
-
-internal fun mergeDesktopStatusBarLyric(
-    mainText: String,
-    secondaryText: String,
-    mergeSecondary: Boolean
-): String = if (mergeSecondary && secondaryText.isNotBlank()) {
-    "${mainText.trimEnd()} ${secondaryText.normalizeDesktopStatusBarSecondaryText()}"
-} else {
-    mainText
 }
 
 /**

@@ -12,7 +12,6 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import com.ella.music.data.remote.RemoteMusicProvider
 import androidx.annotation.StringRes
 import com.ella.music.R
 import org.json.JSONObject
@@ -43,10 +42,6 @@ data class LxSourceConfig(
     val url: String,
     val name: String,
     val script: String
-)
-
-data class OnlineSourceSelection(
-    val provider: RemoteMusicProvider
 )
 
 enum class BottomBarGlassEffect {
@@ -122,13 +117,6 @@ class SettingsManager(private val context: Context) :
                 prefs[KEY_MUSICFREE_PLUGINS_JSON] = plugins.toMusicFreeJson()
                 prefs[KEY_MUSICFREE_SELECTED_PLUGIN_ID] = selected.id
             }
-        }
-    }
-
-    suspend fun clearMusicFreePlugins() {
-        context.dataStore.edit {
-            it.remove(KEY_MUSICFREE_PLUGINS_JSON)
-            it.remove(KEY_MUSICFREE_SELECTED_PLUGIN_ID)
         }
     }
 
@@ -271,6 +259,7 @@ class SettingsManager(private val context: Context) :
         val KEY_APP_DISPLAY_SCALE_PERCENT = intPreferencesKey("app_display_scale_percent")
         val KEY_APP_LANGUAGE = stringPreferencesKey("app_language")
         val KEY_APP_ICON_STYLE = stringPreferencesKey("app_icon_style")
+        val KEY_RECENTS_ICON_FOLLOWS_SYSTEM_THEME = booleanPreferencesKey("recents_icon_follows_system_theme")
         val KEY_WIDGET_SAFE_LAYOUT = booleanPreferencesKey("widget_safe_layout")
         val KEY_LIBRARY_SOURCE = stringPreferencesKey("library_source")
         val KEY_BOTTOM_BAR_STYLE = stringPreferencesKey("bottom_bar_style")
@@ -962,12 +951,6 @@ class SettingsManager(private val context: Context) :
         const val SYSTEM_BARS_HIDDEN_SPACE_USE = 0
         const val SYSTEM_BARS_HIDDEN_SPACE_NOT_USE = 1
 
-        fun systemBarsReserveSpaceForSelection(index: Int): Boolean =
-            index == SYSTEM_BARS_HIDDEN_SPACE_NOT_USE
-
-        fun systemBarsSelectionForReserveSpace(reserveSpace: Boolean): Int =
-            if (reserveSpace) SYSTEM_BARS_HIDDEN_SPACE_NOT_USE else SYSTEM_BARS_HIDDEN_SPACE_USE
-
         const val DEFAULT_APP_FONT_SCALE_PERCENT = 100
         const val APP_FONT_SCALE_MIN_PERCENT = 75
         const val APP_FONT_SCALE_MAX_PERCENT = 175
@@ -1145,6 +1128,7 @@ class SettingsManager(private val context: Context) :
         const val APP_LANGUAGE_RU = "ru"
         const val APP_LANGUAGE_TR = "tr"
         const val APP_LANGUAGE_AR = "ar"
+        const val DEFAULT_RECENTS_ICON_FOLLOWS_SYSTEM_THEME = true
         const val APP_ICON_STYLE_DEFAULT = "default"
         const val APP_ICON_STYLE_ANIME = "anime"
         const val APP_ICON_STYLE_LOLI = "loli"
@@ -1323,14 +1307,6 @@ class SettingsManager(private val context: Context) :
         @StringRes
         val DEFAULT_SHORTCUT_FOLDER_LABEL_RES = R.string.settings_shortcut_folder
 
-        fun defaultShortcutLibraryLabel(context: Context): String =
-            context.getString(DEFAULT_SHORTCUT_LIBRARY_LABEL_RES)
-
-        fun defaultShortcutPlaylistsLabel(context: Context): String =
-            context.getString(DEFAULT_SHORTCUT_PLAYLISTS_LABEL_RES)
-
-        fun defaultShortcutFolderLabel(context: Context): String =
-            context.getString(DEFAULT_SHORTCUT_FOLDER_LABEL_RES)
         const val DEFAULT_HOME_SECTION_ORDER = "library,online,recent"
         const val DEFAULT_HOME_TOP_BAR_ACTION_ORDER = "shuffle,analytics,ai,settings"
         const val DEFAULT_RANDOM_SORT_SEED = 0
@@ -1717,6 +1693,7 @@ class SettingsManager(private val context: Context) :
             setBoolean(KEY_MUSIC_VIDEO_LONG_PRESS_IMMERSIVE_LYRICS_ENABLED)
             setBoolean(KEY_MUSIC_VIDEO_IMMERSIVE_LYRICS_HIDE_SYSTEM_BARS)
             setBoolean(KEY_WIDGET_SAFE_LAYOUT)
+            setBoolean(KEY_RECENTS_ICON_FOLLOWS_SYSTEM_THEME)
             setString(KEY_HOME_SEARCH_TARGET)
             setBoolean(KEY_BOTTOM_DOCK_MERGE_SEARCH)
             setInt(KEY_SYSTEM_BARS_MODE)

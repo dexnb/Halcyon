@@ -2062,7 +2062,7 @@
     <string name="settings_player_lyrics_corner_actions">가사 번역 / 반주 버튼</string>
     <string name="settings_player_lyrics_corner_actions_summary">Apple Music이 아닌 재생 페이지의 가사 화면에 번역과 반주 바로가기를 표시합니다</string>
     <string name="settings_player_landscape_style">기본 가로 화면 재생 스타일</string>
-    <string name="settings_player_landscape_style_summary">가로 화면 재생을 열 때 사용: %1$s</string>
+    <string name="settings_player_landscape_style_summary">휴대폰 세로 화면에서 여는 확장 플레이어와 가로 화면 재생에 사용: %1$s</string>
     <string name="settings_player_landscape_style_wide">태블릿/대화면 적응형 플레이어</string>
     <string name="settings_player_landscape_style_cover_flow">CoverFlow 커버 월</string>
     <string name="settings_player_landscape_style_music_video">MV 몰입형 가사</string>

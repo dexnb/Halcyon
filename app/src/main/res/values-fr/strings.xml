@@ -2062,7 +2062,7 @@
     <string name="settings_player_lyrics_corner_actions">Boutons traduction / accompagnement</string>
     <string name="settings_player_lyrics_corner_actions_summary">Afficher les raccourcis traduction et accompagnement sur les pages de paroles hors Apple Music</string>
     <string name="settings_player_landscape_style">Style par défaut du lecteur en paysage</string>
-    <string name="settings_player_landscape_style_summary">Utilisé à l’ouverture de la lecture en paysage : %1$s</string>
+    <string name="settings_player_landscape_style_summary">Pour le lecteur agrandi sur téléphone en portrait et la lecture en paysage : %1$s</string>
     <string name="settings_player_landscape_style_wide">Lecteur adaptatif tablette/grand écran</string>
     <string name="settings_player_landscape_style_cover_flow">Mur CoverFlow</string>
     <string name="settings_player_landscape_style_music_video">Paroles MV immersives</string>

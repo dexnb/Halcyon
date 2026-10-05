@@ -61,13 +61,11 @@ import com.ella.music.data.model.albumIdentityId
 import com.ella.music.data.model.formatPlaybackDuration
 import com.ella.music.ui.components.AudioQualityListBadge
 import com.ella.music.ui.components.DefaultAlbumCover
-import com.ella.music.ui.components.ellaPageBackground
 import com.ella.music.ui.player.DynamicCoverSource
 import com.ella.music.ui.player.DynamicCoverVideo
 import com.ella.music.ui.components.ExplicitSongTitle
 import com.ella.music.ui.components.PlayNextQuickButton
 import com.ella.music.ui.components.MusicVideoListAction
-import com.ella.music.ui.components.openSongExternalUrl
 import com.ella.music.ui.components.rememberSongListVideoActions
 import com.ella.music.ui.components.RatingStarIcon
 import com.ella.music.ui.components.SafeCoverImage

@@ -66,7 +66,7 @@ fun LyricLine.primaryEndMs(
         mainEnd > resolvedNextLineStartMs &&
             !preservesPrimaryOverlapWith(
                 nextLine = nextLine,
-                sungEndMs = mainWordEndMs ?: backgroundTimedEndMs ?: mainEnd
+                sungEndMs = mainEnd
             ) -> resolvedNextLineStartMs
         else -> mainEnd
     }

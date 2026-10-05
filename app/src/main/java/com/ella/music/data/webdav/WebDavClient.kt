@@ -449,10 +449,6 @@ object WebDavClient {
         }
     }
 
-    fun uploadFileFromString(url: String, config: WebDavConfig, content: String, contentType: String = "application/json") {
-        uploadFile(url, config, content.toByteArray(Charsets.UTF_8), contentType)
-    }
-
     fun uploadFileFromFile(url: String, config: WebDavConfig, file: File, contentType: String = "application/zip") {
         val ctx = requireContext()
         require(file.isFile) { "Upload file does not exist" }

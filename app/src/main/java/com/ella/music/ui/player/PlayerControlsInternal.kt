@@ -3,7 +3,6 @@ package com.ella.music.ui.player
 import android.content.Context
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Color as AndroidColor
 import android.media.MediaRouter2
 import android.os.Build
 import android.provider.Settings

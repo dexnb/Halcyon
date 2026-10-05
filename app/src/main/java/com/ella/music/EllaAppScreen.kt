@@ -1,7 +1,6 @@
 package com.ella.music
 
 import android.app.Activity
-import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -15,11 +14,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.platform.LocalWindowInfo
 import top.yukonga.miuix.kmp.basic.NavigationRailValue
@@ -27,15 +22,12 @@ import top.yukonga.miuix.kmp.basic.rememberNavigationRailState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -62,7 +54,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color as ComposeColor
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -74,8 +65,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.core.view.WindowCompat
@@ -91,7 +80,6 @@ import com.ella.music.data.BottomBarStyle
 import com.ella.music.data.SettingsManager
 import com.ella.music.data.model.playlistIdentityKey
 import com.ella.music.data.repository.MusicScanSummary
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
@@ -134,12 +122,6 @@ import com.ella.music.viewmodel.MainViewModel
 import com.ella.music.viewmodel.PlayerViewModel
 import top.yukonga.miuix.kmp.blur.layerBackdrop as layerMiuixBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop as rememberMiuixLayerBackdrop
-import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Close
-import top.yukonga.miuix.kmp.icon.extended.Play
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -714,7 +696,8 @@ fun EllaApp(
         null
     }
     val miniPlayerLyricSecondaryText = if (isPlaying && miniPlayerLyricsVisible) {
-        when (miniPlayerLyricSecondary) {
+        com.ella.music.ui.components.miniPlayerBackingText(currentLyricLine)
+            ?: when (miniPlayerLyricSecondary) {
             SettingsManager.LYRIC_SECONDARY_TRANSLATION -> currentLyricLine?.translation?.takeIf { it.isNotBlank() }
             SettingsManager.LYRIC_SECONDARY_PRONUNCIATION -> currentLyricLine?.pronunciation?.takeIf { it.isNotBlank() }
             else -> null
@@ -731,7 +714,10 @@ fun EllaApp(
             lineEndMs = currentLyricLine.endMs
                 ?: nextLyricLine?.timeMs
                 ?: (lineStartMs + 5_000L),
-            words = currentLyricLine.words
+            words = currentLyricLine.words,
+            agent = currentLyricLine.agent,
+            backgroundWords = currentLyricLine.backgroundWords,
+            backgroundText = currentLyricLine.backgroundText
         )
     } else {
         null
@@ -908,6 +894,7 @@ fun EllaApp(
             }
             CompositionLocalProvider(
                 LocalPlayerMorph provides playerMorph,
+                com.ella.music.ui.player.LocalPlayerLyricPositionProvider provides remember(playerViewModel) { playerViewModel::livePositionMs },
                 LocalAppNavigator provides { route ->
                     if (showPlayerOverlay) {
                         returnToPlayerRoute = currentRouteIdentity

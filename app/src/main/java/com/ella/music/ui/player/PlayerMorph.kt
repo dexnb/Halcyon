@@ -66,12 +66,17 @@ internal fun Modifier.miniMorphAnchor(artwork: Boolean = false, radius: Dp = 0.d
     }
 }
 
-internal fun Modifier.playerMorphArtwork(): Modifier = composed {
-    val state = LocalPlayerMorph.current.takeIf { LocalPlayerMorphSurface.current }
+internal fun Modifier.playerMorphArtwork(enabled: Boolean = true): Modifier = composed {
+    val state = LocalPlayerMorph.current.takeIf { enabled && LocalPlayerMorphSurface.current }
     val layer = rememberGraphicsLayer()
     var bounds by remember { mutableStateOf(Rect.Zero) }
-    DisposableEffect(layer) {
-        onDispose { if (state?.artworkLayer === layer) state.artworkLayer = null }
+    DisposableEffect(state, layer) {
+        onDispose {
+            if (state?.artworkLayer === layer) {
+                state.artworkLayer = null
+                state.artworkBounds = null
+            }
+        }
     }
     if (state == null) this else onGloballyPositioned {
         bounds = Rect(it.positionInRoot(), it.size.toSize())
@@ -131,3 +136,6 @@ internal fun Modifier.playerMorphSurface(state: PlayerMorphState, floating: Bool
             }
         }
     }
+
+internal fun playerMorphPageArtworkEnabled(surface: Boolean, overlayExpanded: Boolean, style: Int): Boolean =
+    surface && !(overlayExpanded && style != com.ella.music.data.SettingsManager.PLAYER_LANDSCAPE_STYLE_WIDE)

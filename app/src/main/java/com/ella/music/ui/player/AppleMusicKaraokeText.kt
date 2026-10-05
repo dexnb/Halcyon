@@ -112,6 +112,7 @@ internal fun TimedLyricText(
     glowRadius: Float = 0f,
     onWordClick: ((Long) -> Unit)? = null,
     onLongPress: (() -> Unit)? = null,
+    positionClock: State<Long>? = null,
     modifier: Modifier = Modifier
 ) {
     // TTML may encode the blank before a word as part of that word. Move it to the prior
@@ -198,7 +199,7 @@ internal fun TimedLyricText(
     val hdrHighlightEnabled by remember(context) {
         SettingsManager.getInstance(context).lyricHdrHighlightEnabled
     }.collectAsState(initial = false)
-    val positionState = rememberUpdatedState(positionMs)
+    val positionState = positionClock ?: rememberUpdatedState(positionMs)
     val content: @Composable () -> Unit = {
         timedWords.forEachIndexed { index, renderWord ->
             AppleMusicKaraokeWord(
@@ -228,7 +229,7 @@ internal fun TimedLyricText(
         if (followWordFocus) {
             AppleMusicFocusedTimedRow(
                 timedWords = timedWords,
-                positionMs = positionMs,
+                positionMs = positionState.value,
                 active = active,
                 horizontalArrangement = horizontalArrangement,
                 rubyBelow = rubyBelow,
@@ -837,7 +838,7 @@ private fun AppleMusicKaraokeGlyphs(
             val layout = cache.value ?: return@drawBehind
             val waveClock = if (active) positionMs.value else 0L
             val letterCount = layout.layoutInput.text.length
-            if (!(active && flamingoWaveEligible(referenceMotion, renderWord, letterCount))) {
+            if (!(active && flamingoWaveActiveAt(referenceMotion, renderWord, letterCount, waveClock))) {
                 drawKaraokeWord(layout)
                 return@drawBehind
             }
@@ -1050,38 +1051,9 @@ internal fun Color.withHdrHighlightBoost(enabled: Boolean, ratio: Float = LyricH
     )
 }
 
-internal fun karaokeRainbowFillStops(
-    progress: Float,
-    baseAlpha: Float,
-    isRtl: Boolean,
-    feather: Float = DefaultKaraokeFeather
-): Array<Pair<Float, Color>> {
-    val soft = feather.coerceIn(0.05f, 0.85f)
-    val leading = karaokeRainbowColor(0.15f, baseAlpha)
-    val mid = karaokeRainbowColor(0.5f, baseAlpha)
-    val edge = karaokeRainbowColor(0.85f, baseAlpha)
-    return if (isRtl) {
-        arrayOf(
-            0f to Color.Transparent,
-            (1f - progress).coerceAtLeast(0f) to Color.Transparent,
-            (1f - (progress - soft * 0.45f)).coerceIn(0f, 1f) to edge,
-            (1f - (progress - soft)).coerceIn(0f, 1f) to mid,
-            1f to leading
-        )
-    } else {
-        arrayOf(
-            0f to leading,
-            (progress - soft).coerceAtLeast(0f) to mid,
-            (progress - soft * 0.45f).coerceAtLeast(0f) to edge,
-            progress to Color.Transparent,
-            1f to Color.Transparent
-        )
-    }
-}
-
 /**
  * Karaoke fill color stops.
- * Default / experimental trail: all-behind soft edge of [feather] (soft zone trails progress).
+ * Default / experimental trail: the soft edge traverses and clears the glyph by the timed end.
  * [qzCentered]: legacy soft zone centered on progress (half ahead / half behind) with
  * expanded domain so the edge fully clears at 0 and 1 — unused by the trail toggle.
  */
@@ -1094,21 +1066,18 @@ internal fun karaokeFillStops(
 ): Array<Pair<Float, Color>> {
     val soft = feather.coerceIn(0.05f, 0.85f)
     if (!qzCentered) {
-        return if (isRtl) {
-            arrayOf(
-                0f to Color.Transparent,
-                (1f - progress).coerceAtLeast(0f) to Color.Transparent,
-                (1f - (progress - soft)).coerceIn(0f, 1f) to bright,
-                1f to bright
-            )
-        } else {
-            arrayOf(
-                0f to bright,
-                (progress - soft).coerceAtLeast(0f) to bright,
-                progress to Color.Transparent,
-                1f to Color.Transparent
-            )
-        }
+        // Let the feather leave the glyph by the timed word's end, as in 1.2.9. Clamping
+        // the edge to progress left the final glyph pixels dim until the 100% branch,
+        // which made every short CJK unit flash when the next word began.
+        val edge = progress.coerceIn(0f, 1f) * (1f + soft)
+        val solid = (edge - soft).coerceIn(0f, 1f)
+        val clear = edge.coerceIn(0f, 1f)
+        fun colorAt(x: Float): Color = bright.copy(
+            alpha = bright.alpha * ((edge - x) / soft).coerceIn(0f, 1f)
+        )
+        val stops = sortedSetOf(0f, solid, clear, 1f).map { it to colorAt(it) }
+        return if (isRtl) stops.asReversed().map { (x, color) -> 1f - x to color }.toTypedArray()
+            else stops.toTypedArray()
     }
     val half = soft * 0.5f
     val center = ((1f + soft) * progress.coerceIn(0f, 1f)) - half
@@ -1130,36 +1099,6 @@ internal fun karaokeFillStops(
             0f to bright,
             a to bright,
             b to Color.Transparent,
-            1f to Color.Transparent
-        )
-    }
-}
-
-internal fun karaokeSheenStops(
-    progress: Float,
-    contentColor: Color,
-    glow: Float,
-    baseAlpha: Float,
-    isRtl: Boolean,
-    trailWidth: Float = 0.20f
-): Array<Pair<Float, Color>> {
-    val sheenAlpha = (0.10f + glow * 0.20f) * baseAlpha
-    val trail = trailWidth.coerceIn(0.12f, 0.55f)
-    return if (isRtl) {
-        arrayOf(
-            0f to Color.Transparent,
-            (1f - (progress + 0.045f)).coerceAtLeast(0f) to Color.Transparent,
-            (1f - (progress - 0.055f)).coerceIn(0f, 1f) to contentColor.copy(alpha = sheenAlpha),
-            (1f - (progress - trail)).coerceAtMost(1f) to Color.Transparent,
-            1f to Color.Transparent
-        )
-    } else {
-        val sheenStart = (progress - trail).coerceAtLeast(0f)
-        arrayOf(
-            0f to Color.Transparent,
-            sheenStart to Color.Transparent,
-            (progress - 0.055f).coerceIn(sheenStart, progress) to contentColor.copy(alpha = sheenAlpha),
-            (progress + 0.045f).coerceAtMost(1f) to Color.Transparent,
             1f to Color.Transparent
         )
     }
@@ -1829,3 +1768,8 @@ internal fun flamingoWaveStrength(durationMs: Long): Float {
     val t = ((durationMs - 1000L) / 2000f).coerceIn(0f, 1f)
     return t * t * (3f - 2f * t)
 }
+
+/** Unsung and completed units need one text pass, rather than one full pass per letter. */
+internal fun flamingoWaveActiveAt(referenceMotion: Boolean, renderWord: AppleMusicRenderWord, letterCount: Int, positionMs: Long): Boolean =
+    flamingoWaveEligible(referenceMotion, renderWord, letterCount) &&
+        positionMs > renderWord.word.startMs && positionMs < (renderWord.sustainEndMs ?: renderWord.word.endMs)

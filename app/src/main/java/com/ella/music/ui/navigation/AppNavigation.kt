@@ -15,11 +15,8 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.ella.music.data.SettingsManager
-import com.ella.music.isSettingsGraphRoute
-import com.ella.music.isSettingsHomeRoute
 import com.ella.music.data.remote.RemoteMusicProvider
 import com.ella.music.ui.about.AboutScreen
 import com.ella.music.ui.about.UpdateScreen
@@ -445,10 +442,8 @@ fun AppNavigation(
                 onBack = {
                     val previousEntry = navController.previousBackStackEntry
                     if (previousEntry?.destination?.route == Screen.Album.route) {
-                        val nextRequest = previousEntry.savedStateHandle
-                            .get<Int>(AlbumListRestoreScrollRequestKey)
-                            ?: 0
-                            .plus(1)
+                        val nextRequest = (previousEntry.savedStateHandle
+                            .get<Int>(AlbumListRestoreScrollRequestKey) ?: 0) + 1
                         previousEntry.savedStateHandle[AlbumListRestoreScrollRequestKey] = nextRequest
                     }
                     navController.popBackStack()

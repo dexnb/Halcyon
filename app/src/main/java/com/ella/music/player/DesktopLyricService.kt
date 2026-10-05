@@ -249,7 +249,9 @@ class DesktopLyricService : Service() {
             pronunciationWordEnds = intent.getLongArrayExtra(EXTRA_PRONUNCIATION_WORD_ENDS) ?: LongArray(0),
             backgroundWordTexts = intent.getStringArrayExtra(EXTRA_BACKGROUND_WORD_TEXTS)?.toList().orEmpty(),
             backgroundWordStarts = intent.getLongArrayExtra(EXTRA_BACKGROUND_WORD_STARTS) ?: LongArray(0),
-            backgroundWordEnds = intent.getLongArrayExtra(EXTRA_BACKGROUND_WORD_ENDS) ?: LongArray(0)
+            backgroundWordEnds = intent.getLongArrayExtra(EXTRA_BACKGROUND_WORD_ENDS) ?: LongArray(0),
+            interludeStartMs = intent.getLongExtra(EXTRA_INTERLUDE_START, -1L),
+            interludeEndMs = intent.getLongExtra(EXTRA_INTERLUDE_END, -1L)
         )
         lyricView?.setPlaybackActive(controller?.isPlaying ?: true)
     }
@@ -267,6 +269,7 @@ class DesktopLyricService : Service() {
             desktopLyricHeight()
         }
         val lyric = DesktopComposeLyricView(this).apply {
+            livePositionProvider = { controller?.currentPosition?.coerceAtLeast(0L) }
             windowTouchHandler = ::onDrag
             setBackgroundColor(Color.TRANSPARENT)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -569,6 +572,16 @@ class DesktopLyricService : Service() {
         applyCurrentSettingsToViews()
         restoreLockedLyricOpacity()
         if (lock && !statusBarMode) postUnlockNotification() else notificationManager.cancel(NOTIFICATION_ID)
+    }
+
+    private fun overlayWindowAlpha(): Float {
+        val supportsLimit = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val passesTouches = desktopLyricPassThroughTouches(statusBarMode, locked)
+        val limit = if (passesTouches && supportsLimit) {
+            getSystemService(android.hardware.input.InputManager::class.java)
+                ?.maximumObscuringOpacityForTouch ?: 0.8f
+        } else 1f
+        return desktopLyricWindowAlpha(passesTouches, supportsLimit, limit)
     }
 
     private fun restoreLockedLyricOpacity() {
@@ -1125,6 +1138,8 @@ class DesktopLyricService : Service() {
         const val EXTRA_LINE_END = "line_end"
         const val EXTRA_AGENT = "agent"
         const val EXTRA_IS_TTML = "is_ttml"
+        const val EXTRA_INTERLUDE_START = "interlude_start"
+        const val EXTRA_INTERLUDE_END = "interlude_end"
         const val EXTRA_BACKGROUND_TEXT = "background_text"
         const val EXTRA_BACKGROUND_TRANSLATION = "background_translation"
         const val EXTRA_BACKGROUND_START = "background_start"

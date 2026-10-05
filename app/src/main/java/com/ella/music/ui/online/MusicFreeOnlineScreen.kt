@@ -6,9 +6,6 @@ import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
@@ -17,14 +14,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,7 +50,6 @@ import com.ella.music.viewmodel.MusicFreeOnlineViewModel
 import com.ella.music.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.BasicComponent
-import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -96,16 +89,47 @@ fun MusicFreeOnlineScreen(
     val currentPluginId = selectedPlugin?.id.orEmpty()
     var observedPluginId by remember { mutableStateOf<String?>(null) }
     var actionItem by remember { mutableStateOf<MusicFreeOnlineSong?>(null) }
-    LaunchedEffect(currentPluginId) {
-        val previousPluginId = observedPluginId
-        if (previousPluginId != null && previousPluginId != currentPluginId) {
-            state.clearResults("")
-        }
-        observedPluginId = currentPluginId
-    }
+    var searchJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { searchJob?.cancel() } }
 
     fun showToast(text: String) {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+    }
+
+    fun searchSelectedPlugin(automatic: Boolean = false) {
+        val plugin = selectedPlugin ?: return
+        val request = state.searchRequests.request(state.searchQuery, automatic) ?: return
+        searchJob?.cancel()
+        searchJob = scope.launch {
+            state.isBusy = true
+            try {
+                val found = service.search(request.query, plugin)
+                if (state.searchRequests.isCurrent(request)) {
+                    state.results = found
+                    state.message = if (found.isEmpty()) "没有找到相关歌曲" else "找到 ${found.size} 首歌曲"
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                if (state.searchRequests.isCurrent(request)) {
+                    state.message = error.localizedMessage ?: "搜索失败"
+                    showToast(state.message)
+                }
+            } finally {
+                if (state.searchRequests.isCurrent(request)) state.isBusy = false
+            }
+        }
+    }
+    LaunchedEffect(currentPluginId) {
+        val previousPluginId = observedPluginId
+        if (previousPluginId != null && previousPluginId != currentPluginId) {
+            state.searchRequests.invalidate()
+            searchJob?.cancel()
+            state.isBusy = false
+            state.clearResults("")
+            searchSelectedPlugin(automatic = true)
+        }
+        observedPluginId = currentPluginId
     }
 
     suspend fun playLazyOnlineQueue(startItem: MusicFreeOnlineSong) {
@@ -193,22 +217,8 @@ fun MusicFreeOnlineScreen(
                 onQueryChange = { state.searchQuery = it },
                 onSearch = {
                     if (state.searchQuery.isNotBlank() && !state.isBusy) {
-                        if (selectedPlugin == null) {
-                            showToast(context.getString(R.string.lx_online_no_source_hint))
-                        } else scope.launch {
-                            state.isBusy = true
-                            try {
-                                state.results = service.search(state.searchQuery, selectedPlugin)
-                                state.message = if (state.results.isEmpty()) "没有找到相关歌曲" else "找到 ${state.results.size} 首歌曲"
-                            } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                                throw cancelled
-                            } catch (error: Exception) {
-                                state.message = error.localizedMessage ?: "搜索失败"
-                                showToast(state.message)
-                            } finally {
-                                state.isBusy = false
-                            }
-                        }
+                        if (selectedPlugin == null) showToast(context.getString(R.string.lx_online_no_source_hint))
+                        else searchSelectedPlugin()
                     }
                 }
             )
@@ -293,7 +303,6 @@ fun MusicFreeOnlineScreen(
                 }
             }
 
-
         }
     }
 
@@ -330,4 +339,3 @@ private fun String.sanitizeMusicFreeFileName(): String {
         .trim()
         .ifBlank { "Ella Music.mp3" }
 }
-

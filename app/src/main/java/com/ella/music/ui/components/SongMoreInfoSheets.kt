@@ -6,16 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,7 +25,6 @@ import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.draw.clip
 import top.yukonga.miuix.kmp.basic.TextField
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -48,10 +43,6 @@ import com.ella.music.data.model.AudioInfo
 import com.ella.music.data.model.Song
 import com.ella.music.data.model.SongTagInfo
 import com.ella.music.data.model.formatPlaybackDuration
-import com.ella.music.data.neteaseAlbumUrl
-import com.ella.music.data.neteaseArtistUrl
-import com.ella.music.data.neteaseMvUrl
-import com.ella.music.data.neteaseSongUrl
 import com.ella.music.ui.navigation.LocalAppNavigator
 import com.ella.music.viewmodel.MainViewModel
 import com.ella.music.viewmodel.extractYear
@@ -607,4 +598,3 @@ private fun Long.formatSongDateTime(): String {
     val millis = if (this < 10_000_000_000L) this * 1000L else this
     return SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(millis))
 }
-

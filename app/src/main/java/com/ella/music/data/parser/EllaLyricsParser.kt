@@ -694,9 +694,6 @@ internal object EllaLyricsParser {
             lrcTimePattern.replace(line.trim(), "").trim()
         )
 
-    private fun String.isPronunciationLine(): Boolean =
-        isKanaPronunciationLine() || isLatinPronunciationLine()
-
     private fun String.isKanaPronunciationLine(): Boolean {
         val text = cleanLyricText()
         if (text.isBlank() || text.isMusicSymbolOnly() || text.any { it.isCjkIdeograph() }) return false

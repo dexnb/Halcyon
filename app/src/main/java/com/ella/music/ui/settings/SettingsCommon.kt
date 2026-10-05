@@ -19,8 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -30,21 +28,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ella.music.R
-import com.ella.music.ui.about.aboutCardFallbackColor
 import com.ella.music.ui.components.EllaMiuixDialog
 import com.ella.music.ui.components.EllaMiuixDialogActions
 import top.yukonga.miuix.kmp.basic.TextField
-import com.ella.music.ui.components.isAppWallpaperVisible
-import com.ella.music.ui.components.wallpaperAwareCardColor
 import kotlinx.coroutines.delay
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.blur.BlendColorEntry
-import top.yukonga.miuix.kmp.blur.BlurColors
-import top.yukonga.miuix.kmp.blur.BlurDefaults
-import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.blur.textureBlur
 import top.yukonga.miuix.kmp.preference.SliderPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -157,8 +147,6 @@ internal fun SettingsFocusAnchor(
         content()
     }
 }
-
-
 
 @Composable
 internal fun SplitSettingTextField(

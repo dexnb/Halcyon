@@ -170,22 +170,6 @@ class NavidromeService(private val context: Context) {
             List(songs.length()) { songFromJson(songs.getJSONObject(it), config) }
         }
 
-    suspend fun getSimilarSongs(config: RemoteMusicSourceConfig, songId: String, count: Int = 50): List<RemoteOnlineSong> =
-        withContext(Dispatchers.IO) {
-            val songs = request(config, "getSimilarSongs2", mapOf("id" to songId, "count" to count.coerceIn(1, 500).toString()))
-                .optJSONObject("subsonic-response")
-                ?.optJSONObject("similarSongs2")
-                ?.optJSONArray("song") ?: return@withContext emptyList()
-            List(songs.length()) { songFromJson(songs.getJSONObject(it), config) }
-        }
-
-    suspend fun getArtistInfo(config: RemoteMusicSourceConfig, artistId: String): JSONObject? =
-        withContext(Dispatchers.IO) {
-            request(config, "getArtistInfo2", mapOf("id" to artistId))
-                .optJSONObject("subsonic-response")
-                ?.optJSONObject("artistInfo2")
-        }
-
     suspend fun createPlaylist(config: RemoteMusicSourceConfig, name: String, songIds: List<String>) =
         withContext(Dispatchers.IO) {
             require(config.remoteWriteEnabled) { context.getString(R.string.remote_playlist_write_locked) }

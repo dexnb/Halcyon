@@ -34,7 +34,6 @@ import com.ella.music.data.scanner.MediaStoreAudioItem
 import com.ella.music.data.scanner.MusicScanner
 import com.ella.music.data.scanner.TwoStageScanCoordinator
 import com.ella.music.data.scanner.TwoStageScanEvent
-import com.ella.music.data.scanner.toShallowSong
 import com.ella.music.data.webdav.WebDavClient
 import com.ella.music.data.webdav.WebDavConfig
 import java.io.File
@@ -111,7 +110,6 @@ class MusicRepository(private val context: Context) {
     ) {
         val hasBoth: Boolean get() = hasTtml && hasPlain
     }
-
 
     private val scanner = MusicScanner(context)
     private val audioTagRepository = AudioTagRepository(
@@ -498,7 +496,6 @@ class MusicRepository(private val context: Context) {
         summary
     }
 
-
     private fun buildFullScanSummary(
         previousSongs: List<Song>,
         scannedSongs: List<Song>,
@@ -531,7 +528,6 @@ class MusicRepository(private val context: Context) {
             fullRescan = fullRescan
         )
     }
-
 
     suspend fun refreshSongAfterExternalEdit(song: Song): Song? = withContext(Dispatchers.IO) {
         if (song.path.isHttpAudioSource()) return@withContext null
@@ -1767,12 +1763,6 @@ class MusicRepository(private val context: Context) {
 
     private fun MediaStoreAudioItem.librarySyncKey(): String =
         com.ella.music.data.scanner.MediaStoreLibraryIndexer.mediaStoreLibrarySyncKey(id, path)
-
-
-    private fun Song.hasExistingLocalFile(): Boolean {
-        if (path.isBlank() || path.isContentAudioSource() || path.isHttpAudioSource()) return false
-        return runCatching { File(path).isFile }.getOrDefault(false)
-    }
 
     private fun Song.scanSummaryKey(): String = path.ifBlank { librarySyncKey() }
 

@@ -1520,7 +1520,7 @@
     <string name="settings_player_lyrics_corner_actions">Şarkı sözü çevirisi / eşlik düğmeleri</string>
     <string name="settings_player_lyrics_corner_actions_summary">Apple Music dışındaki şarkı sözü sayfalarında çeviri ve eşlik kısayollarını göster</string>
     <string name="settings_player_landscape_style">Varsayılan yatay oynatıcı stili</string>
-    <string name="settings_player_landscape_style_summary">Yatay çalma açıldığında kullanılır: %1$s</string>
+    <string name="settings_player_landscape_style_summary">Telefonda dikey yönde açılan genişletilmiş oynatıcı ve yatay oynatma için: %1$s</string>
     <string name="settings_player_landscape_style_wide">Uyarlanabilir tablet / büyük ekran oynatıcı</string>
     <string name="settings_player_landscape_style_cover_flow">CoverFlow kapak duvarı</string>
     <string name="settings_player_landscape_style_music_video">Sarmal klip şarkı sözleri</string>

@@ -765,7 +765,7 @@ class EllaLyricsParserTest {
     }
 
     @Test
-    fun ttmlHyphenatedWordsAreSpacedProperly() {
+    fun ttmlHyphenatedSyllablesKeepTheirOriginalJoin() {
         val ttml = """
             <tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata">
               <body>
@@ -788,8 +788,8 @@ class EllaLyricsParserTest {
         val result = parseTtml(ttml)!!
         val line = result.lyrics.single()
         assertEquals("When I see you again", line.text)
-        assertEquals("Uh - huh", line.backgroundText)
-        assertEquals(listOf("Uh - ", "huh"), line.backgroundWords.map { it.text })
+        assertEquals("Uh-huh", line.backgroundText)
+        assertEquals(listOf("Uh-", "huh"), line.backgroundWords.map { it.text })
     }
 
     @Test

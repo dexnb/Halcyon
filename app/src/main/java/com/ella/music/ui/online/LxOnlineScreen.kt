@@ -6,15 +6,11 @@ import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,26 +24,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.graphics.luminance
 import top.yukonga.miuix.kmp.basic.CardDefaults
-import top.yukonga.miuix.kmp.basic.DropdownImpl
-import top.yukonga.miuix.kmp.basic.DropdownItem
-import top.yukonga.miuix.kmp.basic.ListPopupColumn
-import top.yukonga.miuix.kmp.basic.PopupPositionProvider
-import top.yukonga.miuix.kmp.window.WindowListPopup
-import com.ella.music.ui.components.ApplyHalcyonSystemBarsToCurrentWindow
 import androidx.compose.ui.res.stringResource
 import com.ella.music.R
 import com.ella.music.data.SettingsManager
@@ -64,20 +50,17 @@ import com.ella.music.data.remote.RemoteOnlineSong
 import com.ella.music.data.remote.isSubsonicLike
 import com.ella.music.ui.components.SongItem
 import com.ella.music.ui.components.SongMoreActionHost
-import com.ella.music.ui.components.EllaMiuixChip
 import com.ella.music.ui.components.ellaPageBackground
 import com.ella.music.viewmodel.LxOnlineViewModel
 import com.ella.music.viewmodel.MainViewModel
 import com.ella.music.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.BasicComponent
-import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import com.ella.music.ui.components.EllaSmallTopAppBar
 import androidx.compose.ui.graphics.Color
-import com.ella.music.ui.components.wallpaperAwareCardColors
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
@@ -156,6 +139,8 @@ fun LxOnlineScreen(
             hasInitializedPlatform = true
         }
     }
+    var searchJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { searchJob?.cancel() } }
     var actionItem by remember { mutableStateOf<LxOnlineSong?>(null) }
     var remoteResults by remember { mutableStateOf<List<RemoteOnlineSong>>(emptyList()) }
     var remoteActionItem by remember { mutableStateOf<RemoteOnlineSong?>(null) }
@@ -163,6 +148,9 @@ fun LxOnlineScreen(
         val previousSourceId = observedSourceId
         val marker = "${selectedProvider.id}:$currentSourceId"
         if (previousSourceId != null && previousSourceId != marker) {
+            state.searchRequests.invalidate()
+            searchJob?.cancel()
+            state.isBusy = false
             state.clearResults()
             remoteResults = emptyList()
         }
@@ -181,8 +169,7 @@ fun LxOnlineScreen(
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
     }
 
-    suspend fun searchSelectedProvider() {
-        if (state.searchQuery.isBlank()) return
+    fun searchSelectedProvider(automatic: Boolean = false) {
         if (selectedProvider == RemoteMusicProvider.Lx && state.searchPlatform !in availablePlatforms) {
             showToast(context.getString(R.string.lx_no_supported_search_platform))
             return
@@ -191,30 +178,48 @@ fun LxOnlineScreen(
             showToast(context.getString(R.string.remote_source_configure_first))
             return
         }
-        state.isBusy = true
-        runCatching {
-            if (selectedProvider == RemoteMusicProvider.Lx) {
-                state.results = service.search(state.searchQuery, selectedSource, platform = state.searchPlatform)
-                remoteResults = emptyList()
-                state.message = if (state.results.isEmpty()) context.getString(R.string.lx_online_no_songs_found)
-                else context.getString(R.string.lx_online_songs_found, state.results.size)
-            } else {
-                val config = remoteConfig ?: error(context.getString(R.string.remote_source_configure_first))
-                remoteResults = when (selectedProvider) {
-                    RemoteMusicProvider.Navidrome -> navidromeService.search(state.searchQuery, config)
-                    RemoteMusicProvider.OpenSubsonic -> navidromeService.search(state.searchQuery, config)
-                    RemoteMusicProvider.Emby -> embyService.search(state.searchQuery, config)
-                    RemoteMusicProvider.Lx -> emptyList()
+        val request = state.searchRequests.request(state.searchQuery, automatic) ?: return
+        val platform = state.searchPlatform
+        val source = selectedSource
+        val provider = selectedProvider
+        val config = remoteConfig
+        searchJob?.cancel()
+        searchJob = scope.launch {
+            state.isBusy = true
+            try {
+                if (provider == RemoteMusicProvider.Lx) {
+                    val found = service.search(request.query, source, platform = platform)
+                    if (state.searchRequests.isCurrent(request)) {
+                        state.results = found
+                        remoteResults = emptyList()
+                        state.message = if (found.isEmpty()) context.getString(R.string.lx_online_no_songs_found)
+                            else context.getString(R.string.lx_online_songs_found, found.size)
+                    }
+                } else {
+                    val activeConfig = config ?: error(context.getString(R.string.remote_source_configure_first))
+                    val found = when (provider) {
+                        RemoteMusicProvider.Navidrome, RemoteMusicProvider.OpenSubsonic -> navidromeService.search(request.query, activeConfig)
+                        RemoteMusicProvider.Emby -> embyService.search(request.query, activeConfig)
+                        RemoteMusicProvider.Lx -> emptyList()
+                    }
+                    if (state.searchRequests.isCurrent(request)) {
+                        remoteResults = found
+                        state.results = emptyList()
+                        state.message = if (found.isEmpty()) context.getString(R.string.lx_online_no_songs_found)
+                            else context.getString(R.string.lx_online_songs_found, found.size)
+                    }
                 }
-                state.results = emptyList()
-                state.message = if (remoteResults.isEmpty()) context.getString(R.string.lx_online_no_songs_found)
-                else context.getString(R.string.lx_online_songs_found, remoteResults.size)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                if (state.searchRequests.isCurrent(request)) {
+                    state.message = error.localizedMessage ?: context.getString(R.string.lx_online_search_failed)
+                    showToast(state.message)
+                }
+            } finally {
+                if (state.searchRequests.isCurrent(request)) state.isBusy = false
             }
-        }.onFailure {
-            state.message = it.localizedMessage ?: context.getString(R.string.lx_online_search_failed)
-            showToast(state.message)
         }
-        state.isBusy = false
     }
 
     suspend fun playLazyOnlineQueue(startItem: LxOnlineSong) {
@@ -347,15 +352,19 @@ fun LxOnlineScreen(
                     availablePlatforms.getOrNull(index)?.let { platform ->
                         if (state.searchPlatform != platform) {
                             state.searchPlatform = platform
+                            state.searchRequests.invalidate()
+                            searchJob?.cancel()
+                            state.isBusy = false
                             state.clearResults()
                             remoteResults = emptyList()
                             scope.launch { settingsManager.setSelectedLxSearchPlatform(platform.source) }
+                            searchSelectedProvider(automatic = true)
                         }
                     }
                 },
                 query = state.searchQuery,
                 onQueryChange = { state.searchQuery = it },
-                onSearch = { scope.launch { searchSelectedProvider() } }
+                onSearch = { searchSelectedProvider() }
             )
 
             val statusMessage = if (state.isBusy) stringResource(R.string.lx_online_processing) else state.message

@@ -128,14 +128,10 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.basic.Search
-import top.yukonga.miuix.kmp.icon.extended.Add
-import top.yukonga.miuix.kmp.icon.extended.AddFolder
 import top.yukonga.miuix.kmp.icon.extended.Close
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.icon.extended.Download
-import top.yukonga.miuix.kmp.icon.extended.Help
 import top.yukonga.miuix.kmp.icon.extended.SelectAll
-import top.yukonga.miuix.kmp.icon.extended.Settings
 import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.Job
@@ -1626,18 +1622,6 @@ internal fun libraryLayoutAnchorSongIndex(firstVisibleItemIndex: Int, columns: I
 internal fun libraryLayoutItemIndexForSong(songIndex: Int, columns: Int): Int =
     if (columns > 1) songIndex.coerceAtLeast(0) / columns
     else songIndex.coerceAtLeast(0)
-
-internal fun libraryLayoutAfterPinch(
-    currentLayout: Int,
-    scaleDelta: Float,
-    threshold: Float = 0.2f
-): Int = when {
-    // A positive scale delta means the fingers spread apart. In the library that moves toward
-    // the denser cover grid: detailed list -> multi-row -> cover grid.
-    scaleDelta >= threshold -> LibraryPinchState.layoutForOrder(LibraryPinchState.layoutOrder(currentLayout) - 1)
-    scaleDelta <= -threshold -> LibraryPinchState.layoutForOrder(LibraryPinchState.layoutOrder(currentLayout) + 1)
-    else -> currentLayout
-}
 
 @Composable
 private fun Modifier.libraryPinchGesture(

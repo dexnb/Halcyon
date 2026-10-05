@@ -1,10 +1,17 @@
 package com.ella.music.player
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DesktopLyricOverlayChromeTest {
+    @Test
+    fun statusBarPassThroughStillRespectsAndroidTouchOpacityLimit() {
+        assertEquals(0.8f, desktopLyricWindowAlpha(true, true, 0.8f), 0.001f)
+        assertEquals(1f, desktopLyricWindowAlpha(true, false, 0.8f), 0.001f)
+    }
+
     @Test
     fun lockedDesktopLyricsDoNotKeepTheControlPanelChrome() {
         assertFalse(

@@ -161,14 +161,3 @@ internal fun resolveContinuePlaybackIndex(
     if (storedResumeKey.isNullOrBlank()) return -1
     return songs.indexOfFirst { it.playlistIdentityKey() == storedResumeKey }
 }
-
-internal fun List<Song>.containsPlayingSong(currentSong: Song?): Boolean {
-    val current = currentSong ?: return false
-    val currentKey = current.playlistIdentityKey()
-    val currentPath = current.path.trim().lowercase()
-    return any { song ->
-        song.playlistIdentityKey() == currentKey ||
-            (current.id > 0L && song.id == current.id) ||
-            (currentPath.isNotBlank() && song.path.trim().lowercase() == currentPath)
-    }
-}

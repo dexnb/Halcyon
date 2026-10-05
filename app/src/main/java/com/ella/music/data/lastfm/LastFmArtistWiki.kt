@@ -443,13 +443,6 @@ internal fun isWifiConnected(context: Context): Boolean {
     return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
 }
 
-internal fun isVpnActive(context: Context): Boolean {
-    val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-        ?: return false
-    return manager.getNetworkCapabilities(manager.activeNetwork)
-        ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-}
-
 internal suspend fun fetchLastFmArtistWiki(
     artistName: String,
     locale: Locale,

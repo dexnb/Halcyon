@@ -2,7 +2,6 @@ package com.ella.music.ui.folder
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +35,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ella.music.R
@@ -48,14 +46,8 @@ import com.ella.music.data.playbackSourcesForSongs
 import com.ella.music.ui.LibrarySortUiState
 import com.ella.music.ui.components.ConfirmDangerDialog
 import com.ella.music.ui.components.EllaSearchBar
-import com.ella.music.ui.components.EllaMiuixActionMenuGroup
 import com.ella.music.ui.components.EllaMiuixBottomSheet
-import com.ella.music.ui.components.EllaMiuixMenuItem
 import com.ella.music.ui.components.EllaSmallTopAppBar
-import com.ella.music.ui.components.ActionMenuCommonIcons
-import com.ella.music.ui.components.actionMenuIcon
-import com.ella.music.data.ActionMenuIds
-import top.yukonga.miuix.kmp.icon.extended.Refresh
 import com.ella.music.data.model.FAVORITES_PLAYLIST_ID
 import com.ella.music.data.model.UserPlaylist
 import com.ella.music.ui.components.AddToPlaylistSheet
@@ -89,13 +81,11 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Add
-import top.yukonga.miuix.kmp.icon.extended.AddFolder
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.icon.extended.Play
 import top.yukonga.miuix.kmp.icon.extended.Pin
 import top.yukonga.miuix.kmp.icon.extended.SelectAll
-import top.yukonga.miuix.kmp.icon.extended.Forward
 import top.yukonga.miuix.kmp.icon.extended.Playlist
 import top.yukonga.miuix.kmp.icon.basic.Search
 import top.yukonga.miuix.kmp.theme.MiuixTheme

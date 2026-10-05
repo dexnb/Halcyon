@@ -1287,7 +1287,7 @@
     <string name="settings_player_lyrics_corner_actions">Lyric translation / accompaniment buttons</string>
     <string name="settings_player_lyrics_corner_actions_summary">Show translation and accompaniment shortcuts on non-Apple Music lyric pages</string>
     <string name="settings_player_landscape_style">Default landscape player style</string>
-    <string name="settings_player_landscape_style_summary">Used when opening landscape playback: %1$s</string>
+    <string name="settings_player_landscape_style_summary">Used for the expanded player on phones in portrait and for landscape playback: %1$s</string>
     <string name="settings_player_landscape_style_wide">Adaptive tablet / large-screen player</string>
     <string name="settings_player_landscape_style_cover_flow">CoverFlow wall</string>
     <string name="settings_player_landscape_style_music_video">Immersive MV lyrics</string>

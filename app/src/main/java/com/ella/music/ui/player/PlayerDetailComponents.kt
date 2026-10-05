@@ -58,46 +58,6 @@ internal fun PlayerDetailInfoLine(label: String, value: String) {
 }
 
 @Composable
-internal fun PlayerDetailActionRow(
-    title: String,
-    summary: String,
-    enabled: Boolean = true,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(LocalPlayerContentColor.current.copy(alpha = if (enabled) 0.11f else 0.055f))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = LocalPlayerContentColor.current.copy(alpha = if (enabled) 0.92f else 0.42f),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = summary.ifBlank { stringResource(R.string.player_no_info) },
-                color = LocalPlayerContentColor.current.copy(alpha = if (enabled) 0.58f else 0.30f),
-                fontSize = 12.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Text(
-            text = "›",
-            color = LocalPlayerContentColor.current.copy(alpha = if (enabled) 0.72f else 0.24f),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
 internal fun PlayerDetailGroupCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit

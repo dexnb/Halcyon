@@ -2062,7 +2062,7 @@
     <string name="settings_player_lyrics_corner_actions">歌詞ページの翻訳 / 伴奏ボタン</string>
     <string name="settings_player_lyrics_corner_actions_summary">Apple Music 以外の再生ページの歌詞画面に翻訳と伴奏のショートカットを表示します</string>
     <string name="settings_player_landscape_style">デフォルトの横画面再生スタイル</string>
-    <string name="settings_player_landscape_style_summary">横画面再生を開くときに使用：%1$s</string>
+    <string name="settings_player_landscape_style_summary">スマートフォンの縦画面で開く再生レイアウトと横画面再生に使用：%1$s</string>
     <string name="settings_player_landscape_style_wide">タブレット・大画面向け自動調整プレーヤー</string>
     <string name="settings_player_landscape_style_cover_flow">CoverFlow カバーウォール</string>
     <string name="settings_player_landscape_style_music_video">MV 没入型歌詞</string>

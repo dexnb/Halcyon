@@ -16,7 +16,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -36,7 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
@@ -66,7 +65,6 @@ import com.ella.music.ui.components.copySelectedLyricText
 import com.ella.music.ui.components.LyricShareOptions
 import com.ella.music.ui.components.saveLyricCardToPictures
 import com.ella.music.ui.components.shareLyricCard
-import com.ella.music.ui.components.shareLyricVideoFile
 import com.ella.music.viewmodel.MainViewModel
 import com.ella.music.viewmodel.PlayerViewModel
 import com.ella.music.ui.settings.rememberMusicVideoSyncPermissionLauncher
@@ -120,6 +118,7 @@ fun PlayerScreen(
     val defaultAppleMusicShowLyrics = isLargeScreenDevice &&
         SettingsManager.normalizePlayerPageStyle(playerPageStyle) == SettingsManager.PLAYER_PAGE_STYLE_APPLE_MUSIC
     val playerLandscapeStyle = playerSettings.playerLandscapeStyle
+    val selectedQueueIndex by playerViewModel.currentQueueIndex.collectAsState()
     val playerKeepScreenOn = playerSettings.playerKeepScreenOn
     val lyricSourceMode = playerSettings.lyricSourceMode
     val lyricFontState = rememberPlayerLyricFontState(context, settingsManager)
@@ -246,7 +245,9 @@ fun PlayerScreen(
     val musicVideoVisibleForCurrentSong = song != null &&
         uiState.musicVideoVisible &&
         uiState.musicVideoOwnerKey == musicVideoSongKey
-    val isLandscape = configuration.screenWidthDp > configuration.screenHeightDp
+    var playerViewport by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+    val isLandscape = playerViewport.width > playerViewport.height ||
+        configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val isMusicVideoLandscape = (landscapeState.expanded && musicVideoVisibleForCurrentSong) ||
         (isLandscape && playerLandscapeStyle == SettingsManager.PLAYER_LANDSCAPE_STYLE_MUSIC_VIDEO && musicVideoVisibleForCurrentSong)
     val effectivePlayerSystemBarsMode = when {
@@ -641,6 +642,7 @@ fun PlayerScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .onSizeChanged { playerViewport = it }
                 .then(playerHiddenSystemBarsConsumptionModifier)
         ) {
           CompositionLocalProvider(
@@ -651,6 +653,7 @@ fun PlayerScreen(
               LocalPlayerTimelinePlaying provides isPlaying,
               LocalPlayerSurfaceActive provides playerVisible,
               LocalPlayerCoverVisualizerHost provides coverVisualizerHost,
+              LocalPlayerLyricPositionProvider provides remember(playerViewModel) { playerViewModel::livePositionMs },
               LocalAppleMusicLyricsViewPreferences provides appleMusicLyricsViewPreferences
           ) {
             // Keep one background composed for both pages. Recreating Apple/Beautiful Lyrics
@@ -671,6 +674,14 @@ fun PlayerScreen(
                 useBlurBackground = false,
                 modifier = Modifier.fillMaxSize()
             )
+            val overlayExpanded = landscapeState.expanded || (isLandscape && playerVisible &&
+                playerLandscapeStyle != SettingsManager.PLAYER_LANDSCAPE_STYLE_WIDE)
+            val overlayStyle = if (landscapeState.expanded && musicVideoVisibleForCurrentSong) {
+                SettingsManager.PLAYER_LANDSCAPE_STYLE_MUSIC_VIDEO
+            } else playerLandscapeStyle
+            // The occluded page cannot contribute a second artwork to the shared morph.
+            CompositionLocalProvider(LocalPlayerMorphSurface provides playerMorphPageArtworkEnabled(
+                LocalPlayerMorphSurface.current, overlayExpanded, overlayStyle)) {
             PlayerScreenPageHost(
                 immersiveAlbumCover = immersiveAlbumCover,
                 showLyrics = showLyrics,
@@ -984,16 +995,14 @@ fun PlayerScreen(
                     .then(playerForegroundSystemBarsModifier)
             )
 
+            }
+
             PlayerLandscapeOverlayHost(
                 context = context,
-                expanded = landscapeState.expanded,
+                expanded = overlayExpanded,
                 // The explicit MV landscape action is an intent to open the MV-backed player,
                 // regardless of the default landscape style selected in Settings.
-                layoutStyle = if (landscapeState.expanded && musicVideoVisibleForCurrentSong) {
-                    SettingsManager.PLAYER_LANDSCAPE_STYLE_MUSIC_VIDEO
-                } else {
-                    playerLandscapeStyle
-                },
+                layoutStyle = overlayStyle,
                 dynamicCoverEnabled = dynamicCoverEnabled,
                 dynamicCoverCustomFolders = dynamicCoverCustomFolders,
                 musicVideoCustomFolders = musicVideoCustomFolders,
@@ -1026,6 +1035,7 @@ fun PlayerScreen(
                 showTotalDuration = playerShowTotalDuration,
                 queueExpanded = uiState.queueExpanded,
                 playlist = playlist,
+                selectedQueueIndex = selectedQueueIndex,
                 audioSessionId = audioSessionId,
                 visualizerEnabled = effectiveAudioVisualizerEnabled,
                 visualizerOpacity = audioVisualizerOpacity,

@@ -105,6 +105,7 @@ interface AppearanceSettingsAccess {
     val appFontScalePercent: Flow<Int>
     val appDisplayScalePercent: Flow<Int>
     val appIconStyle: Flow<String>
+    val recentsIconFollowsSystemTheme: Flow<Boolean>
     val widgetSafeLayout: Flow<Boolean>
     val bottomBarStyle: Flow<BottomBarStyle>
     val bottomBarGlassEffect: Flow<BottomBarGlassEffect>
@@ -173,6 +174,7 @@ interface AppearanceSettingsAccess {
     suspend fun setAppFontScalePercent(percent: Int)
     suspend fun setAppDisplayScalePercent(percent: Int)
     suspend fun setAppIconStyle(style: String)
+    suspend fun setRecentsIconFollowsSystemTheme(enabled: Boolean)
     suspend fun setWidgetSafeLayout(enabled: Boolean)
     suspend fun setBottomBarStyle(style: BottomBarStyle)
     suspend fun setBottomBarGlassEffect(effect: BottomBarGlassEffect)
@@ -242,6 +244,10 @@ internal class AppearanceSettingsAccessImpl(private val context: Context) : Appe
         }
     override val appIconStyle: Flow<String> =
         context.dataStore.data.map { AppIconManager.normalize(it[KEY_APP_ICON_STYLE]) }
+    override val recentsIconFollowsSystemTheme: Flow<Boolean> = context.dataStore.data.map {
+        it[SettingsManager.KEY_RECENTS_ICON_FOLLOWS_SYSTEM_THEME]
+            ?: SettingsManager.DEFAULT_RECENTS_ICON_FOLLOWS_SYSTEM_THEME
+    }
     override val widgetSafeLayout: Flow<Boolean> =
         context.dataStore.data.map { it[KEY_WIDGET_SAFE_LAYOUT] ?: false }
     override val bottomBarStyle: Flow<BottomBarStyle> = context.dataStore.data.map { preferences ->
@@ -511,6 +517,10 @@ internal class AppearanceSettingsAccessImpl(private val context: Context) : Appe
 
     override suspend fun setAppIconStyle(style: String) {
         context.dataStore.edit { it[KEY_APP_ICON_STYLE] = AppIconManager.normalize(style) }
+    }
+
+    override suspend fun setRecentsIconFollowsSystemTheme(enabled: Boolean) {
+        context.dataStore.edit { it[SettingsManager.KEY_RECENTS_ICON_FOLLOWS_SYSTEM_THEME] = enabled }
     }
 
     override suspend fun setWidgetSafeLayout(enabled: Boolean) {

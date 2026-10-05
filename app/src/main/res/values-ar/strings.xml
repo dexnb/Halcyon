@@ -1520,7 +1520,7 @@
     <string name="settings_player_lyrics_corner_actions">أزرار ترجمة الكلمات / الموسيقى المصاحبة</string>
     <string name="settings_player_lyrics_corner_actions_summary">إظهار اختصارات الترجمة والموسيقى المصاحبة في صفحات الكلمات غير الخاصة بـ Apple Music</string>
     <string name="settings_player_landscape_style">نمط المشغل الأفقي الافتراضي</string>
-    <string name="settings_player_landscape_style_summary">يُستخدم عند فتح التشغيل في الوضع الأفقي: %1$s</string>
+    <string name="settings_player_landscape_style_summary">للمشغل الموسع على الهاتف في الوضع العمودي وللتشغيل الأفقي: %1$s</string>
     <string name="settings_player_landscape_style_wide">مشغل متكيف للأجهزة اللوحية / الشاشات الكبيرة</string>
     <string name="settings_player_landscape_style_cover_flow">جدار CoverFlow للأغلفة</string>
     <string name="settings_player_landscape_style_music_video">كلمات أغاني الفيديو الموسيقي الشاملة</string>

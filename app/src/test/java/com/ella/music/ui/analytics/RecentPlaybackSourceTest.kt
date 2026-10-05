@@ -16,15 +16,15 @@ class RecentPlaybackSourceTest {
         PlaybackHistoryEntry(id, 1L, "Song 1", "Artist", "Album", time, categorySourceKey = source, mediaUri = video)
 
     @Test fun playlistPlaybackOnlyAddsItsActualCategoryAndUsesFullCount() {
-        val rows = buildRecentPlaybackRows(listOf(entry("a", 1)), songs, listOf(playlist), emptyList(), RecentPlaybackTab.Collection)
+        val rows = buildRecentPlaybackRowsForResolved(resolveRecentPlaybackEntries(listOf(entry("a", 1)), songs), songs, listOf(playlist), emptyList(), RecentPlaybackTab.Collection)
         assertEquals(1, rows.size)
         assertEquals(RecentPlaybackTab.Playlist, rows.single().kind)
         assertTrue(rows.single().subtitle.startsWith("150首"))
-        assertTrue(buildRecentPlaybackRows(listOf(entry("a", 1)), songs, listOf(playlist), emptyList(), RecentPlaybackTab.Artist).isEmpty())
+        assertTrue(buildRecentPlaybackRowsForResolved(resolveRecentPlaybackEntries(listOf(entry("a", 1)), songs), songs, listOf(playlist), emptyList(), RecentPlaybackTab.Artist).isEmpty())
     }
 
     @Test fun repeatedSongsKeepLatestAndRemoveAllMatchingHistoryTogether() {
-        val rows = buildRecentPlaybackRows(listOf(entry("a", 1), entry("b", 2)), songs, emptyList(), emptyList(), RecentPlaybackTab.Song)
+        val rows = buildRecentPlaybackRowsForResolved(resolveRecentPlaybackEntries(listOf(entry("a", 1), entry("b", 2)), songs), songs, emptyList(), emptyList(), RecentPlaybackTab.Song)
         assertEquals(1, rows.size)
         assertEquals(2L, rows.single().playedAt)
         assertEquals(setOf("a", "b"), rows.single().entryIds.toSet())
@@ -33,14 +33,14 @@ class RecentPlaybackSourceTest {
 
     @Test fun videosDeduplicateByMediaAndNeverPointDeletionAtOriginalAudio() {
         val history = listOf(entry("a", 1, video = "file:///Music/mv.mp4"), entry("b", 2, video = "file:///Music/mv.mp4"))
-        val rows = buildRecentPlaybackRows(history, songs, emptyList(), emptyList(), RecentPlaybackTab.Mv)
+        val rows = buildRecentPlaybackRowsForResolved(resolveRecentPlaybackEntries(history, songs), songs, emptyList(), emptyList(), RecentPlaybackTab.Mv)
         assertEquals(1, rows.size)
         assertEquals("file:///Music/mv.mp4", rows.single().song?.path)
         assertNotEquals(1L, rows.single().song?.id)
-        assertTrue(buildRecentPlaybackRows(history, songs, emptyList(), emptyList(), RecentPlaybackTab.Song).isEmpty())
+        assertTrue(buildRecentPlaybackRowsForResolved(resolveRecentPlaybackEntries(history, songs), songs, emptyList(), emptyList(), RecentPlaybackTab.Song).isEmpty())
     }
 
     @Test fun legacyHistoryDoesNotInventCategorySources() {
-        assertTrue(buildRecentPlaybackRows(listOf(entry("a", 1, "")), songs, listOf(playlist), emptyList(), RecentPlaybackTab.Collection).isEmpty())
+        assertTrue(buildRecentPlaybackRowsForResolved(resolveRecentPlaybackEntries(listOf(entry("a", 1, "")), songs), songs, listOf(playlist), emptyList(), RecentPlaybackTab.Collection).isEmpty())
     }
 }

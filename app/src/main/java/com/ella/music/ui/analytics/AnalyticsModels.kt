@@ -561,17 +561,6 @@ private fun JSONArray?.toStringList(): List<String> {
     return List(length()) { index -> optString(index) }.filter { it.isNotBlank() }
 }
 
-internal fun LibraryAnalysis.songsForBucket(
-    songs: List<Song>,
-    quality: Boolean,
-    label: String
-): List<Song> {
-    val keys = (if (quality) qualityBuckets else formatBuckets)
-        .firstOrNull { it.label == label }?.songKeys?.toSet().orEmpty()
-    if (keys.isEmpty()) return emptyList()
-    return songs.filter { it.searchIdentityKey() in keys }
-}
-
 internal fun List<SongWithInfo>.toBuckets(labelOf: (SongWithInfo) -> String): List<AnalysisBucket> {
     return groupBy(labelOf)
         .map { (label, rows) ->
@@ -710,15 +699,6 @@ private fun historyDateKey(timestampMs: Long): String {
     return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(timestampMs))
 }
 
-internal fun formatHistoryDateChip(dateKey: String): String {
-    val date = parseHistoryDateKey(dateKey) ?: return dateKey
-    val then = Calendar.getInstance().apply { time = date }
-    return "%02d-%02d".format(
-        then.get(Calendar.MONTH) + 1,
-        then.get(Calendar.DAY_OF_MONTH)
-    )
-}
-
 private fun parseHistoryDateKey(dateKey: String): Date? {
     return runCatching {
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateKey)
@@ -795,10 +775,3 @@ internal val bitDepthPalette = listOf(
     Color(0xFF00B0FF), // Cyan (16-bit)
     Color(0xFF9E9E9E)  // Grey
 )
-
-internal fun dimensionPalette(dimension: AnalysisDimension): List<Color> = when (dimension) {
-    AnalysisDimension.FORMAT -> xiaomiStoragePalette
-    AnalysisDimension.QUALITY -> qualityPalette
-    AnalysisDimension.SAMPLE_RATE -> sampleRatePalette
-    AnalysisDimension.BIT_DEPTH -> bitDepthPalette
-}

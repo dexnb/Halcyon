@@ -2062,7 +2062,7 @@
     <string name="settings_player_lyrics_corner_actions">Übersetzungs- / Begleitbuttons</string>
     <string name="settings_player_lyrics_corner_actions_summary">Übersetzung und Begleitung auf Nicht-Apple-Music-Liedtextseiten anzeigen</string>
     <string name="settings_player_landscape_style">Standardstil für den Querformat-Player</string>
-    <string name="settings_player_landscape_style_summary">Beim Öffnen der Querformat-Wiedergabe: %1$s</string>
+    <string name="settings_player_landscape_style_summary">Für den erweiterten Player auf Smartphones im Hochformat und die Querformat-Wiedergabe: %1$s</string>
     <string name="settings_player_landscape_style_wide">Adaptiver Player für Tablets/Großbildschirme</string>
     <string name="settings_player_landscape_style_cover_flow">CoverFlow-Wand</string>
     <string name="settings_player_landscape_style_music_video">Immersiver MV-Liedtext</string>

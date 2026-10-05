@@ -2049,7 +2049,7 @@
     <string name="settings_player_lyrics_corner_actions">Кнопки перевода / минусовки</string>
     <string name="settings_player_lyrics_corner_actions_summary">Показывать перевод и минусовку на страницах текста не в стиле Apple Music</string>
     <string name="settings_player_landscape_style">Стиль плеера по умолчанию в альбомной ориентации</string>
-    <string name="settings_player_landscape_style_summary">Используется при открытии альбомного плеера: %1$s</string>
+    <string name="settings_player_landscape_style_summary">Для развёрнутого плеера на телефоне в портретной ориентации и воспроизведения в альбомной ориентации: %1$s</string>
     <string name="settings_player_landscape_style_wide">Адаптивный плеер для планшетов и больших экранов</string>
     <string name="settings_player_landscape_style_cover_flow">Стена CoverFlow</string>
     <string name="settings_player_landscape_style_music_video">Иммерсивный MV с текстом</string>

@@ -25,9 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +43,6 @@ import com.ella.music.data.model.Song
 import com.ella.music.data.model.formatPlaybackDuration
 import com.ella.music.ui.components.EllaMiuixMenuItem
 import com.ella.music.ui.components.EllaMiuixSheetColumn
-import com.ella.music.ui.components.EllaMiuixSheetHandle
 import com.ella.music.ui.components.SafeCoverImage
 import com.ella.music.ui.player.DynamicCoverSource
 import com.ella.music.ui.player.readMusicVideoDurationMs
@@ -132,21 +129,6 @@ internal fun ArtistMusicVideoSortMode.isDescending(): Boolean = when (this) {
     ArtistMusicVideoSortMode.NameDesc -> true
     else -> false
 }
-
-internal suspend fun resolveArtistMusicVideos(
-    context: Context,
-    songs: List<Song>,
-    dynamicCoverFolders: List<String>,
-    musicVideoFolders: List<String>
-): List<ArtistMusicVideo> = enrichArtistMusicVideos(
-    context = context,
-    sources = resolveArtistMusicVideoSources(
-        context = context,
-        songs = songs,
-        dynamicCoverFolders = dynamicCoverFolders,
-        musicVideoFolders = musicVideoFolders
-    )
-)
 
 /** Resolve the lightweight source list first so the MV tab can appear before metadata is read. */
 internal suspend fun resolveArtistMusicVideoSources(

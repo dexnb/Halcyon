@@ -11,7 +11,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,7 +25,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.padding
@@ -68,7 +66,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -77,7 +74,6 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -86,9 +82,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ella.music.R
 import com.ella.music.ui.components.CoverPreviewDialog
-import com.ella.music.ui.components.EllaMiuixDialog
-import com.ella.music.ui.components.EllaMiuixDialogActions
-import com.ella.music.ui.components.PlayerQueueListIcon
 import com.ella.music.data.ActionMenuIds
 import com.ella.music.data.model.AudioInfo
 import com.ella.music.data.model.LyricLine
@@ -540,9 +533,6 @@ internal fun CoverPlayerPage(
     fun revealAppleMusicChrome() {
         appleMusicChromeVisible = true
         appleMusicChromeGeneration++
-    }
-    fun hideAppleMusicChrome() {
-        appleMusicChromeVisible = false
     }
     LaunchedEffect(appleMusicShowLyrics) {
         if (appleMusicShowLyrics) {

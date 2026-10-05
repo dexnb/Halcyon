@@ -66,7 +66,6 @@ import com.ella.music.ui.theme.EllaTheme
 import com.ella.music.ui.components.ScriptFontPaths
 import com.ella.music.ui.components.applyHalcyonSystemBars
 import com.ella.music.ui.components.currentAppSystemBarsMode
-import com.ella.music.ui.components.currentAppSystemBarsReserveSpace
 import com.ella.music.ui.theme.MONET_COVER
 import com.ella.music.ui.theme.THEME_DARK
 import com.ella.music.ui.theme.THEME_FOLLOW_SYSTEM

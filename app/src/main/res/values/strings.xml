@@ -1554,7 +1554,7 @@
     <string name="settings_player_lyrics_corner_actions">歌词页翻译 / 伴奏按钮</string>
     <string name="settings_player_lyrics_corner_actions_summary">在非 Apple Music 播放页的歌词界面显示翻译和伴奏快捷按钮</string>
     <string name="settings_player_landscape_style">默认横屏播放样式</string>
-    <string name="settings_player_landscape_style_summary">点击“横屏播放”时使用：%1$s</string>
+    <string name="settings_player_landscape_style_summary">用于手机竖屏展开对应播放样式及横屏播放：%1$s</string>
     <string name="settings_player_landscape_style_wide">平板/大屏自适应播放页</string>
     <string name="settings_player_landscape_style_cover_flow">CoverFlow 封面墙</string>
     <string name="settings_player_landscape_style_music_video">MV 沉浸歌词</string>

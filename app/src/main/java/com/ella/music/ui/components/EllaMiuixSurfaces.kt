@@ -11,27 +11,19 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,10 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -76,7 +65,6 @@ import top.yukonga.miuix.kmp.window.WindowDialog
 val LocalInBottomSheet = androidx.compose.runtime.compositionLocalOf { false }
 
 val LocalInDialog = androidx.compose.runtime.compositionLocalOf { false }
-
 
 /** True when the active Miuix scheme reads as dark. */
 @Composable
@@ -322,27 +310,6 @@ fun EllaMiuixDialogActions(
             EllaMiuixAction(text = confirmText, onClick = onConfirm, primary = true)
         ),
         modifier = modifier
-    )
-}
-
-@Composable
-fun EllaMiuixTripleDialogActions(
-    firstText: String,
-    secondText: String,
-    confirmText: String,
-    onFirst: () -> Unit,
-    onSecond: () -> Unit,
-    onConfirm: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    EllaMiuixActionRow(
-        actions = listOf(
-            EllaMiuixAction(text = firstText, onClick = onFirst),
-            EllaMiuixAction(text = secondText, onClick = onSecond),
-            EllaMiuixAction(text = confirmText, onClick = onConfirm, primary = true)
-        ),
-        modifier = modifier,
-        spacing = 8.dp
     )
 }
 

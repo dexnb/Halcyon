@@ -28,18 +28,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import com.ella.music.data.SettingsManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlin.math.PI
 import kotlin.math.ln
 import kotlin.math.max
-import kotlin.math.sin
 import kotlin.math.sqrt
 
 @Composable

@@ -76,8 +76,6 @@ object RemoteAudioCache {
         webDavAudioDir = File(app.cacheDir, "webdav_audio")
     }
 
-    fun cacheRoot(): File? = cacheDir
-
     fun isCacheableRemoteSong(song: Song): Boolean {
         if (song.path.isHttpAudioSource()) return true
         // A synced Navidrome/OpenSubsonic row can lose a usable stream URL and still be

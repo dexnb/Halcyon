@@ -6,10 +6,8 @@ import android.content.ContextWrapper
 import android.graphics.Color
 import android.os.Build
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewParent
 import android.view.Window
-import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
