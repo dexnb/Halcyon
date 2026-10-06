@@ -85,6 +85,7 @@ internal fun AppleMusicLyricsView(
     focusOffsetDp: Dp? = null,
     useFocusLeadingPadding: Boolean = true,
     nonCurrentLineBlurEnabled: Boolean = true,
+    edgeFeatherEnabled: Boolean = true,
     userScrollEnabled: Boolean = true,
     reserveExtraLyricSpace: Boolean = false,
     singleLine: Boolean = false,

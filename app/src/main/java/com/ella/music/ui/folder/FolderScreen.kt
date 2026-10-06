@@ -520,7 +520,7 @@ fun FolderScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 160.dp)
+                    contentPadding = PaddingValues(bottom = 160.dp, end = if (folders.size > 30) ScrollIndicatorListEndPadding else 0.dp)
                 ) {
                     items(
                         items = folderRows,

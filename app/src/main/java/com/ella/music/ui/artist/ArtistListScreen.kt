@@ -72,6 +72,7 @@ import com.ella.music.ui.components.LazyListScrollIndicator
 import com.ella.music.ui.components.RestoreListScrollAfterSearch
 import com.ella.music.ui.components.ShuffleAllSummaryButton
 import com.ella.music.ui.components.SideIndexListEndPadding
+import com.ella.music.ui.components.ScrollIndicatorListEndPadding
 import com.ella.music.ui.components.DirectionalSortModeField
 import com.ella.music.ui.components.SortDropdownMenu
 import com.ella.music.ui.components.directionalSortModeDropdownItems
@@ -626,7 +627,11 @@ fun ArtistListScreen(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        end = if (showArtistSideIndex) SideIndexListEndPadding else 0.dp,
+                        end = when {
+                            !showArtistSideIndex -> 0.dp
+                            sortMode in setOf(ArtistSortMode.Name, ArtistSortMode.NameDesc) -> SideIndexListEndPadding
+                            else -> ScrollIndicatorListEndPadding
+                        },
                         bottom = 160.dp
                     )
                 ) {

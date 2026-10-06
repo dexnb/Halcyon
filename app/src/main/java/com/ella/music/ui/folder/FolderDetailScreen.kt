@@ -69,6 +69,7 @@ import com.ella.music.ui.components.RestoreListScrollAfterSearch
 import com.ella.music.ui.components.LocateCurrentSongFloatingButton
 import com.ella.music.ui.components.ShuffleAllSummaryButton
 import com.ella.music.ui.components.SideIndexListEndPadding
+import com.ella.music.ui.components.ScrollIndicatorListEndPadding
 import com.ella.music.ui.components.SongItem
 import com.ella.music.ui.components.SongMoreActionHost
 import com.ella.music.ui.components.DirectionalSortModeField
@@ -586,7 +587,11 @@ fun FolderDetailScreen(
                     sortMode == FolderSongSortMode.FileNameDesc
                 )
             val showScrollIndicator = !showFastIndex && sortedSongs.size > 30
-            val listEndInset = if (showFastIndex || showScrollIndicator) SideIndexListEndPadding else 0.dp
+            val listEndInset = when {
+                showFastIndex -> SideIndexListEndPadding
+                showScrollIndicator -> ScrollIndicatorListEndPadding
+                else -> 0.dp
+            }
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     if (!selection.selectionMode) {
@@ -752,8 +757,8 @@ fun FolderDetailScreen(
                     currentItemIndex = currentSongItemIndex,
                     locateRequest = locateCurrentSongRequest,
                     modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = LibraryFloatingControlsEndPadding, bottom = LibraryFloatingControlsBottomPadding)
+                .align(Alignment.BottomEnd)
+                .padding(end = LibraryFloatingControlsEndPadding, bottom = LibraryFloatingControlsBottomPadding)
                 )
                 FloatingSelectionControls(
                     visible = selection.selectionMode && sortedSongs.isNotEmpty(),

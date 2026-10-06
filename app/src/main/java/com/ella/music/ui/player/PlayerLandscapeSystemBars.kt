@@ -14,12 +14,12 @@ internal fun ForceLandscapePlayerBars(
 ) {
     val activity = LocalContext.current.findActivity()
     val view = LocalView.current
-    DisposableEffect(activity) {
+    DisposableEffect(activity, forceLandscape) {
         val oldOrientation = activity?.requestedOrientation
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        if (forceLandscape) activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         setPlayerSystemBars(activity, view)
         onDispose {
-            if (oldOrientation != null) {
+            if (forceLandscape && oldOrientation != null) {
                 activity.requestedOrientation = oldOrientation
             }
             setPlayerSystemBars(activity, view)

@@ -556,14 +556,17 @@ fun PlayerScreen(
             uriHandler.openUri(url)
         }
     }
+    // Read the requested entry directly: a hidden resident player may still be on its cover
+    // when a poster lyric tap sets showLyrics and opens the surface in the same frame.
+    val entryShowLyrics = remember(openToken, immersiveAlbumCover) { playerViewModel.showLyrics.value }
+    val entryPage = if (entryShowLyrics && !immersiveAlbumCover) PLAYER_PAGE_LYRICS else PLAYER_PAGE_COVER
+    var entryAligned by remember(openToken, immersiveAlbumCover) { mutableStateOf(false) }
     val playerPagerState = rememberPagerState(
-        initialPage = PLAYER_PAGE_COVER,
+        initialPage = entryPage,
         pageCount = { PLAYER_PAGE_COUNT }
     )
-    LaunchedEffect(openToken) {
-        if (playerPagerState.currentPage != PLAYER_PAGE_COVER) {
-            playerPagerState.scrollToPage(PLAYER_PAGE_COVER)
-        }
+    PlayerPagerEntryEffects(openToken, immersiveAlbumCover, playerPagerState, entryPage) {
+        entryAligned = true
     }
     // Only clear remembered cover/MV positions when the track identity actually changes.
     // Remounting PlayerScreen (lyrics page / AM playlist leave→return) must NOT wipe
@@ -684,7 +687,8 @@ fun PlayerScreen(
                 LocalPlayerMorphSurface.current, overlayExpanded, overlayStyle)) {
             PlayerScreenPageHost(
                 immersiveAlbumCover = immersiveAlbumCover,
-                showLyrics = showLyrics,
+                showLyrics = if (entryAligned) showLyrics else entryShowLyrics,
+                pendingEntryPage = entryPage.takeUnless { entryAligned },
                 pagerState = playerPagerState,
                 userScrollEnabled = !dismissingPlayer &&
                     !(
@@ -695,7 +699,10 @@ fun PlayerScreen(
                             playerPagerState.currentPage == PLAYER_PAGE_COVER
                         ),
                 onShowImmersiveLyrics = { playerViewModel.setShowLyrics(true) },
-                onDismissImmersiveLyrics = { playerViewModel.setShowLyrics(false) },
+                onDismissImmersiveLyrics = {
+                    playerViewModel.setShowLyrics(false)
+                    if (entryShowLyrics) onBack()
+                },
                 onShowPagedLyrics = {
                     scope.launch { playerPagerState.animateScrollToPage(PLAYER_PAGE_LYRICS) }
                 },

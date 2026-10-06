@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -144,8 +145,9 @@ fun LxOnlineScreen(
     var actionItem by remember { mutableStateOf<LxOnlineSong?>(null) }
     var remoteResults by remember { mutableStateOf<List<RemoteOnlineSong>>(emptyList()) }
     var remoteActionItem by remember { mutableStateOf<RemoteOnlineSong?>(null) }
-    LaunchedEffect(currentSourceId, selectedProvider) {
-        val previousSourceId = observedSourceId
+    LaunchedEffect(currentSourceId, selectedProvider, loadedSources) {
+        if (selectedProvider == RemoteMusicProvider.Lx && loadedSources == null) return@LaunchedEffect
+        val previousSourceId = state.observedSourceId
         val marker = "${selectedProvider.id}:$currentSourceId"
         if (previousSourceId != null && previousSourceId != marker) {
             state.searchRequests.invalidate()
@@ -154,7 +156,7 @@ fun LxOnlineScreen(
             state.clearResults()
             remoteResults = emptyList()
         }
-        observedSourceId = marker
+        state.observedSourceId = marker
     }
 
     val remoteConfig = when (selectedProvider) {
@@ -463,7 +465,11 @@ fun LxOnlineScreen(
                     }
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                OnlineSearchPaginationEffect(resultsListState, state.searchRequests, state.results.size,
+                    state.isBusy || selectedSource == null || loadedSources == null) {
+                    searchSelectedProvider(automatic = it, loadMore = true)
+                }
+                LazyColumn(state = resultsListState, modifier = Modifier.fillMaxSize()) {
                     items(state.results, key = { it.song.id }) { item ->
                         SongItem(
                             song = item.song,
@@ -516,6 +522,10 @@ fun LxOnlineScreen(
                             }
                         )
                     }
+                    item(key = "pagination") {
+                        OnlineSearchPageFooter(state.searchRequests) { searchSelectedProvider(loadMore = true) }
+                    }
+                    item { Spacer(modifier = Modifier.height(120.dp)) }
                 }
             }
         }

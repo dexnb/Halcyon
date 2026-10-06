@@ -265,6 +265,7 @@ fun LyricPluginSourceSettingsScreen(
         EllaMiuixDialogActions(
             cancelText = stringResource(R.string.common_cancel),
             confirmText = stringResource(R.string.common_delete),
+            confirmDangerous = true,
             onCancel = { pendingDelete = null },
             onConfirm = {
                 val target = deleteTarget ?: return@EllaMiuixDialogActions

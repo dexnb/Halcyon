@@ -90,6 +90,7 @@ internal fun PlayerScreenPageHost(
     lyricsPage: @Composable (onDismissLyrics: () -> Unit, enableSwipeDismiss: Boolean, backEnabled: Boolean, pageVisible: Boolean, Modifier) -> Unit,
     detailPage: @Composable (Modifier) -> Unit,
     playerVisible: Boolean = true,
+    pendingEntryPage: Int? = null,
     modifier: Modifier = Modifier
 ) {
     if (immersiveAlbumCover) {
@@ -129,6 +130,7 @@ internal fun PlayerScreenPageHost(
         BackHandler(enabled = shouldInterceptPlayerPagerBack(playerVisible, pagerState.currentPage)) {
             onDismissPagedLyrics()
         }
+        Box(modifier = modifier.fillMaxSize()) {
         HorizontalPager(
             state = pagerState,
             modifier = modifier.fillMaxSize(),
@@ -162,6 +164,14 @@ internal fun PlayerScreenPageHost(
                 )
                 PLAYER_PAGE_DETAILS -> detailPage(Modifier.fillMaxSize())
             }
+        }
+        // Keep the real pager mounted and measured while hiding its old offset. scrollToPage
+        // awaits that layout; replacing the pager with this placeholder creates a deadlock.
+        if (pendingEntryPage == PLAYER_PAGE_LYRICS) {
+            lyricsPage(onDismissPagedLyrics, false, false, playerVisible, Modifier.fillMaxSize())
+        } else if (pendingEntryPage != null) {
+            coverPage(onShowPagedLyrics, Modifier.fillMaxSize())
+        }
         }
     }
 }

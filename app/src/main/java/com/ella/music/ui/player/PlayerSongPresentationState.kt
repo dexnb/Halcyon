@@ -115,6 +115,23 @@ internal fun rememberPlayerSongPresentationState(
     )
 }
 
+@Composable
+internal fun rememberPlayerAudioInfo(
+    context: Context,
+    song: Song?,
+    playerViewModel: PlayerViewModel
+): AudioInfo? {
+    val songKey = remember(song) { song?.presentationIdentityKey() }
+    // NetEase resolves its stream (and therefore the served quality) after the song becomes current,
+    // so the badge must follow the served level instead of the one-shot "Audio" placeholder.
+    val neteaseStreams by com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).streamInfo.collectAsState()
+    val neteaseStreamKey = if (song?.onlineSource == com.ella.music.data.SettingsManager.LIBRARY_SOURCE_NETEASE) neteaseStreams[song.onlineId] else null
+    val audioInfo by produceState<AudioInfo?>(initialValue = null, songKey, neteaseStreamKey) {
+        value = withContext(Dispatchers.IO) { song?.let(playerViewModel::getAudioInfo) }
+    }
+    return audioInfo
+}
+
 private fun Song.presentationIdentityKey(): String =
     listOf(
         playlistIdentityKey(),

@@ -839,7 +839,7 @@
     <string name="settings_backup_export_playback_title">匯出播放紀錄</string>
     <string name="settings_backup_export_playback_summary">匯出播放紀錄、排行與日曆統計，相容 Prism Music sessions</string>
     <string name="settings_backup_restore_playback_title">匯入播放紀錄</string>
-    <string name="settings_backup_restore_playback_summary">匯入 Halcyon 或 Prism Music 聽歌統計 JSON</string>
+    <string name="settings_backup_restore_playback_summary">自動辨識 Halcyon、Prism Music、光錐音樂（JSON / ZIP）、LunaBeat 或 Raws Music 聽歌記錄</string>
     <string name="settings_backup_export_format_title">選擇匯出格式</string>
     <string name="settings_backup_export_format_ella">Halcyon 格式</string>
     <string name="settings_backup_export_format_ella_summary">包含播放紀錄、排行與日曆統計，適合在 Halcyon 中還原</string>

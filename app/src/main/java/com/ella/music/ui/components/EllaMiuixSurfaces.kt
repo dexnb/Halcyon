@@ -107,7 +107,9 @@ data class EllaMiuixAction(
     val text: String,
     val onClick: () -> Unit,
     val primary: Boolean = false,
-    val weight: Float = 1f
+    val weight: Float = 1f,
+    val dangerous: Boolean = false,
+    val enabled: Boolean = true
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -504,10 +506,22 @@ fun EllaMiuixActionRow(
     ) {
         actions.forEach { action ->
             val buttonModifier = Modifier.weight(action.weight)
-            if (action.primary) {
+            if (action.dangerous) {
                 TextButton(
                     text = action.text,
                     onClick = action.onClick,
+                    enabled = action.enabled,
+                    modifier = buttonModifier,
+                    colors = ButtonDefaults.textButtonColors(
+                        color = MiuixTheme.colorScheme.error,
+                        textColor = MiuixTheme.colorScheme.onError
+                    )
+                )
+            } else if (action.primary) {
+                TextButton(
+                    text = action.text,
+                    onClick = action.onClick,
+                    enabled = action.enabled,
                     modifier = buttonModifier,
                     colors = ButtonDefaults.textButtonColorsPrimary()
                 )

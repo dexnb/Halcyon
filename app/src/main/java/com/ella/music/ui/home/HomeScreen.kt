@@ -92,6 +92,7 @@ import com.ella.music.ui.components.FastIndexBar
 import com.ella.music.ui.components.LazyListScrollIndicator
 import com.ella.music.ui.components.RestoreListScrollAfterSearch
 import com.ella.music.ui.components.SideIndexListEndPadding
+import com.ella.music.ui.components.ScrollIndicatorListEndPadding
 import com.ella.music.ui.components.SongItem
 import com.ella.music.ui.components.SafeCoverImage
 import com.ella.music.ui.components.DefaultAlbumCover
@@ -878,7 +879,8 @@ fun LibraryScreen(
                 val showScrollIndicator = sortedSongs.size > 30 && !showFastIndexBar
                 // Keep a small inset so the more button sits near, but not under, the side index bar.
                 val listEndInset = when {
-                    showFastIndexBar || showScrollIndicator -> SideIndexListEndPadding
+                    showFastIndexBar -> SideIndexListEndPadding
+                    showScrollIndicator -> ScrollIndicatorListEndPadding
                     else -> 0.dp
                 }
                 Column(modifier = Modifier.fillMaxSize()) {

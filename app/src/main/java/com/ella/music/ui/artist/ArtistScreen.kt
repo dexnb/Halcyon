@@ -55,6 +55,7 @@ import com.ella.music.ui.components.EllaMiuixBottomSheet
 import com.ella.music.ui.components.EllaCenteredLoadingIndicator
 import com.ella.music.ui.components.FastIndexBar
 import com.ella.music.ui.components.LazyListScrollIndicator
+import com.ella.music.ui.components.ScrollIndicatorListEndPadding
 import com.ella.music.ui.components.RestoreListScrollAfterSearch
 import com.ella.music.ui.components.LibraryFloatingControlsBottomPadding
 import com.ella.music.ui.components.LibraryFloatingControlsEndPadding
@@ -97,6 +98,7 @@ fun ArtistScreen(
     onAlbumClick: (Long) -> Unit,
     onArtistClick: (String) -> Unit = {},
     onMetadataCategoryClick: (String, String) -> Unit = { _, _ -> },
+    onOpenLastFmSettings: () -> Unit = {},
     onNavigateToPlayer: () -> Unit
 ) {
     val context = LocalContext.current
@@ -603,7 +605,7 @@ fun ArtistScreen(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 120.dp)
+            contentPadding = PaddingValues(bottom = 120.dp, end = if (showScrollIndicator) ScrollIndicatorListEndPadding else 0.dp)
         ) {
             item {
                 ArtistHeader(

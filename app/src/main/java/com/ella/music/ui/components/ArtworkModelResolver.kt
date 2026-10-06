@@ -81,7 +81,7 @@ fun rememberSongArtworkState(
                 current.fileSize.toString(),
                 coverUrl.orEmpty(),
                 albumArtUri?.toString().orEmpty()
-            ).joinToString("|")
+            ).let { parts -> if (cacheVariant == null) parts else parts + cacheVariant }.joinToString("|")
         }
     }
     val shouldTryEmbedded = song != null &&

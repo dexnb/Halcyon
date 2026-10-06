@@ -318,6 +318,8 @@ internal fun PluginLyricsMatchSheet(
         onDismissRequest = { showPreviewSheet = false },
         enableNestedScroll = false
     ) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val previewMaxHeight = minOf(280.dp, maxHeight * 0.30f)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -480,6 +482,7 @@ internal fun PluginLyricsMatchSheet(
                     }
                 }
             }
+        }
         }
     }
 

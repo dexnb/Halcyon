@@ -123,6 +123,7 @@ fun SettingsDetailScreen(
         )
     )
     val homeLibraryTileItems = listOf(
+        HomePreferenceItem("poster_wall", stringResource(R.string.poster_wall_title), stringResource(R.string.poster_wall_summary)),
         HomePreferenceItem("artist", stringResource(R.string.settings_library_tile_artist), stringResource(R.string.settings_library_tile_artist_summary)),
         HomePreferenceItem("album", stringResource(R.string.settings_library_tile_album), stringResource(R.string.settings_library_tile_album_summary)),
         HomePreferenceItem("recent_playback", stringResource(R.string.recent_playback_title), stringResource(R.string.settings_home_section_recent_playback_summary)),

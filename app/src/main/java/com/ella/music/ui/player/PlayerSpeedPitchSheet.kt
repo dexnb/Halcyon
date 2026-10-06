@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -89,6 +93,11 @@ private fun SpeedPitchSliderCard(
                 .padding(vertical = 4.dp)
         )
     }
+    SettingsNumberInputDialog(
+        show = showInput, title = title, value = value,
+        valueRange = 0.5f..2f, decimalPlaces = 2,
+        onDismissRequest = { showInput = false }, onSave = onValueChange
+    )
 }
 
 private fun Float.formatPlaybackStep(): String = "%.2f".format(this.coerceIn(0.5f, 2f))

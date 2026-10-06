@@ -709,6 +709,22 @@ internal object EllaLyricsParser {
 
     private fun String.isLatinPronunciationLine(): Boolean {
         val text = cleanLyricText()
+        // A dash followed by a space marks a credit/ordinary lyric, not an inferred reading.
+        if (text.excludesPronunciationInference()) return false
+        if (text.isBlank() || text.isMusicSymbolOnly() || text.any { it.isCjkIdeograph() }) return false
+        if (!text.any { it.isJapaneseKanaChar() }) return false
+        val kanaMarks = setOf('・', '·', 'ー', 'ﾞ', 'ﾟ')
+        return text.all {
+            it.isJapaneseKanaChar() ||
+                it.isWhitespace() ||
+                it in "-'`.:,;!?/()[]{}" ||
+                it in kanaMarks
+        }
+    }
+
+    private fun String.isLatinPronunciationLine(): Boolean {
+        val text = cleanLyricText()
+        if (text.excludesPronunciationInference()) return false
         if (text.isBlank() || text.hasCjk() || text.isMusicSymbolOnly()) return false
         // A reading may only carry the accents pinyin/romaji/romaja emit. Vietnamese shares
         // acute and grave with pinyin but never `đ ơ ư ă` or the hook/dot-below vowels, so this

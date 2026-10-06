@@ -189,6 +189,9 @@ internal fun MiniLyricsPreview(
     legacyWindow: Boolean = false,
     contentColor: Color = Color.White,
     wordLiftEnabled: Boolean = true,
+    blurEnabled: Boolean = true,
+    edgeFeatherEnabled: Boolean = blurEnabled,
+    primaryTextSizeOverrideSp: Float? = null,
     onLineClick: (LyricLine) -> Unit = {},
     onLineDoubleClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -287,7 +290,9 @@ internal fun MiniLyricsPreview(
         onLineDoubleClick = onLineDoubleClick,
         onLineLongClick = {},
         wordLiftEnabled = wordLiftEnabled,
+        // Keep whole rows sharp until they reach the feathered viewport boundary.
         nonCurrentLineBlurEnabled = false,
+        edgeFeatherEnabled = edgeFeatherEnabled,
         // The mini preview is tap-to-open only; don't let it scroll on drag.
         userScrollEnabled = false,
         reserveExtraLyricSpace = MINI_LYRICS_RESERVE_EXTRA_LYRIC_SPACE,
@@ -300,7 +305,12 @@ internal fun MiniLyricsPreview(
             singleLinePreview || denseMultiPartPreview -> miniLineSpacing.coerceAtMost(4).dp
             else -> miniLineSpacing.dp
         },
-        modifier = modifier.fillMaxWidth()
+        lineSpacing = when {
+            singleLinePreview || denseMultiPartPreview -> miniLineSpacing.coerceAtMost(4).dp
+            else -> miniLineSpacing.dp
+        },
+        modifier = modifier
+            .fillMaxWidth()
     )
 }
 

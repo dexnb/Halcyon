@@ -10,6 +10,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -245,7 +247,9 @@ fun AppNavigation(
     initialBottomDockItems: List<String> = SettingsManager.DEFAULT_BOTTOM_DOCK_ITEMS.split(','),
     initialStartDestination: String = Screen.Home.route,
     modifier: Modifier = Modifier,
-    onNavigateToPlayer: () -> Unit = {}
+    onNavigateToPlayer: () -> Unit = {},
+    posterWallBottomPadding: Dp = 0.dp,
+    onPosterWallFullscreenChanged: (Boolean) -> Unit = {}
 ) {
     val bottomDockItems by mainViewModel.settingsManager.bottomDockItems.collectAsState(
         initial = initialBottomDockItems
@@ -649,6 +653,7 @@ fun AppNavigation(
                 artistName = artistName,
                 mainViewModel = mainViewModel,
                 playerViewModel = playerViewModel,
+                onOpenLastFmSettings = { navController.navigate(Screen.LastFmSettings.route) },
                 onBack = { navController.popBackStack() },
                 onAlbumClick = { albumId -> navController.navigate(Screen.AlbumDetail.createRoute(albumId)) },
                 onArtistClick = { targetArtist -> navController.navigate(Screen.ArtistDetail.createRoute(targetArtist)) },

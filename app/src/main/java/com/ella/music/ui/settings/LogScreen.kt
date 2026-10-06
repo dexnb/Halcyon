@@ -362,6 +362,7 @@ fun LogScreen(
         EllaMiuixDialogActions(
             cancelText = stringResource(R.string.common_cancel),
             confirmText = stringResource(R.string.common_clear),
+            confirmDangerous = true,
             onCancel = { showClearDialog = false },
             onConfirm = {
                 scope.launch {

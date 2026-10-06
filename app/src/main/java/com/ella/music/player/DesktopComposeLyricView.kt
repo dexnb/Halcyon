@@ -1,5 +1,7 @@
 package com.ella.music.player
 
+import com.ella.music.data.parser.excludesPronunciationInference
+
 import android.content.Context
 import android.graphics.Color as AndroidColor
 import android.graphics.drawable.GradientDrawable
@@ -473,6 +475,37 @@ internal class DesktopComposeLyricView(context: Context) : FrameLayout(context) 
 
     private fun Char.isLatinLetter(): Boolean = this in 'A'..'Z' || this in 'a'..'z'
 }
+
+internal fun isLikelyRomanizationSecondary(primary: String, candidate: String): Boolean {
+    val primaryText = primary.takeIf { it.isNotBlank() } ?: return false
+    val secondary = candidate.trim().takeIf { it.isNotBlank() } ?: return false
+    if (secondary.excludesPronunciationInference()) return false
+    if (!primaryText.hasCjkKanaOrHangul()) return false
+    if (!secondary.any { it.isLatinLetter() }) return false
+    if (secondary.hasCjkKanaOrHangul()) return false
+    val useful = secondary.filterNot { it.isWhitespace() }
+    if (useful.isEmpty()) return false
+    val romanChars = useful.count { it.isLatinLetter() || it in "-'.`·・" }
+    return romanChars.toFloat() / useful.length >= 0.82f
+}
+
+private fun String.hasCjkKanaOrHangul(): Boolean = any { char ->
+    when (Character.UnicodeBlock.of(char)) {
+        null -> false
+        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS,
+        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A,
+        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B,
+        Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS,
+        Character.UnicodeBlock.HIRAGANA,
+        Character.UnicodeBlock.KATAKANA,
+        Character.UnicodeBlock.HANGUL_SYLLABLES,
+        Character.UnicodeBlock.HANGUL_JAMO,
+        Character.UnicodeBlock.HANGUL_COMPATIBILITY_JAMO -> true
+        else -> false
+    }
+}
+
+private fun Char.isLatinLetter(): Boolean = this in 'A'..'Z' || this in 'a'..'z'
 
 private class DesktopComposeLifecycleOwner :
     LifecycleOwner,

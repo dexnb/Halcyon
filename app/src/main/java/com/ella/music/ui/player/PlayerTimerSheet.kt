@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ella.music.R
+import com.ella.music.data.SettingsManager
 import com.ella.music.data.model.formatPlaybackDuration
 import com.ella.music.ui.components.SelectionCheck
 import com.ella.music.ui.components.ellaOverlayCardColor
@@ -238,6 +240,16 @@ internal fun TimerSheetContent(
             Text(text = stringResource(R.string.player_cancel_sleep_timer))
         }
     }
+    SettingsNumberInputDialog(
+        show = showDurationInput,
+        title = "${stringResource(R.string.player_custom_duration)} (${stringResource(R.string.player_minutes_unit)})",
+        value = customTotalMinutes.toFloat(), valueRange = 1f..SLEEP_TIMER_MAX_TOTAL_MINUTES.toFloat(),
+        onDismissRequest = { showDurationInput = false },
+        onSave = { total ->
+            val (hours, minutes) = splitSleepTimerMinutes(total.toInt())
+            persistCustom(hours, minutes)
+        }
+    )
 }
 
 @Composable

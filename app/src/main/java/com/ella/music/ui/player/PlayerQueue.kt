@@ -2,9 +2,6 @@ package com.ella.music.ui.player
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,10 +32,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerInputChange
-import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
-import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -49,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.ella.music.R
+import com.ella.music.ui.playlist.ImmediateOrLongPressDragGestureDetector
 import com.ella.music.data.model.Song
 import com.ella.music.data.model.playlistIdentityKey
 import com.ella.music.data.repository.CoverUsage
@@ -67,7 +61,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import sh.calvin.reorderable.DragGestureDetector
 import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
+import com.ella.music.ui.components.rememberEllaReorderableLazyListState
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
@@ -241,7 +235,61 @@ internal fun PlayerQueueMenu(
                 }.takeIf { it >= 0 }
                 ?: manualPlaylist.indexOfFirst { it.song.playlistIdentityKey() == currentSongKey }
     }
-    LaunchedEffect(currentIndex) {
+    var pendingMoveStart by remember(playlistSnapshotKey) { mutableStateOf<Int?>(null) }
+    var pendingMoveTarget by remember(playlistSnapshotKey) { mutableStateOf<Int?>(null) }
+    // Keep the actual queue occurrence selected while a drag is still local. A raw song identity
+    // points to the first duplicate as soon as the reordered list is recomposed.
+    var trackedCurrentEntryKey by remember(playlistSnapshotKey) { mutableStateOf<String?>(null) }
+    LaunchedEffect(playlistSnapshotKey, currentSongKey, effectiveCurrentSourceKey, currentQueueIndexHint) {
+        val incomingEntries = buildQueueEntries(playlist)
+        // A queue replacement can arrive while the sheet remains composed. Do not rely solely on
+        // remember(playlist): a mutable queue snapshot may compare equal across the transition,
+        // leaving one stale occurrence in the locally reordered presentation. The playback queue
+        // is authoritative whenever it publishes a new snapshot, so replace the local rows before
+        // resolving the current occurrence.
+        manualPlaylist = incomingEntries
+        pendingMoveStart = null
+        pendingMoveTarget = null
+        trackedCurrentEntryKey = currentQueueIndexHint.takeIf {
+            it in incomingEntries.indices &&
+                incomingEntries[it].song.playlistIdentityKey() == currentSongKey &&
+                (effectiveCurrentSourceKey == null ||
+                    incomingEntries[it].song.playbackSourceKey == effectiveCurrentSourceKey)
+        }?.let(incomingEntries::get)?.stableKey
+            ?: incomingEntries.firstOrNull {
+                it.song.playlistIdentityKey() == currentSongKey &&
+                    (effectiveCurrentSourceKey == null ||
+                        it.song.playbackSourceKey == effectiveCurrentSourceKey)
+            }?.stableKey
+            ?: incomingEntries.firstOrNull {
+                it.song.playlistIdentityKey() == currentSongKey
+            }?.stableKey
+    }
+    val currentIndex = remember(
+        manualPlaylist,
+        currentSongKey,
+        effectiveCurrentSourceKey,
+        currentQueueIndexHint,
+        trackedCurrentEntryKey
+    ) {
+        trackedCurrentEntryKey?.let { key ->
+            manualPlaylist.indexOfFirst { it.stableKey == key }
+        }?.takeIf { it >= 0 }
+            ?: currentQueueIndexHint.takeIf {
+            it in manualPlaylist.indices &&
+                manualPlaylist[it].song.playlistIdentityKey() == currentSongKey &&
+                (effectiveCurrentSourceKey == null ||
+                    manualPlaylist[it].song.playbackSourceKey == effectiveCurrentSourceKey)
+            }
+                ?: manualPlaylist.indexOfFirst {
+                    it.song.playlistIdentityKey() == currentSongKey &&
+                        (effectiveCurrentSourceKey == null || it.song.playbackSourceKey == effectiveCurrentSourceKey)
+                }.takeIf { it >= 0 }
+                ?: manualPlaylist.indexOfFirst { it.song.playlistIdentityKey() == currentSongKey }
+    }
+    // Moving rows changes the index without changing the playing occurrence. Recentring on
+    // every index change fights edge scrolling and makes a drag jump through the queue.
+    LaunchedEffect(manualPlaylist.getOrNull(currentIndex)?.stableKey) {
         if (currentIndex >= 0) {
             listState.scrollToItem(currentIndex)
         }
@@ -252,7 +300,7 @@ internal fun PlayerQueueMenu(
             pendingMoveTarget = null
         }
     }
-    val reorderableLazyListState = rememberReorderableLazyListState(
+    val reorderableLazyListState = rememberEllaReorderableLazyListState(
         lazyListState = listState,
         onMove = { from, to ->
             if (queueLocked) return@rememberReorderableLazyListState
@@ -414,7 +462,7 @@ internal fun PlayerQueueMenu(
                             Modifier
                         } else {
                             Modifier.draggableHandle(
-                                dragGestureDetector = LongPressDragHandleGestureDetector,
+                                dragGestureDetector = ImmediateOrLongPressDragGestureDetector,
                                 onDragStopped = {
                                     val move = resolveQueueMoveCommit(
                                         fromIndex = pendingMoveStart,
@@ -610,40 +658,6 @@ internal fun PlayerQueueMenu(
     )
 }
 
-private object LongPressDragHandleGestureDetector : DragGestureDetector {
-    override suspend fun PointerInputScope.detect(
-        onDragStart: (Offset) -> Unit,
-        onDragEnd: () -> Unit,
-        onDragCancel: () -> Unit,
-        onDrag: (PointerInputChange, Offset) -> Unit
-    ) {
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false)
-            val longPress = awaitLongPressOrCancellation(down.id)
-            if (longPress == null) {
-                onDragCancel()
-                return@awaitEachGesture
-            }
-            onDragStart(longPress.position)
-            while (true) {
-                val event = awaitPointerEvent()
-                val change = event.changes.firstOrNull { it.id == longPress.id } ?: run {
-                    onDragCancel()
-                    break
-                }
-                if (!change.pressed || change.changedToUpIgnoreConsumed()) {
-                    onDragEnd()
-                    break
-                }
-                val dragAmount = change.positionChange()
-                if (dragAmount != Offset.Zero) {
-                    onDrag(change, dragAmount)
-                    change.consume()
-                }
-            }
-        }
-    }
-}
 
 @Composable
 internal fun QueueAlbumArtView(

@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +39,43 @@ import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.preference.SliderPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import kotlin.math.roundToInt
+
+internal object SettingsRememberedValues {
+    private val values = mutableMapOf<String, Any?>()
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> read(key: String, fallback: T): T = (values[key] as? T) ?: fallback
+
+    fun <T> write(key: String, value: T) {
+        values[key] = value
+    }
+}
+
+@Composable
+internal fun <T> kotlinx.coroutines.flow.Flow<T>.collectCachedAsState(
+    key: String,
+    initial: T
+): androidx.compose.runtime.State<T> {
+    val state = collectAsState(initial = SettingsRememberedValues.read(key, initial))
+    SettingsRememberedValues.write(key, state.value)
+    return state
+}
+
+@Composable
+internal fun rememberSettingsScrollState(key: String): ScrollState {
+    // The navigation entry owns this saved state: opening a child preserves the viewport, while
+    // popping this page and entering it again creates a fresh state at the top (#161, #473).
+    return rememberSaveable(key, saver = ScrollState.Saver) { ScrollState(0) }
+}
+
+@Composable
+internal fun rememberSettingsLazyListState(key: String): LazyListState {
+    return rememberSaveable(key, saver = LazyListState.Saver) { LazyListState(0, 0) }
+}
+
+internal typealias SettingsCardFrosting = com.ella.music.ui.components.SettingsCardFrosting
+internal val LocalSettingsCardFrosting get() = com.ella.music.ui.components.LocalSettingsCardFrosting
 
 internal object SettingsRememberedValues {
     private val values = mutableMapOf<String, Any?>()
@@ -223,6 +262,7 @@ internal fun SettingsIntSliderPreference(
     onValueChange: (Int) -> Unit
 ) {
     val safeRange = valueRange.first.toFloat()..valueRange.last.toFloat()
+    var showInput by rememberSaveable { mutableStateOf(false) }
     SliderPreference(
         title = title,
         summary = summary.takeIf { it.isNotBlank() },
@@ -238,6 +278,161 @@ internal fun SettingsIntSliderPreference(
             onValueChange(next.toInt().coerceIn(valueRange))
         }
     )
+    SettingsNumberInputDialog(
+        show = showInput && enabled,
+        title = title,
+        value = value.toFloat(),
+        valueRange = safeRange,
+        decimalPlaces = 0,
+        onDismissRequest = { showInput = false },
+        onSave = { onValueChange(it.roundToInt().coerceIn(valueRange)) }
+    )
+}
+
+@Composable
+internal fun SettingsFloatSliderPreference(
+    title: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    valueText: String,
+    onValueChange: (Float) -> Unit,
+    summary: String? = null,
+    steps: Int = 0,
+    decimalPlaces: Int = 2,
+    inputScale: Float = 1f,
+    onManualValue: ((Float) -> Unit)? = null,
+    onValueChangeFinished: (() -> Unit)? = null
+) {
+    var showInput by rememberSaveable { mutableStateOf(false) }
+    SliderPreference(
+        title = title, summary = summary, value = value.coerceIn(valueRange),
+        valueRange = valueRange, valueText = valueText, steps = steps,
+        onValueChange = onValueChange, onValueChangeFinished = onValueChangeFinished,
+        onClick = { showInput = true }, holdDownState = showInput
+    )
+    SettingsNumberInputDialog(
+        show = showInput, title = title, value = value * inputScale,
+        valueRange = valueRange.start * inputScale..valueRange.endInclusive * inputScale,
+        decimalPlaces = decimalPlaces, onDismissRequest = { showInput = false },
+        onSave = {
+            val next = (it / inputScale).coerceIn(valueRange)
+            if (onManualValue != null) onManualValue(next) else {
+                onValueChange(next)
+                onValueChangeFinished?.invoke()
+            }
+        }
+    )
+}
+
+internal fun parseSettingsNumberInput(
+    text: String,
+    range: ClosedFloatingPointRange<Float>,
+    decimalPlaces: Int
+): Float? {
+    val normalized = text.trim().replace(',', '.')
+    if (!normalized.matches(Regex("[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)"))) return null
+    val next = normalized.toFloatOrNull() ?: return null
+    if (!next.isFinite() || next !in range) return null
+    if (decimalPlaces == 0 && next != next.roundToInt().toFloat()) return null
+    return java.math.BigDecimal(normalized).setScale(decimalPlaces, java.math.RoundingMode.HALF_UP)
+        .toFloat().takeIf { it in range }
+}
+
+private fun formatSettingsNumberInput(value: Float, decimalPlaces: Int): String =
+    java.math.BigDecimal(value.toString()).setScale(decimalPlaces, java.math.RoundingMode.HALF_UP)
+        .stripTrailingZeros().toPlainString()
+
+@Composable
+internal fun SettingsNumberInputDialog(
+    show: Boolean,
+    title: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    decimalPlaces: Int = 0,
+    onDismissRequest: () -> Unit,
+    onSave: (Float) -> Unit
+) {
+    var text by remember(show, value) { mutableStateOf(formatSettingsNumberInput(value, decimalPlaces)) }
+    val parsed = parseSettingsNumberInput(text, valueRange, decimalPlaces)
+    EllaMiuixDialog(
+        show = show, title = title,
+        summary = stringResource(R.string.settings_number_input_range,
+            formatSettingsNumberInput(valueRange.start, decimalPlaces),
+            formatSettingsNumberInput(valueRange.endInclusive, decimalPlaces)),
+        onDismissRequest = onDismissRequest
+    ) {
+        Column(Modifier.fillMaxWidth()) {
+            TextField(
+                value = text, onValueChange = { text = it }, singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = when {
+                    valueRange.start < 0f -> KeyboardType.Text
+                    decimalPlaces == 0 -> KeyboardType.Number
+                    else -> KeyboardType.Decimal
+                }),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            )
+            EllaMiuixDialogActions(
+                cancelText = stringResource(R.string.common_cancel),
+                confirmText = stringResource(R.string.common_confirm),
+                confirmEnabled = parsed != null, onCancel = onDismissRequest,
+                onConfirm = {
+                    parsed?.let { onSave(it); onDismissRequest() }
+                }
+            )
+        }
+    }
+}
+
+internal fun formatMsAsSecondsInput(ms: Int): String =
+    String.format(java.util.Locale.US, "%.2f", ms.coerceAtLeast(0) / 1_000f)
+
+internal fun parseSecondsInputToMs(text: String, minMs: Int, maxMs: Int): Int? {
+    val seconds = text.trim().replace(',', '.').toFloatOrNull() ?: return null
+    val ms = (seconds * 1_000f).toInt()
+    if (ms !in minMs..maxMs) return null
+    return ms
+}
+
+@Composable
+internal fun SettingsSecondsInputDialog(
+    show: Boolean,
+    title: String,
+    valueMs: Int,
+    minMs: Int,
+    maxMs: Int,
+    onDismissRequest: () -> Unit,
+    onSave: (Int) -> Unit,
+    summary: String? = null
+) {
+    var text by remember(show, valueMs) { mutableStateOf(formatMsAsSecondsInput(valueMs)) }
+    val parsedMs = parseSecondsInputToMs(text, minMs, maxMs)
+    EllaMiuixDialog(
+        show = show,
+        title = title,
+        summary = summary,
+        onDismissRequest = onDismissRequest
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            TextField(
+                value = text,
+                onValueChange = { text = it },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+            EllaMiuixDialogActions(
+                cancelText = stringResource(R.string.common_cancel),
+                confirmText = stringResource(R.string.common_confirm),
+                onCancel = onDismissRequest,
+                onConfirm = {
+                    val next = parsedMs ?: return@EllaMiuixDialogActions
+                    onSave(next)
+                    onDismissRequest()
+                }
+            )
+        }
+    }
 }
 
 internal fun formatMsAsSecondsInput(ms: Int): String =

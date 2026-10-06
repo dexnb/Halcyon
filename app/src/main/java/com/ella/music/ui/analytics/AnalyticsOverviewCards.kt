@@ -253,6 +253,16 @@ internal fun MonthlyListeningReportCard(
             }
         }
     }
+    EllaMiuixBottomSheet(show = yearPicker, title = stringResource(R.string.category_year),
+        onDismissRequest = { yearPicker = false }) {
+        Column(Modifier.fillMaxWidth().heightIn(max = (LocalConfiguration.current.screenHeightDp * 0.60f).dp)
+            .verticalScroll(rememberScrollState())) {
+            EllaCheckOptionGroup(availableYears.map { it to it.toString() }, report.year, onSelect = { year ->
+                onYearSelected(year)
+                yearPicker = false
+            })
+        }
+    }
 }
 
 @Composable
