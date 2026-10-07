@@ -1583,7 +1583,9 @@
     <string name="lx_online_song_expired">Онлайн-песня больше не действительна.</string>
     <string name="lx_online_source_management">Управление источниками</string>
     <string name="lx_online_no_source_selected">Источник LX не выбран.</string>
+    <string name="musicfree_online_no_source_selected">Источник MusicFree не выбран.</string>
     <string name="lx_online_no_source_hint">Коснитесь значка шестеренки, чтобы импортировать или выбрать источник LX.</string>
+    <string name="musicfree_online_no_source_hint">Коснитесь значка шестеренки, чтобы импортировать или выбрать источник MusicFree.</string>
     <string name="lx_online_no_songs_found">Песни не найдены</string>
     <string name="lx_online_songs_found">Найдены песни %1$d</string>
     <string name="lx_online_search_failed">Поиск не удался</string>
@@ -2868,11 +2870,11 @@
     <string name="player_queue">Очередь воспроизведения</string>
     <string name="settings_apple_music_use_apple_favorite">Использовать кнопку избранного Apple</string>
     <string name="settings_apple_music_use_apple_favorite_summary">Использовать нативные значки избранного-звездочки и меню в плеере Apple Music</string>
-    <string name="lastfm_cloudflare_verification_title">Проверка безопасности</string>
-    <string name="lastfm_cloudflare_verification_button">Пройти проверку</string>
-    <string name="lastfm_cloudflare_verification_complete">Готово</string>
-    <string name="lastfm_cloudflare_verification_success">Проверка завершена, биография обновляется</string>
-    <string name="lastfm_cloudflare_verification_hint">Обнаружена проверка Cloudflare. Пожалуйста, завершите её ниже.</string>
+    <string name="lastfm_verification_title">Проверка безопасности</string>
+    <string name="lastfm_verification_button">Пройти проверку</string>
+    <string name="lastfm_verification_complete">Готово</string>
+    <string name="lastfm_verification_success">Проверка завершена, биография обновляется</string>
+    <string name="lastfm_verification_hint">Сайт требует проверку безопасности. Пройдите её на странице ниже.</string>
     <string name="library_cache_cancelled">Caching cancelled</string>
     <string name="library_cache_done">Cached %1$d, failed %2$d</string>
     <string name="library_cache_nothing">No remote songs to cache</string>

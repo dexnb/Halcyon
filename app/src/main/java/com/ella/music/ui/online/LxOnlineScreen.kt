@@ -107,13 +107,15 @@ fun LxOnlineScreen(
     }
     var declaredPlatforms by remember(selectedSource?.script) { mutableStateOf<Set<String>?>(null) }
     var platformDetectionError by remember(selectedSource?.script) { mutableStateOf(false) }
-    val availablePlatforms = LxSearchPlatform.entries.filter { declaredPlatforms?.contains(it.source) != false }
-    val unsupportedPlatforms = declaredPlatforms.orEmpty() - LxSearchPlatform.entries.map { it.source }.toSet()
+    val availablePlatforms = LxSearchPlatform.entries.filter {
+        declaredPlatforms == null || it.declaredSourceKey(declaredPlatforms.orEmpty()) != null
+    }
+    val unsupportedPlatforms = declaredPlatforms.orEmpty() - LxSearchPlatform.entries.flatMap { it.sourceKeys }.toSet()
     LaunchedEffect(selectedSource?.script) {
         val config = selectedSource ?: return@LaunchedEffect
         try {
             declaredPlatforms = service.supportedSources(config)
-            val detected = LxSearchPlatform.entries.filter { it.source in declaredPlatforms.orEmpty() }
+            val detected = LxSearchPlatform.entries.filter { it.declaredSourceKey(declaredPlatforms.orEmpty()) != null }
             if (state.searchPlatform !in detected) {
                 detected.firstOrNull()?.let { state.searchPlatform = it }
             }
@@ -126,13 +128,12 @@ fun LxOnlineScreen(
     val openPlayerOnPlay by settingsManager.openPlayerOnPlay.collectAsState(initial = false)
     val showPlayNextInLists by settingsManager.showPlayNextInLists.collectAsState(initial = false)
     val currentSourceId = selectedSource?.id.orEmpty()
-    var observedSourceId by remember { mutableStateOf<String?>(null) }
     val selectedLxSearchPlatform by settingsManager.selectedLxSearchPlatform.collectAsState(initial = "")
     var hasInitializedPlatform by remember { mutableStateOf(false) }
     LaunchedEffect(selectedLxSearchPlatform) {
         if (!hasInitializedPlatform && selectedLxSearchPlatform.isNotBlank()) {
             val matched = LxSearchPlatform.entries.firstOrNull {
-                it.source == selectedLxSearchPlatform || it.name.equals(selectedLxSearchPlatform, ignoreCase = true)
+                selectedLxSearchPlatform in it.sourceKeys || it.name.equals(selectedLxSearchPlatform, ignoreCase = true)
             }
             if (matched != null) {
                 state.searchPlatform = matched
@@ -385,7 +386,11 @@ fun LxOnlineScreen(
             if ((!showingRemote && state.results.isEmpty()) || (showingRemote && remoteResults.isEmpty())) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        text = if (!remoteConfigured) stringResource(R.string.remote_source_configure_first) else stringResource(R.string.lx_online_search_hint),
+                        text = stringResource(when {
+                            !remoteConfigured -> R.string.remote_source_configure_first
+                            !showingRemote && !state.searchPlatform.supportsNameSearch -> R.string.lx_qishui_input_hint
+                            else -> R.string.lx_online_search_hint
+                        }),
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )
                 }

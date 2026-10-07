@@ -149,6 +149,8 @@ interface PlayerUiSettingsAccess {
     val songInfoLayout: Flow<String>
     val queueToolbarLayout: Flow<String>
     val playerLandscapeStyle: Flow<Int>
+    val playerClockColor: Flow<Int>
+    suspend fun setPlayerClockColor(color: Int)
     val playerLandscapeHideSystemBars: Flow<Boolean>
     suspend fun setPlayerLandscapeHideSystemBars(enabled: Boolean)
     val playerKeepScreenOn: Flow<Boolean>
@@ -395,6 +397,12 @@ internal class PlayerUiSettingsAccessImpl(private val context: Context) : Player
         context.dataStore.data.map { it[KEY_QUEUE_TOOLBAR_LAYOUT].orEmpty() }
     override val playerLandscapeStyle: Flow<Int> =
         context.dataStore.data.map { SettingsManager.normalizePlayerLandscapeStyle(it[KEY_PLAYER_LANDSCAPE_STYLE]) }
+    override val playerClockColor: Flow<Int> = context.dataStore.data.map {
+        SettingsManager.normalizePlayerClockColor(it[SettingsManager.KEY_PLAYER_CLOCK_COLOR])
+    }
+    override suspend fun setPlayerClockColor(color: Int) {
+        context.dataStore.edit { it[SettingsManager.KEY_PLAYER_CLOCK_COLOR] = SettingsManager.normalizePlayerClockColor(color) }
+    }
     override val playerKeepScreenOn: Flow<Boolean> =
         context.dataStore.data.map { it[KEY_PLAYER_KEEP_SCREEN_ON] ?: false }
     override val playerLandscapeHideSystemBars: Flow<Boolean> =

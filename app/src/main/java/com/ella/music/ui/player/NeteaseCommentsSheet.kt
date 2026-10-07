@@ -184,9 +184,10 @@ private class NeteaseCommentsUi(
     private val resource: com.ella.music.data.netease.NeteaseCommentResource,
     private val scope: CoroutineScope,
     /** Application context, only for toasts and their strings. */
-    private val appContext: Context
+    private val appContext: Context,
+    initialSort: NeteaseCommentSort
 ) {
-    var sort by mutableStateOf(NeteaseCommentSort.Recommend)
+    var sort by mutableStateOf(initialSort)
         private set
     val comments = mutableStateListOf<NeteaseComment>()
     val floors = mutableStateMapOf<Long, CommentFloorUi>()
@@ -206,7 +207,7 @@ private class NeteaseCommentsUi(
 
     private var nextPageNo = 1
     private var nextCursor = ""
-    private var nextSortType = NeteaseCommentSort.Recommend.apiValue
+    private var nextSortType = initialSort.apiValue
     private var job: Job? = null
     /** Bumped on every reload so a cancelled request's cleanup cannot touch the new sort's state. */
     private var generation = 0

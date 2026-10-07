@@ -126,7 +126,7 @@ internal fun SettingsAppearanceSection(
             title = stringResource(R.string.settings_player_vertical_actions),
             subtitle = stringResource(R.string.settings_action_menu_summary),
             savedLayout = playerActionMenuLayout,
-            defaultOrder = (ActionMenuIds.playerShortcutDefaults + ActionMenuIds.playerDefaults).distinct(),
+            defaultOrder = ActionMenuIds.playerActionMenuDefaults,
             onDismissRequest = { showPlayerActionMenuSheet = false },
             onSave = { value ->
                 scope.launch {
@@ -360,6 +360,7 @@ internal fun SettingsAppearanceSection(
         "playerLandscapeStyle",
         SettingsManager.DEFAULT_PLAYER_LANDSCAPE_STYLE
     )
+    val playerClockColor by settingsManager.playerClockColor.collectCachedAsState("playerClockColor", SettingsManager.DEFAULT_PLAYER_CLOCK_COLOR)
     val playlistSpecialEntriesVisible by settingsManager.playlistSpecialEntriesVisible.collectCachedAsState("playlistSpecialEntriesVisible", false)
     val showPlayNextInLists by settingsManager.showPlayNextInLists.collectCachedAsState("showPlayNextInLists", false)
     val listQualityDisplayMode by settingsManager.listQualityDisplayMode.collectCachedAsState(
@@ -1907,6 +1908,20 @@ internal fun SettingsAppearanceSection(
                 )
                 } // search-anchor:end
 
+            }
+            SettingsSearchAnchor(R.string.settings_player_clock_color) {
+                val clockColorEntries = listOf(
+                    DropdownItem(title = stringResource(R.string.settings_player_clock_color_cover)),
+                    DropdownItem(title = stringResource(R.string.settings_player_clock_color_white)),
+                    DropdownItem(title = stringResource(R.string.settings_player_clock_color_light_gray))
+                )
+                WindowSpinnerPreference(
+                    title = stringResource(R.string.settings_player_clock_color),
+                    summary = clockColorEntries[playerClockColor].text,
+                    items = clockColorEntries,
+                    selectedIndex = playerClockColor,
+                    onSelectedIndexChange = { color -> scope.launch { settingsManager.setPlayerClockColor(color) } }
+                )
             }
             SettingsFocusAnchor(active = highlightKey == "transport_button_outlines") {
                 // search-anchor:start

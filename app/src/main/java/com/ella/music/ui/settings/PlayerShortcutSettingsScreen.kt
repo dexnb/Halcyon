@@ -402,6 +402,7 @@ internal fun playerShortcutLabel(id: String): String = when (id) {
     ActionMenuIds.REMOTE_QUALITY -> stringResource(R.string.settings_action_menu_remote_quality)
     PlayerExtraActionIds.LYRIC_SHARE -> stringResource(R.string.player_lyric_share)
     ActionMenuIds.LANDSCAPE -> stringResource(R.string.player_landscape_lyrics)
+    ActionMenuIds.POSTER_WALL -> stringResource(R.string.poster_wall_title)
     ActionMenuIds.LYRICS_DISPLAY -> stringResource(R.string.player_lyrics_display)
     ActionMenuIds.SPECTRUM -> stringResource(R.string.song_more_view_spectrum)
     ActionMenuIds.RATING -> stringResource(R.string.song_more_set_rating)

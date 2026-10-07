@@ -31,6 +31,7 @@ internal fun actionMenuStringRes(id: String): Int = when (id) {
     ActionMenuIds.AB_REPEAT -> R.string.player_repeat_mode
     ActionMenuIds.REMOTE_QUALITY -> R.string.settings_action_menu_remote_quality
     ActionMenuIds.LANDSCAPE -> R.string.player_landscape_lyrics
+    ActionMenuIds.POSTER_WALL -> R.string.poster_wall_title
     ActionMenuIds.LYRICS_DISPLAY -> R.string.player_lyrics_display
     ActionMenuIds.DYNAMIC_COVER -> R.string.player_match_dynamic_cover
     ActionMenuIds.VISUALIZER -> R.string.player_visualizer_settings
@@ -43,6 +44,8 @@ internal fun actionMenuStringRes(id: String): Int = when (id) {
     ActionMenuIds.DOWNLOAD -> R.string.netease_download_song
     ActionMenuIds.DOWNLOAD_MV -> R.string.netease_download_mv
     ActionMenuIds.VIEW_MV -> R.string.player_view_music_video
+    ActionMenuIds.SONG_COMMENTS -> R.string.player_view_song_comments
+    ActionMenuIds.MV_COMMENTS -> R.string.player_view_mv_comments
     com.ella.music.ui.player.PlayerExtraActionIds.LYRIC_SHARE -> R.string.player_lyric_share
     ActionMenuIds.REMOVE_FROM_RECENT_PLAYBACK -> R.string.recent_playback_remove_from_recent
     ActionMenuIds.DELETE_SINGLE_RECENT_PLAYBACK -> R.string.recent_playback_remove_from_recent

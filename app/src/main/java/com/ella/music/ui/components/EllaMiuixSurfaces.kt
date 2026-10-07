@@ -304,12 +304,15 @@ fun EllaMiuixDialogActions(
     confirmText: String,
     onCancel: () -> Unit,
     onConfirm: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    confirmDangerous: Boolean = false,
+    cancelDangerous: Boolean = false,
+    confirmEnabled: Boolean = true
 ) {
     EllaMiuixActionRow(
         actions = listOf(
-            EllaMiuixAction(text = cancelText, onClick = onCancel),
-            EllaMiuixAction(text = confirmText, onClick = onConfirm, primary = true)
+            EllaMiuixAction(text = cancelText, onClick = onCancel, dangerous = cancelDangerous),
+            EllaMiuixAction(text = confirmText, onClick = onConfirm, primary = true, dangerous = confirmDangerous, enabled = confirmEnabled)
         ),
         modifier = modifier
     )
@@ -529,6 +532,7 @@ fun EllaMiuixActionRow(
                 TextButton(
                     text = action.text,
                     onClick = action.onClick,
+                    enabled = action.enabled,
                     modifier = buttonModifier,
                     colors = ButtonDefaults.textButtonColors(
                         color = MiuixTheme.colorScheme.onSurface.copy(alpha = 0.12f),

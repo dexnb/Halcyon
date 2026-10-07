@@ -272,8 +272,8 @@ internal fun SettingsIntSliderPreference(
         steps = steps,
         showKeyPoints = showKeyPoints,
         enabled = enabled,
-        onClick = onClick,
-        holdDownState = holdDownState,
+        onClick = onClick ?: { showInput = true },
+        holdDownState = holdDownState || showInput,
         onValueChange = { next ->
             onValueChange(next.toInt().coerceIn(valueRange))
         }

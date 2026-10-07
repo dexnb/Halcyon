@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="netease_trial_playback_badge">试听</string>
+    <string name="netease_trial_playback_hint">本次播放使用的是网易云试听资源，可检查登录状态、会员权益及曲目播放权限。</string>
+    <string name="poster_wall_refresh">重新生成海报墙</string>
+    <string name="settings_player_clock_color">时钟页面取色</string>
+    <string name="settings_player_clock_color_cover">封面取色</string>
+    <string name="settings_player_clock_color_white">白色</string>
+    <string name="settings_player_clock_color_light_gray">浅灰色</string>
     <string name="settings_player_landscape_hide_system_bars">播放页横屏隐藏状态栏及手势条</string>
     <string name="settings_player_landscape_hide_system_bars_summary">横屏播放时隐藏系统栏，可从屏幕边缘滑动临时显示</string>
     <string name="settings_performance_diagnostics">界面性能检测</string>
@@ -53,7 +60,7 @@
     <string name="continue_playback">继续播放：%1$s - %2$s</string>
     <string name="continue_playback_title">继续播放</string>
     <string name="continue_playback_song">%1$s - %2$s</string>
-    <string name="settings_continue_playback_row">显示“继续播放”功能条</string>
+    <string name="settings_continue_playback_row">音乐库页：显示“继续播放”功能条</string>
     <string name="settings_continue_playback_row_summary">在音乐库及各详情页显示该分类最近播放的歌曲</string>
     <string name="play_all">播放全部</string>
     <string name="album_play_all">播放全部</string>
@@ -621,7 +628,7 @@
     <string name="recent_playback_limit_unlimited">无限制</string>
     <string name="recent_playback_limit_custom">自定义数量</string>
     <string name="recent_playback_show_date">显示最近播放日期</string>
-    <string name="recent_playback_collection_types">合集 Tab 显示类型</string>
+    <string name="recent_playback_collection_types">合集标签页显示类型</string>
     <string name="recent_playback_clear">清空</string>
     <string name="recent_playback_clear_message">确定清空“%1$s”Tab 的最近播放记录吗？其它 Tab 的记录不会被清除。</string>
     <string name="recent_playback_tab_collection">合集</string>
@@ -1184,7 +1191,7 @@
     <string name="settings_backup_export_playback_title">导出听歌历史</string>
     <string name="settings_backup_export_playback_summary">选择 Halcyon、棱镜音乐、光锥音乐、LunaBeat 或 Raws Music 格式</string>
     <string name="settings_backup_restore_playback_title">导入听歌历史</string>
-    <string name="settings_backup_restore_playback_summary">自动识别并导入 Halcyon、棱镜音乐、光锥音乐、LunaBeat 或 Raws Music</string>
+    <string name="settings_backup_restore_playback_summary">自动识别 Halcyon、棱镜音乐、光锥音乐（JSON / ZIP）、LunaBeat 或 Raws Music 听歌记录</string>
     <string name="settings_backup_export_format_title">选择导出格式</string>
     <string name="settings_backup_export_format_ella">Halcyon 格式</string>
     <string name="settings_backup_export_format_ella_summary">包含播放历史、排行和日历统计，适合在 Halcyon 中恢复</string>
@@ -1493,6 +1500,7 @@
     <string name="settings_startup_poster_duration_summary">设置每次启动时显示海报的时长</string>
     <string name="settings_startup_poster_duration_value">%1$.2f 秒</string>
     <string name="settings_duration_input_range">输入 %1$.2f 到 %2$.2f</string>
+    <string name="settings_number_input_range">输入 %1$s 到 %2$s</string>
     <string name="settings_startup_poster_image">选择开屏海报图片</string>
     <string name="settings_app_wallpaper">全局自定义壁纸</string>
     <string name="settings_app_wallpaper_summary">在音乐库、专辑、歌单、文件夹等页面背后显示自定义壁纸</string>
@@ -2043,7 +2051,7 @@
     <string name="settings_show_local_mv_in_lists">列表中显示本地 MV 按钮</string>
     <string name="settings_show_local_mv_in_lists_summary">歌曲存在本地 MV 时，在歌曲列表显示本地 MV 入口</string>
     <string name="settings_show_online_mv_in_lists">列表中显示在线 MV 按钮</string>
-    <string name="settings_show_online_mv_in_lists_summary">歌曲有网易云 MV 信息时，在歌曲列表显示在线 MV 入口</string>
+    <string name="settings_show_online_mv_in_lists_summary">歌曲有网易云MV 信息时，在歌曲列表显示在线 MV 入口</string>
     <string name="player_detail_music_video">MV</string>
     <string name="player_music_video_landscape">横屏</string>
     <string name="player_music_video_portrait">竖屏</string>
@@ -2372,11 +2380,18 @@
     <string name="lx_online_song_expired">在线歌曲已失效</string>
     <string name="lx_online_source_management">源管理</string>
     <string name="lx_online_no_source_selected">未选择 LX 源</string>
+    <string name="musicfree_online_no_source_selected">未选择 MusicFree 源</string>
     <string name="lx_online_no_source_hint">点右上角齿轮导入或选择 LX 源</string>
+    <string name="musicfree_online_no_source_hint">点右上角齿轮导入或选择 MusicFree 源</string>
     <string name="lx_online_no_songs_found">没有找到相关歌曲</string>
     <string name="lx_online_songs_found">找到 %1$d 首歌曲</string>
     <string name="lx_online_search_failed">搜索失败</string>
     <string name="lx_online_search_placeholder">搜索在线歌曲、歌手</string>
+    <string name="lx_qishui_input_placeholder">汽水歌曲分享链接或 ID</string>
+    <string name="lx_qishui_input_hint">粘贴汽水歌曲分享链接或歌曲 ID，点选结果播放。暂不支持按歌名搜索。</string>
+    <string name="lx_qishui_invalid_track">请输入汽水歌曲分享链接或歌曲 ID，暂不支持按歌名搜索</string>
+    <string name="lx_qishui_link_failed">无法展开汽水歌曲链接，请稍后重试或输入歌曲 ID</string>
+    <string name="lx_qishui_track_title">汽水歌曲 %1$s</string>
     <string name="lx_online_processing">处理中…</string>
     <string name="lx_online_import_hint">导入 LX 源后可搜索在线歌曲</string>
     <string name="lx_online_search_hint">搜索后点选歌曲即可在线播放</string>
@@ -2704,7 +2719,7 @@
     <string name="player_queue_autoplay_title">自动播放</string>
     <string name="player_queue_autoplay_subtitle">将继续播放类似音乐</string>
     <string name="player_local_music_video">本地 MV</string>
-    <string name="player_netease_music_video">网易云 MV</string>
+    <string name="player_netease_music_video">网易云MV</string>
     <string name="settings_xiaomi_super_island_custom">超级岛自定义设置</string>
     <string name="settings_xiaomi_super_island_custom_summary">歌词布局、颜色、按钮、分享与 XMSF 兼容模式</string>
     <string name="settings_xiaomi_super_island_display_section">歌词显示</string>
@@ -2933,11 +2948,11 @@
     <string name="player_queue">播放队列</string>
     <string name="settings_apple_music_use_apple_favorite">使用 Apple 的收藏按钮</string>
     <string name="settings_apple_music_use_apple_favorite_summary">在 Apple Music 播放页中使用原生星标收藏与更多操作图标</string>
-    <string name="lastfm_cloudflare_verification_title">安全验证</string>
-    <string name="lastfm_cloudflare_verification_button">通过安全验证</string>
-    <string name="lastfm_cloudflare_verification_complete">完成验证</string>
-    <string name="lastfm_cloudflare_verification_success">安全验证已完成，正在刷新传记</string>
-    <string name="lastfm_cloudflare_verification_hint">遇到 Cloudflare 安全验证，请在下方网页中完成人机验证</string>
+    <string name="lastfm_verification_title">安全验证</string>
+    <string name="lastfm_verification_button">通过安全验证</string>
+    <string name="lastfm_verification_complete">完成验证</string>
+    <string name="lastfm_verification_success">安全验证已完成，正在刷新传记</string>
+    <string name="lastfm_verification_hint">网站要求安全验证，请在下方网页中完成验证</string>
     <string name="recent_playback_multi_select">多选</string>
     <string name="recent_playback_search">搜索</string>
     <string name="recent_playback_search_hint">搜索最近播放</string>
@@ -3075,7 +3090,7 @@
     <string name="netease_mv_resolution_title">MV 在线播放分辨率</string>
     <string name="netease_mv_download_resolution_title">MV 下载分辨率</string>
     <string name="netease_download_song">下载歌曲到本地</string>
-    <string name="netease_download_mv">下载 MV 到本地</string>
+    <string name="netease_download_mv">下载MV到本地</string>
     <string name="netease_local_downloads">本地下载</string>
     <string name="netease_download_failed">下载失败：%1$s</string>
     <string name="netease_download_complete">下载完成</string>

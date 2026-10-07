@@ -26,7 +26,7 @@ internal const val NETEASE_SCHEME = "halcyon-netease"
 internal data class NeteaseCollections(val favorites: List<Song>, val playlists: List<UserPlaylist>, val favoritePlaylistId: String)
 internal class NeteaseApiException(val code: Int) : IOException("NetEase API ($code)")
 /** Quality actually served for a resolved stream; drives the player badge and live-output sheet. */
-internal data class NeteaseStreamInfo(val url: String, val level: String, val type: String, val bitRate: Int, val sampleRate: Int)
+internal data class NeteaseStreamInfo(val url: String, val level: String, val type: String, val bitRate: Int, val sampleRate: Int, val isTrial: Boolean = false)
 
 internal class CatClawNeteaseClient(context: Context) {
     private val accounts = NeteaseAccountStore.getInstance(context)
@@ -145,15 +145,8 @@ internal class CatClawNeteaseClient(context: Context) {
             val url = data.optString("url").takeUnless { it == "null" }.orEmpty()
             failureCode = data.optInt("code", -1)
             if (failureCode == 200 && url.isNotBlank()) {
-                val parsed = url.toHttpUrlOrNull() ?: throw IOException("Invalid NetEase stream URL")
-                val resolved = NeteaseStreamInfo(
-                    url = parsed.newBuilder().scheme("https").build().toString(),
-                    level = data.optString("level").ifBlank { level },
-                    type = data.optString("type").ifBlank { data.optString("encodeType") },
-                    bitRate = data.optInt("br"),
-                    sampleRate = data.optInt("sr")
-                )
-                if (data.optJSONObject("freeTrialInfo") != null) {
+                val resolved = parseNeteaseStreamInfo(data, level)
+                if (resolved.isTrial) {
                     if (trial == null) trial = resolved
                     continue
                 }

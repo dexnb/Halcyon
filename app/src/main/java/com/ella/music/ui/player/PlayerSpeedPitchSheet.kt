@@ -1,6 +1,8 @@
 package com.ella.music.ui.player
 
 import com.ella.music.ui.components.ellaOverlayCardColor
+import com.ella.music.ui.settings.SettingsNumberInputDialog
+import androidx.compose.foundation.clickable
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -58,6 +60,7 @@ private fun SpeedPitchSliderCard(
     value: Float,
     onValueChange: (Float) -> Unit
 ) {
+    var showInput by rememberSaveable { mutableStateOf(false) }
     Card(
         modifier = Modifier.fillMaxWidth(),
         insideMargin = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
@@ -66,7 +69,7 @@ private fun SpeedPitchSliderCard(
         )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().clickable { showInput = true },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(

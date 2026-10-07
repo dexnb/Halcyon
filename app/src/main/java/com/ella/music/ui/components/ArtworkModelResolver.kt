@@ -69,7 +69,8 @@ fun rememberSongArtworkState(
         song?.fileSize,
         coverUrl,
         albumArtUri,
-        cacheFamily
+        cacheFamily,
+        cacheVariant
     ) {
         song?.let { current ->
             listOf(

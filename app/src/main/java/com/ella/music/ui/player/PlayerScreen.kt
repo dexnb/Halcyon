@@ -319,13 +319,17 @@ fun PlayerScreen(
     LaunchedEffect(openToken, playerVisible, isLandscape, playerLandscapeStyle) {
         if (!playerVisible) {
             landscapeState.expanded = false
-        } else if (isLandscape) {
+            landscapeOverlayFromNaturalLandscape = false
+        } else if (isLandscape && !landscapeState.expanded) {
             // A permanently-landscape device (for example an in-car display) never performs the
             // portrait-to-landscape rotation that used to open this host. Apply the user's chosen
             // landscape presentation as soon as the player page itself opens instead.
             landscapeOverlayFromNaturalLandscape = true
             landscapeState.expanded =
                 playerLandscapeStyle != SettingsManager.PLAYER_LANDSCAPE_STYLE_WIDE
+        } else if (!isLandscape && landscapeOverlayFromNaturalLandscape) {
+            landscapeState.expanded = false
+            landscapeOverlayFromNaturalLandscape = false
         }
     }
     val visualizerPermissionState = rememberPlayerVisualizerPermissionState(
@@ -587,7 +591,7 @@ fun PlayerScreen(
         showLyrics = showLyrics,
         pagerState = playerPagerState,
         onShowLyricsChange = playerViewModel::setShowLyrics,
-        playerVisible = playerVisible
+        playerVisible = playerVisible && entryAligned
     )
 
     PlayerDismissMotionHost(
@@ -1093,6 +1097,7 @@ fun PlayerScreen(
                 interceptBack = playerLandscapeStyle == SettingsManager.PLAYER_LANDSCAPE_STYLE_WIDE ||
                     !landscapeOverlayFromNaturalLandscape,
                 showBackButton = playerLandscapeStyle == SettingsManager.PLAYER_LANDSCAPE_STYLE_WIDE,
+                forceLandscape = !landscapeOverlayFromNaturalLandscape,
                 onDismiss = {
                     landscapeState.expanded = false
                 }

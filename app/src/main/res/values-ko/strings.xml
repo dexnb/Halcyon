@@ -1591,7 +1591,9 @@
     <string name="lx_online_song_expired">온라인 곡은 더 이상 유효하지 않습니다</string>
     <string name="lx_online_source_management">소스 관리</string>
     <string name="lx_online_no_source_selected">LX 소스가 선택되지 않았습니다</string>
+    <string name="musicfree_online_no_source_selected">MusicFree 소스가 선택되지 않았습니다</string>
     <string name="lx_online_no_source_hint">LX 소스를 가져오거나 선택하려면 기어 아이콘을 탭하세요</string>
+    <string name="musicfree_online_no_source_hint">MusicFree 소스를 가져오거나 선택하려면 기어 아이콘을 탭하세요</string>
     <string name="lx_online_no_songs_found">곡을 찾을 수 없습니다</string>
     <string name="lx_online_songs_found">%1$d 곡을 찾았습니다</string>
     <string name="lx_online_search_failed">검색 실패</string>
@@ -2881,11 +2883,11 @@
     <string name="player_queue">재생 대기열</string>
     <string name="settings_apple_music_use_apple_favorite">Apple 즐겨찾기 버튼 사용</string>
     <string name="settings_apple_music_use_apple_favorite_summary">Apple Music 재생 화면에서 기본 별표 즐겨찾기 및 더보기 아이콘 사용</string>
-    <string name="lastfm_cloudflare_verification_title">보안 확인</string>
-    <string name="lastfm_cloudflare_verification_button">보안 확인 진행</string>
-    <string name="lastfm_cloudflare_verification_complete">확인 완료</string>
-    <string name="lastfm_cloudflare_verification_success">보안 확인이 완료되었습니다. 아티스트 소개를 새로고침합니다</string>
-    <string name="lastfm_cloudflare_verification_hint">Cloudflare 보안 확인이 감지되었습니다. 아래에서 확인을 완료해 주세요.</string>
+    <string name="lastfm_verification_title">보안 확인</string>
+    <string name="lastfm_verification_button">보안 확인 진행</string>
+    <string name="lastfm_verification_complete">확인 완료</string>
+    <string name="lastfm_verification_success">보안 확인이 완료되었습니다. 아티스트 소개를 새로고침합니다</string>
+    <string name="lastfm_verification_hint">웹사이트에서 보안 확인을 요청했습니다. 아래 페이지에서 인증을 완료하세요.</string>
     <string name="library_cache_cancelled">Caching cancelled</string>
     <string name="library_cache_done">Cached %1$d, failed %2$d</string>
     <string name="library_cache_nothing">No remote songs to cache</string>

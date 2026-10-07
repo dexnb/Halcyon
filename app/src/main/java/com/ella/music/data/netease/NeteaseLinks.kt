@@ -31,13 +31,15 @@ internal enum class NeteaseLinkTarget(val id: String, val titleRes: Int) {
 internal data class NeteaseLinkSettings(
     val target: NeteaseLinkTarget = NeteaseLinkTarget.Web,
     val openMusicVideoExternally: Boolean = false,
-    val custom: Map<NeteaseLinkKind, String> = emptyMap()
+    val custom: Map<NeteaseLinkKind, String> = emptyMap(),
+    val defaultCommentSort: NeteaseCommentSort = NeteaseCommentSort.Recommend
 )
 
 internal object NeteaseLinks {
     private const val PREFS = "netease_links"
     private const val KEY_TARGET = "target"
     private const val KEY_MV_EXTERNAL = "mv_external"
+    private const val KEY_COMMENT_SORT = "comment_default_sort"
     private const val ID = "{id}"
 
     private val webPrefixes = mapOf(
@@ -97,11 +99,13 @@ internal object NeteaseLinks {
 
     fun current(context: Context): NeteaseLinkSettings = mutableSettings.value ?: read(context).also { mutableSettings.value = it }
 
-    private fun read(context: Context): NeteaseLinkSettings {
+    internal fun read(context: Context): NeteaseLinkSettings {
         val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return NeteaseLinkSettings(
             target = NeteaseLinkTarget.fromId(prefs.getString(KEY_TARGET, null)),
             openMusicVideoExternally = prefs.getBoolean(KEY_MV_EXTERNAL, false),
+            defaultCommentSort = NeteaseCommentSort.fromApiValue(prefs.getInt(KEY_COMMENT_SORT, NeteaseCommentSort.Recommend.apiValue))
+                ?: NeteaseCommentSort.Recommend,
             custom = NeteaseLinkKind.entries.mapNotNull { kind ->
                 prefs.getString("custom_${kind.key}", null)?.takeIf { it.isNotBlank() }?.let { kind to it }
             }.toMap()
@@ -113,6 +117,7 @@ internal object NeteaseLinks {
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply {
             putString(KEY_TARGET, next.target.id)
             putBoolean(KEY_MV_EXTERNAL, next.openMusicVideoExternally)
+            putInt(KEY_COMMENT_SORT, next.defaultCommentSort.apiValue)
             NeteaseLinkKind.entries.forEach { kind ->
                 val value = next.custom[kind]?.trim().orEmpty()
                 if (value.isEmpty()) remove("custom_${kind.key}") else putString("custom_${kind.key}", value)
@@ -184,5 +189,14 @@ internal object NeteaseLinks {
         false
     } catch (_: SecurityException) {
         false
+    }
+
+    internal fun intentForUrl(url: String): Intent = when {
+        url.startsWith("intent:", ignoreCase = true) -> Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+        url.startsWith("android-app:", ignoreCase = true) -> Intent.parseUri(url, Intent.URI_ANDROID_APP_SCHEME)
+        // URI_INTENT_SCHEME would treat orpheus://...#Intent;... as an opaque VIEW URI.
+        // Zero accepts an Intent fragment on any scheme, preserving package, action and extras.
+        "#Intent;" in url -> Intent.parseUri(url, 0)
+        else -> Intent(Intent.ACTION_VIEW, Uri.parse(url))
     }
 }

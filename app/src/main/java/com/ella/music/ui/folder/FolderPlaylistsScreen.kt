@@ -90,7 +90,7 @@ import top.yukonga.miuix.kmp.icon.extended.Playlist
 import top.yukonga.miuix.kmp.icon.basic.Search
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
+import com.ella.music.ui.components.rememberEllaReorderableLazyListState
 
 @Composable
 fun FolderPlaylistsScreen(
@@ -242,20 +242,20 @@ fun FolderPlaylistsScreen(
             filteredPlaylists.filter { it.id == draggedPlaylistId || it.id !in draggedSelectionIds }
         }
     }
-    val reorderableLazyListState = rememberReorderableLazyListState(
+    val reorderableLazyListState = rememberEllaReorderableLazyListState(
         lazyListState = listState,
         onMove = { from, to ->
-            if (!reorderEnabled) return@rememberReorderableLazyListState
+            if (!reorderEnabled) return@rememberEllaReorderableLazyListState
             val fromIndex = from.index
             val toIndex = to.index
             val fromPlaylist = reorderablePlaylists.getOrNull(fromIndex)
-                ?: return@rememberReorderableLazyListState
+                ?: return@rememberEllaReorderableLazyListState
             val toPlaylist = reorderablePlaylists.getOrNull(toIndex)
-                ?: return@rememberReorderableLazyListState
+                ?: return@rememberEllaReorderableLazyListState
             val sourceIndex = manualCustomPlaylists.indexOfFirst { it.id == fromPlaylist.id }
             val targetIndex = manualCustomPlaylists.indexOfFirst { it.id == toPlaylist.id }
             if (sourceIndex !in manualCustomPlaylists.indices || targetIndex !in manualCustomPlaylists.indices) {
-                return@rememberReorderableLazyListState
+                return@rememberEllaReorderableLazyListState
             }
             manualCustomPlaylists = manualCustomPlaylists.moveSelectedItemsAsBlock(
                 from = sourceIndex,
@@ -373,7 +373,9 @@ fun FolderPlaylistsScreen(
                 stringResource(R.string.folder_playlist_title)
             },
             color = ellaPageBackground(),
-            titleEndPadding = 192.dp,
+            // Six selection actions occupy the right side. Keep the title gesture area clear of
+            // the first (pin) action so it remains reliably tappable on narrow screens.
+            titleEndPadding = if (selection.selectionMode) 304.dp else 192.dp,
             onDoubleTapTitle = { scope.launch { listState.animateScrollToItem(0) } },
             navigationIcon = {
                 if (showBackButton || selection.selectionMode) {

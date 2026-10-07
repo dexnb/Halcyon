@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="netease_trial_playback_badge">Preview</string>
+    <string name="netease_trial_playback_hint">This playback uses a NetEase preview. Check your login, membership and access to this track.</string>
+    <string name="poster_wall_refresh">Regenerate poster wall</string>
+    <string name="settings_player_clock_color">Clock player color</string>
+    <string name="settings_player_clock_color_cover">Cover color</string>
+    <string name="settings_player_clock_color_white">White</string>
+    <string name="settings_player_clock_color_light_gray">Light gray</string>
     <string name="settings_performance_diagnostics">UI performance diagnostics</string>
     <string name="settings_performance_diagnostics_summary">Sample frame rate, jank and memory for the current screen, similar to gfxinfo</string>
     <string name="settings_performance_running">Sampling</string>
@@ -53,7 +60,7 @@
     <string name="continue_playback">Continue playback: %1$s - %2$s</string>
     <string name="continue_playback_title">Continue playback</string>
     <string name="continue_playback_song">%1$s - %2$s</string>
-    <string name="settings_continue_playback_row">Show Continue Playback row</string>
+    <string name="settings_continue_playback_row">Music library: show Continue Playback row</string>
     <string name="settings_continue_playback_row_summary">Show the most recently played song in each library category and detail page</string>
     <string name="play_all">Play all</string>
     <string name="album_play_all">Play all</string>
@@ -997,7 +1004,7 @@
     <string name="settings_backup_export_playback_title">Export listening history</string>
     <string name="settings_backup_export_playback_summary">Choose Halcyon, Prism Music, Cone Music, LunaBeat, or Raws Music</string>
     <string name="settings_backup_restore_playback_title">Import listening history</string>
-    <string name="settings_backup_restore_playback_summary">Auto-detect and import Halcyon, Prism Music, Cone Music, LunaBeat, or Raws Music</string>
+    <string name="settings_backup_restore_playback_summary">Auto-detect listening history from Halcyon, Prism Music, Cone Music (JSON / ZIP), LunaBeat, or Raws Music</string>
     <string name="settings_backup_export_format_title">Select export format</string>
     <string name="settings_backup_export_format_ella">Halcyon format</string>
     <string name="settings_backup_export_format_ella_summary">Includes play history, rankings, and calendar stats; suitable for restoring in Halcyon</string>
@@ -1250,6 +1257,7 @@
     <string name="settings_startup_poster_duration_summary">Set how long the poster remains visible when the app opens</string>
     <string name="settings_startup_poster_duration_value">%1$.2f sec</string>
     <string name="settings_duration_input_range">Enter %1$.2f to %2$.2f</string>
+    <string name="settings_number_input_range">Enter %1$s to %2$s</string>
     <string name="settings_startup_poster_image">Choose startup poster image</string>
     <string name="settings_app_wallpaper">Global custom wallpaper</string>
     <string name="settings_app_wallpaper_summary">Show a custom wallpaper behind library, album, playlist, folder, and similar pages</string>
@@ -1912,11 +1920,18 @@
     <string name="lx_online_song_expired">Online song is no longer valid</string>
     <string name="lx_online_source_management">Source management</string>
     <string name="lx_online_no_source_selected">No LX source selected</string>
+    <string name="musicfree_online_no_source_selected">No MusicFree source selected</string>
     <string name="lx_online_no_source_hint">Tap the gear icon to import or select an LX source</string>
+    <string name="musicfree_online_no_source_hint">Tap the gear icon to import or select a MusicFree source</string>
     <string name="lx_online_no_songs_found">No songs found</string>
     <string name="lx_online_songs_found">Found %1$d songs</string>
     <string name="lx_online_search_failed">Search failed</string>
     <string name="lx_online_search_placeholder">Search online songs, artists</string>
+    <string name="lx_qishui_input_placeholder">Qishui song share link or ID</string>
+    <string name="lx_qishui_input_hint">Paste a Qishui song share link or track ID, then tap the result to play. Name search is not supported yet.</string>
+    <string name="lx_qishui_invalid_track">Enter a Qishui song share link or track ID. Name search is not supported yet.</string>
+    <string name="lx_qishui_link_failed">Could not resolve this Qishui song link. Try again later or enter the track ID.</string>
+    <string name="lx_qishui_track_title">Qishui track %1$s</string>
     <string name="lx_online_processing">Processing…</string>
     <string name="lx_online_import_hint">Import an LX source to search online songs</string>
     <string name="lx_online_search_hint">Search and tap a song to play online</string>
@@ -2863,7 +2878,7 @@
     <string name="recent_playback_limit_unlimited">Unlimited</string>
     <string name="recent_playback_limit_custom">Custom count</string>
     <string name="recent_playback_show_date">Show last played date</string>
-    <string name="recent_playback_collection_types">Collection tab display types</string>
+    <string name="recent_playback_collection_types">Types shown on the Collections tab</string>
     <string name="recent_playback_clear">Clear</string>
     <string name="recent_playback_clear_message">Clear the “%1$s” tab? Records in other tabs will be kept.</string>
     <string name="recent_playback_tab_collection">Collection</string>
@@ -2920,11 +2935,11 @@
     <string name="artist_introduction_fetch_failed">Failed to fetch biography. Check network connection</string>
     <string name="settings_apple_music_use_apple_favorite">Use Apple favorite button</string>
     <string name="settings_apple_music_use_apple_favorite_summary">Use native star favorite and more action icons in Apple Music player</string>
-    <string name="lastfm_cloudflare_verification_title">Security Verification</string>
-    <string name="lastfm_cloudflare_verification_button">Verify via Cloudflare</string>
-    <string name="lastfm_cloudflare_verification_complete">Verification Done</string>
-    <string name="lastfm_cloudflare_verification_success">Verification completed, refreshing biography</string>
-    <string name="lastfm_cloudflare_verification_hint">Cloudflare challenge encountered. Please complete verification below.</string>
+    <string name="lastfm_verification_title">Security Verification</string>
+    <string name="lastfm_verification_button">Complete security verification</string>
+    <string name="lastfm_verification_complete">Verification Done</string>
+    <string name="lastfm_verification_success">Verification completed, refreshing biography</string>
+    <string name="lastfm_verification_hint">The website requires a security check. Complete verification in the page below.</string>
     <string name="recent_playback_multi_select">Select</string>
     <string name="recent_playback_search">Search</string>
     <string name="recent_playback_search_hint">Search recently played</string>

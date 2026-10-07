@@ -25,11 +25,11 @@ import com.ella.music.R
 import com.ella.music.data.SettingsManager
 import com.ella.music.data.repository.MusicRepository
 import com.ella.music.ui.settings.SettingsCardGroup
+import com.ella.music.ui.settings.SettingsFloatSliderPreference as SliderPreference
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.preference.ArrowPreference
-import top.yukonga.miuix.kmp.preference.SliderPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.preference.WindowSpinnerPreference
 
@@ -77,6 +77,9 @@ internal fun LyricActionMenu(
         mutableStateOf(sustainThresholdMs.toFloat())
     }
     val wordLiftEnabled by settingsManager.appleMusicLyricsWordLift.collectAsState(initial = true)
+    val rainbowEnabled by settingsManager.lyricRainbowEnabled.collectAsState(initial = false)
+    val hdrEnabled by settingsManager.lyricHdrHighlightEnabled.collectAsState(initial = false)
+    val sustainMotion by settingsManager.lyricSustainMotion.collectAsState(initial = true)
     val containerModifier = if (applyScrollableContainer) {
         modifier
             .verticalScroll(rememberScrollState())
@@ -127,6 +130,21 @@ internal fun LyricActionMenu(
                 checked = keepScreenOn,
                 onCheckedChange = { onToggleKeepScreenOn() }
             )
+            SwitchPreference(
+                title = stringResource(R.string.settings_lyric_rainbow),
+                checked = rainbowEnabled,
+                onCheckedChange = { enabled -> scope.launch { settingsManager.setLyricRainbowEnabled(enabled) } }
+            )
+            SwitchPreference(
+                title = stringResource(R.string.settings_lyric_hdr_highlight),
+                checked = hdrEnabled,
+                onCheckedChange = { enabled -> scope.launch { settingsManager.setLyricHdrHighlightEnabled(enabled) } }
+            )
+            SwitchPreference(
+                title = stringResource(R.string.settings_lyric_sustain_motion),
+                checked = sustainMotion,
+                onCheckedChange = { enabled -> scope.launch { settingsManager.setLyricSustainMotion(enabled) } }
+            )
             if (showPerspectiveToggle) {
                 SwitchPreference(
                     title = stringResource(R.string.player_enable_perspective_effect),
@@ -150,6 +168,7 @@ internal fun LyricActionMenu(
                 // A continuous slider rounds to a millisecond below. Rendering 2,700 tick marks
                 // would itself cause the settings surface to stutter (#470).
                 steps = 0,
+                decimalPlaces = 0,
                 valueText = stringResource(
                     R.string.player_lyrics_sustain_threshold_value,
                     sustainThresholdPreview.toInt()
@@ -285,6 +304,7 @@ internal fun LyricStyleSettingsContent(
                     value = previewPerspectiveYAngle.coerceIn(0f, 45f),
                     valueRange = 0f..45f,
                     steps = 9,
+                    decimalPlaces = 0,
                     valueText = "${previewPerspectiveYAngle.toInt()}°",
                     onValueChange = {
                         previewPerspectiveYAngle = it
@@ -298,6 +318,7 @@ internal fun LyricStyleSettingsContent(
                 value = previewNonCurrentBlur.coerceIn(0f, 100f),
                 valueRange = 0f..100f,
                 steps = 100,
+                decimalPlaces = 0,
                 valueText = "${previewNonCurrentBlur.roundToInt()}%",
                 onValueChange = {
                     previewNonCurrentBlur = it
@@ -312,6 +333,8 @@ internal fun LyricStyleSettingsContent(
                 valueRange = fontScaleRange.first / 100f..fontScaleRange.last / 100f,
                 steps = (fontScaleRange.last - fontScaleRange.first) / 5,
                 valueText = "${(previewFontScale * 100f).roundToInt()}%",
+                inputScale = 100f,
+                decimalPlaces = 0,
                 onValueChange = {
                     previewFontScale = it
                     onFontScale(it)
@@ -323,6 +346,7 @@ internal fun LyricStyleSettingsContent(
                 valueRange = primaryTextSizeRange.first.toFloat()..primaryTextSizeRange.last.toFloat(),
                 steps = primaryTextSizeRange.last - primaryTextSizeRange.first,
                 valueText = "${previewPrimaryTextSize.roundToInt()}sp",
+                decimalPlaces = 0,
                 onValueChange = {
                     previewPrimaryTextSize = it
                     onPrimaryTextSize(it)
@@ -334,6 +358,8 @@ internal fun LyricStyleSettingsContent(
                 valueRange = secondaryFontScaleRange.first / 100f..secondaryFontScaleRange.last / 100f,
                 steps = (secondaryFontScaleRange.last - secondaryFontScaleRange.first) / 5,
                 valueText = "${(previewSecondaryFontScale * 100f).roundToInt()}%",
+                inputScale = 100f,
+                decimalPlaces = 0,
                 onValueChange = {
                     previewSecondaryFontScale = it
                     onSecondaryFontScale(it)
@@ -345,6 +371,7 @@ internal fun LyricStyleSettingsContent(
                 valueRange = secondaryTextSizeRange.first.toFloat()..secondaryTextSizeRange.last.toFloat(),
                 steps = secondaryTextSizeRange.last - secondaryTextSizeRange.first,
                 valueText = "${previewSecondaryTextSize.roundToInt()}sp",
+                decimalPlaces = 0,
                 onValueChange = {
                     previewSecondaryTextSize = it
                     onSecondaryTextSize(it)

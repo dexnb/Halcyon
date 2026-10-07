@@ -41,7 +41,8 @@ internal fun SongMoreActionSheet(
 ) {
     val context = LocalContext.current
     val settingsManager = remember(context) { SettingsManager.getInstance(context) }
-    val neteaseMvId = rememberNeteaseMvId(song)
+    val neteaseLinks = rememberNeteaseSongLinks(song)
+    val neteaseMvId = neteaseLinks.mvId
     val savedLayout by settingsManager.listActionMenuLayout.collectAsState(initial = "")
     val visibleActions = remember(savedLayout, song) {
         ActionMenuLayout.parse(savedLayout, ActionMenuIds.listDefaults)
@@ -58,6 +59,24 @@ internal fun SongMoreActionSheet(
         EllaMiuixActionMenuGroup {
             visibleActions.forEach { actionId ->
                 when (actionId) {
+                ActionMenuIds.SONG_COMMENTS -> if (neteaseLinks.songId.isNotBlank()) {
+                    SongMenuItem(stringResource(R.string.player_view_song_comments), {
+                        onDismiss()
+                        com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.Comment, neteaseLinks.songId)
+                    }, icon = actionMenuIcon(actionId))
+                }
+                ActionMenuIds.VIEW_MV -> if (neteaseMvId.isNotBlank()) {
+                    SongMenuItem(stringResource(R.string.player_view_music_video), {
+                        onDismiss()
+                        com.ella.music.MusicVideoLauncher.openNetease(context, song, neteaseMvId)
+                    }, icon = actionMenuIcon(actionId))
+                }
+                ActionMenuIds.MV_COMMENTS -> if (neteaseMvId.isNotBlank()) {
+                    SongMenuItem(stringResource(R.string.player_view_mv_comments), {
+                        onDismiss()
+                        com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.MusicVideoComment, neteaseMvId)
+                    }, icon = actionMenuIcon(actionId))
+                }
                 ActionMenuIds.REMOVE_FROM_RECENT_PLAYBACK,
                 ActionMenuIds.DELETE_SINGLE_RECENT_PLAYBACK -> onDeleteSingleRecentPlayback?.let {
                     SongMenuItem(

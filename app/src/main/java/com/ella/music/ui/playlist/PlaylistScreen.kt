@@ -403,10 +403,13 @@ fun PlaylistScreen(
         val targetIndex = playlistIndexById[target] ?: return
         if (anchorIndex == targetIndex) return
         val bounds = if (anchorIndex < targetIndex) anchorIndex..targetIndex else targetIndex..anchorIndex
-        selection.selectedIds = selection.selectedIds + bounds
+        val rangeIds = bounds
             .map { displayedCustomPlaylists[it] }
             .filterNot { it.isRemote }
             .map { it.id }
+        // Preserve manual selection order, but make the selected range follow the visible list
+        // order so pinning B..E after tapping B and E is deterministic.
+        selection.selectedIds = (selection.selectedIds - rangeIds.toSet()) + rangeIds
         // A range action completes the current anchor/target gesture. The next two taps must
         // start a fresh range instead of extending the previous one (#246).
         selection.rangeAnchorId = null

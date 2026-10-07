@@ -2310,7 +2310,9 @@
     <string name="lx_online_song_expired">الأغنية عبر الإنترنت لم تعد صالحة</string>
     <string name="lx_online_source_management">إدارة المصادر</string>
     <string name="lx_online_no_source_selected">لم يتم تحديد أي مصدر LX</string>
+    <string name="musicfree_online_no_source_selected">لم يتم تحديد أي مصدر MusicFree</string>
     <string name="lx_online_no_source_hint">اضغط على أيقونة الترس لاستيراد مصدر LX أو تحديده</string>
+    <string name="musicfree_online_no_source_hint">اضغط على أيقونة الترس لاستيراد مصدر MusicFree أو تحديده</string>
     <string name="lx_online_no_songs_found">لم يتم العثور على أغانٍ</string>
     <string name="lx_online_songs_found">تم العثور على %1$d أغنية</string>
     <string name="lx_online_search_failed">فشل البحث</string>
@@ -2841,11 +2843,11 @@
     <string name="player_queue">قائمة الانتظار</string>
     <string name="settings_apple_music_use_apple_favorite">استخدام زر المفضلة لـ Apple</string>
     <string name="settings_apple_music_use_apple_favorite_summary">استخدام أيقونات المفضلة النجمية الأصلية والمزيد من الإجراءات في مشغل Apple Music</string>
-    <string name="lastfm_cloudflare_verification_title">التحقق الأمني</string>
-    <string name="lastfm_cloudflare_verification_button">اجتياز التحقق</string>
-    <string name="lastfm_cloudflare_verification_complete">تم التحقق</string>
-    <string name="lastfm_cloudflare_verification_success">تم إكمال التحقق الأمني، جاري تحديث السيرة الذاتية</string>
-    <string name="lastfm_cloudflare_verification_hint">تم اكتشاف تحدي Cloudflare الأمني. يرجى إكمال التحقق أدناه.</string>
+    <string name="lastfm_verification_title">التحقق الأمني</string>
+    <string name="lastfm_verification_button">اجتياز التحقق</string>
+    <string name="lastfm_verification_complete">تم التحقق</string>
+    <string name="lastfm_verification_success">تم إكمال التحقق الأمني، جاري تحديث السيرة الذاتية</string>
+    <string name="lastfm_verification_hint">يتطلب الموقع التحقق الأمني. يرجى إكمال التحقق في الصفحة أدناه.</string>
     <string name="library_cache_cancelled">Caching cancelled</string>
     <string name="library_cache_done">Cached %1$d, failed %2$d</string>
     <string name="library_cache_nothing">No remote songs to cache</string>

@@ -1591,7 +1591,9 @@
     <string name="lx_online_song_expired">Le titre en ligne n’est plus valide</string>
     <string name="lx_online_source_management">Gestion des sources</string>
     <string name="lx_online_no_source_selected">Aucune source LX sélectionnée</string>
+    <string name="musicfree_online_no_source_selected">Aucune source MusicFree sélectionnée</string>
     <string name="lx_online_no_source_hint">Appuyez sur l’icône d’engrenage pour importer ou sélectionner une source LX</string>
+    <string name="musicfree_online_no_source_hint">Appuyez sur l’icône d’engrenage pour importer ou sélectionner une source MusicFree</string>
     <string name="lx_online_no_songs_found">Aucun titre trouvé</string>
     <string name="lx_online_songs_found">%1$d titres trouvés</string>
     <string name="lx_online_search_failed">Échec de la recherche</string>
@@ -2881,11 +2883,11 @@
     <string name="player_queue">File d\'attente</string>
     <string name="settings_apple_music_use_apple_favorite">Utiliser le bouton favori d\'Apple</string>
     <string name="settings_apple_music_use_apple_favorite_summary">Utiliser l\'étoile des favoris et les icônes d\'action supplémentaires natives dans le lecteur Apple Music</string>
-    <string name="lastfm_cloudflare_verification_title">Vérification de sécurité</string>
-    <string name="lastfm_cloudflare_verification_button">Passer la vérification</string>
-    <string name="lastfm_cloudflare_verification_complete">Terminé</string>
-    <string name="lastfm_cloudflare_verification_success">Vérification terminée, actualisation de la biographie</string>
-    <string name="lastfm_cloudflare_verification_hint">Défi Cloudflare détecté. Veuillez effectuer la vérification ci-dessous.</string>
+    <string name="lastfm_verification_title">Vérification de sécurité</string>
+    <string name="lastfm_verification_button">Passer la vérification</string>
+    <string name="lastfm_verification_complete">Terminé</string>
+    <string name="lastfm_verification_success">Vérification terminée, actualisation de la biographie</string>
+    <string name="lastfm_verification_hint">Le site demande une vérification de sécurité. Veuillez la terminer ci-dessous.</string>
     <string name="library_cache_cancelled">Caching cancelled</string>
     <string name="library_cache_done">Cached %1$d, failed %2$d</string>
     <string name="library_cache_nothing">No remote songs to cache</string>

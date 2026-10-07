@@ -21,6 +21,22 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.drop
 
 @Composable
+internal fun PlayerPagerEntryEffects(
+    openToken: Int,
+    immersiveAlbumCover: Boolean,
+    pagerState: PagerState,
+    entryPage: Int,
+    onAligned: () -> Unit
+) {
+    val latestOnAligned by rememberUpdatedState(onAligned)
+    LaunchedEffect(openToken, immersiveAlbumCover) {
+        // An immersive surface never mounts a pager, so it must not await its first layout.
+        if (!immersiveAlbumCover) pagerState.scrollToPage(entryPage)
+        latestOnAligned()
+    }
+}
+
+@Composable
 internal fun PlayerPagerSyncEffects(
     immersiveAlbumCover: Boolean,
     showLyrics: Boolean,
@@ -68,12 +84,6 @@ internal fun PlayerPagerSyncEffects(
             }
         }
     }
-    LaunchedEffect(immersiveAlbumCover) {
-        if (immersiveAlbumCover && pagerState.currentPage != PLAYER_PAGE_COVER) {
-            onShowLyricsChange(false)
-            pagerState.scrollToPage(PLAYER_PAGE_COVER)
-        }
-    }
 }
 
 @Composable
@@ -115,8 +125,8 @@ internal fun PlayerScreenPageHost(
             lyricsPage(
                 onDismissImmersiveLyrics,
                 true,
-                true,
-                true,
+                playerVisible,
+                playerVisible,
                 Modifier.fillMaxSize()
             )
             }
@@ -133,8 +143,10 @@ internal fun PlayerScreenPageHost(
         Box(modifier = modifier.fillMaxSize()) {
         HorizontalPager(
             state = pagerState,
-            modifier = modifier.fillMaxSize(),
-            userScrollEnabled = userScrollEnabled,
+            modifier = Modifier.fillMaxSize().graphicsLayer {
+                alpha = if (pendingEntryPage == null) 1f else 0f
+            },
+            userScrollEnabled = userScrollEnabled && pendingEntryPage == null,
             // Keep adjacent pages alive while swiping so the cover never briefly tears down
             // before returning from lyrics or details.
             beyondViewportPageCount = 1
@@ -155,7 +167,7 @@ internal fun PlayerScreenPageHost(
                     // Stop the frame-driven lyric renderer as soon as a pager gesture starts.
                     // Keeping it active while swiping back made the cover page wait behind the
                     // lyrics recomposition after the lyrics page had been open for a while.
-                    isPlayerLyricsPageVisible(
+                    playerVisible && pendingEntryPage == null && isPlayerLyricsPageVisible(
                         page = page,
                         currentPage = pagerState.currentPage,
                         isScrollInProgress = pagerState.isScrollInProgress

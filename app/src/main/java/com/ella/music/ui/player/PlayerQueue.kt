@@ -59,7 +59,6 @@ import com.ella.music.data.model.AudioInfo
 import com.ella.music.ui.components.rememberSongArtworkState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import sh.calvin.reorderable.DragGestureDetector
 import sh.calvin.reorderable.ReorderableItem
 import com.ella.music.ui.components.rememberEllaReorderableLazyListState
 import top.yukonga.miuix.kmp.basic.Icon
@@ -303,8 +302,8 @@ internal fun PlayerQueueMenu(
     val reorderableLazyListState = rememberEllaReorderableLazyListState(
         lazyListState = listState,
         onMove = { from, to ->
-            if (queueLocked) return@rememberReorderableLazyListState
-            if (from.index !in manualPlaylist.indices || to.index !in manualPlaylist.indices) return@rememberReorderableLazyListState
+            if (queueLocked) return@rememberEllaReorderableLazyListState
+            if (from.index !in manualPlaylist.indices || to.index !in manualPlaylist.indices) return@rememberEllaReorderableLazyListState
             if (trackedCurrentEntryKey == null && currentIndex >= 0) {
                 trackedCurrentEntryKey = manualPlaylist[currentIndex].stableKey
             }

@@ -138,7 +138,7 @@ internal fun AppleMusicLyricsView(
         lyrics.all { it.timeMs == timestamp }
     } == true
     if (singleTimestampTimeline) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize().lyricViewportEdges(edgeFeatherEnabled, userScrollEnabled), contentAlignment = Alignment.Center) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(lineSpacing),
                 modifier = Modifier.fillMaxWidth()
@@ -372,7 +372,7 @@ internal fun AppleMusicLyricsView(
         else -> TextAlign.Start
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize().clipToBounds()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().lyricViewportEdges(edgeFeatherEnabled, userScrollEnabled)) {
         val trailingLineHeight = with(LocalDensity.current) { trailingLineHeightPx.toDp() }
         // The first lyric has no preceding rows that LazyColumn can scroll through. Reserve its
         // focus offset as actual leading content so 00:00 lyrics land at the same visual anchor
@@ -457,7 +457,9 @@ internal fun AppleMusicLyricsView(
                         paused = isPaused && revealAllLinesWhilePaused,
                         distance = (index - activeIndex).coerceIn(-4, 4),
                         userScrolling = userDragging || keepLinesSharp,
-                        nonCurrentLineBlurEnabled = nonCurrentLineBlurEnabled && isPlaying,
+                        // Compact previews soften only at their viewport edges. A row's timeline
+                        // distance must not blur it while it is still inside the visible area.
+                        nonCurrentLineBlurEnabled = nonCurrentLineBlurEnabled && isPlaying && userScrollEnabled,
                         nonCurrentLineBlurPercent = nonCurrentLineBlurPercent,
                         // Do not invalidate every retained LazyColumn row for every playback tick.
                         // Only the active (or simultaneous duet) line needs a changing karaoke position.

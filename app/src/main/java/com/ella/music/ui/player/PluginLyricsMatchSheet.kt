@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -323,6 +324,9 @@ internal fun PluginLyricsMatchSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                // Measure controls/buttons at their natural height instead of squeezing the
+                // last actions into the space left by a long lyric preview.
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
             LyricsRenderControls(
@@ -375,7 +379,7 @@ internal fun PluginLyricsMatchSheet(
                 fontSize = 12.sp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 120.dp, max = 280.dp)
+                    .heightIn(min = minOf(120.dp, previewMaxHeight), max = previewMaxHeight)
                     .combinedClickable(
                         onClick = {
                             val now = android.os.SystemClock.uptimeMillis()

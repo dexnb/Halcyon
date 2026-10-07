@@ -357,11 +357,12 @@ internal fun AppleMusicLyricLine(
         }
     ) {
         val pronunciation = line.pronunciation.orEmpty()
-        // Ruby only belongs over a script that needs annotating. Timed pronunciation words alone
-        // used to be enough, which stacked a whole Latin-script lyric on top of its own row as
-        // unreadable 8 pt furigana; such a reading goes on its own line instead.
+        // Latin-script romanizations stay on their own row. Explicit timed kana readings can
+        // annotate English loanwords (e.g. "ライ" over "Lie,") just like Japanese words.
         val annotatableBase = line.text.ifBlank { line.backgroundText.orEmpty() }.needsPhoneticAnnotation()
-        val inlineRuby = showPronunciation && pronunciation.isNotBlank() && annotatableBase &&
+        val timedKanaReading = line.pronunciationWords.any { it.endMs > it.startMs } &&
+            line.pronunciationWords.all { isInlineRubyPronunciation(it.text) }
+        val inlineRuby = showPronunciation && pronunciation.isNotBlank() && (annotatableBase || timedKanaReading) &&
             (line.pronunciationWords.isNotEmpty() || isInlineRubyPronunciation(pronunciation))
         val showPronunciationAbove = showPronunciation && pronunciation.isNotBlank() && !pronunciationBelow && !inlineRuby
         val showPronunciationBelow = showPronunciation && pronunciation.isNotBlank() && pronunciationBelow && !inlineRuby

@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color as ComposeColor
@@ -550,7 +551,8 @@ fun EllaApp(
     val effectiveBottomBarStyle = bottomBarStyle
     val canCompactBottomDock = showBottomBar && !showNavigationRail
     var bottomDockMode by rememberSaveable { mutableStateOf(BottomDockMode.Expanded) }
-    var normalBottomDockHeightPx by remember { mutableIntStateOf(0) }
+    var bottomDockHeightPx by remember { mutableIntStateOf(0) }
+    var posterWallFullscreen by rememberSaveable { mutableStateOf(false) }
 
     val currentSong by playerViewModel.currentSong.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
@@ -726,6 +728,7 @@ fun EllaApp(
     val miniPlayerLyricProgress = miniPlayerLyricTiming?.progressAt(currentPosition) ?: 0f
 
     val showMiniPlayer = currentSong != null &&
+        !(currentRoute == Screen.PosterWall.route && posterWallFullscreen) &&
         currentRoute != Screen.Player.route &&
         currentRoute != Screen.AiChat.route &&
         currentRoute != Screen.Update.route &&
@@ -832,7 +835,7 @@ fun EllaApp(
     val contentModifier = Modifier
         .fillMaxSize()
         .then(if (sharedAppBackgroundVisible) Modifier else Modifier.background(MiuixTheme.colorScheme.background))
-    val normalBottomDockHeight = with(LocalDensity.current) { normalBottomDockHeightPx.toDp() }
+    val bottomDockHeight = with(LocalDensity.current) { bottomDockHeightPx.toDp() }
     val normalBottomDockSwipe = normalBottomDockSwipeModifier(
         enabled = showBottomBar && !showNavigationRail && !showPlayerOverlay,
         tabs = tabs,
@@ -1028,6 +1031,8 @@ fun EllaApp(
                     initialBottomDockItems = initialUiSettings.bottomDockItems,
                     initialStartDestination = startupRoute,
                     modifier = appNavigationModifier,
+                    posterWallBottomPadding = if (showMiniPlayer) bottomDockHeight else 0.dp,
+                    onPosterWallFullscreenChanged = { posterWallFullscreen = it },
                     onNavigateToPlayer = {
                         playerDismissProgress = 0f
                         playerOverlayOpenToken++
@@ -1102,10 +1107,9 @@ fun EllaApp(
                         Modifier
                             .fillMaxWidth()
                             .align(androidx.compose.ui.Alignment.BottomCenter)
-                            .onSizeChanged { size -> normalBottomDockHeightPx = size.height }
                     } else {
                         Modifier.align(androidx.compose.ui.Alignment.BottomCenter)
-                    }).graphicsLayer {
+                    }).onSizeChanged { size -> bottomDockHeightPx = size.height }.graphicsLayer {
                         val openProgress = playerMorph.progress
                         translationY = 0f
                         alpha = (1f - openProgress * 2.2f).coerceIn(0f, 1f)
@@ -1122,7 +1126,10 @@ fun EllaApp(
                         .graphicsLayer {
                             translationY = if (playerMorph.progress <= 0f) size.height else 0f
                         }
-                        .playerMorphSurface(playerMorph, effectiveBottomBarStyle != BottomBarStyle.Normal)
+                        .playerMorphSurface(playerMorph, effectiveBottomBarStyle != BottomBarStyle.Normal,
+                            // A direct lyric entry must not replay the resident cover layer over
+                            // the lyric page. Read the request before asynchronous flow collection.
+                            replayArtwork = { !playerViewModel.showLyrics.value })
                 ) {
                     CompositionLocalProvider(
                         LocalPlayerMorphSurface provides true,

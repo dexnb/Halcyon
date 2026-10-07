@@ -51,6 +51,7 @@ import com.ella.music.data.model.playlistIdentityKey
 import com.ella.music.ui.LibrarySortUiState
 import com.ella.music.ui.components.ConfirmDangerDialog
 import com.ella.music.ui.components.CoverPreviewDialog
+import com.ella.music.ui.components.ArtistPickerContent
 import com.ella.music.ui.components.EllaMiuixBottomSheet
 import com.ella.music.ui.components.EllaCenteredLoadingIndicator
 import com.ella.music.ui.components.FastIndexBar
@@ -144,6 +145,7 @@ fun ArtistScreen(
     var musicVideoRevision by remember { mutableStateOf(0) }
     var pendingDeleteMusicVideos by remember { mutableStateOf<List<ArtistMusicVideo>>(emptyList()) }
     var musicVideoMenuTarget by remember { mutableStateOf<ArtistMusicVideo?>(null) }
+    var musicVideoArtistChoices by remember { mutableStateOf<List<String>>(emptyList()) }
     var showIntroduction by rememberSaveable(artistName) { mutableStateOf(false) }
     var artistCoverPreviewVisible by remember(artistName) { mutableStateOf(false) }
     var musicVideoInfoTarget by remember { mutableStateOf<ArtistMusicVideo?>(null) }
@@ -545,6 +547,7 @@ fun ArtistScreen(
         ArtistIntroductionScreen(
             artistName = artistName,
             songs = artistSongs,
+            onOpenLastFmSettings = onOpenLastFmSettings,
             coverModel = customArtistCoverAssets
                 .firstOrNull { it.kind == ArtistCoverKind.Image }
                 ?.uri
@@ -933,7 +936,8 @@ fun ArtistScreen(
                         ArtistBiographyPanel(
                             artistName = artistName,
                             songs = artistSongs,
-                            downloadMode = artistBioDownload
+                            downloadMode = artistBioDownload,
+                            onOpenLastFmSettings = onOpenLastFmSettings
                         )
                     }
                 }
@@ -1288,16 +1292,41 @@ fun ArtistScreen(
         musicVideoMenuTarget?.let { item ->
             EllaMiuixBottomSheet(
                 show = true,
-                title = item.song.title,
+                title = stringResource(R.string.player_more_actions),
                 onDismissRequest = { musicVideoMenuTarget = null }
             ) {
-                ArtistMusicVideoActionMenu(
+                com.ella.music.ui.components.MusicVideoActionMenu(
+                    song = item.song,
+                    onNavigateToArtist = onArtistClick,
                     onShare = {
                         MusicVideoLauncher.share(context, item.source.uri, item.song.title)
                     },
                     onInfo = { musicVideoInfoTarget = item },
                     onDelete = { pendingDeleteMusicVideos = listOf(item) },
-                    onDismiss = { musicVideoMenuTarget = null }
+                    onDismiss = { musicVideoMenuTarget = null },
+                    onArtistPickerRequested = { artists ->
+                        musicVideoMenuTarget = null
+                        musicVideoArtistChoices = artists
+                    }
+                )
+            }
+        }
+
+        if (musicVideoArtistChoices.isNotEmpty()) {
+            EllaMiuixBottomSheet(
+                show = true,
+                enableNestedScroll = false,
+                title = stringResource(R.string.song_more_select_artist),
+                onDismissRequest = { musicVideoArtistChoices = emptyList() }
+            ) {
+                ArtistPickerContent(
+                    artists = musicVideoArtistChoices,
+                    mainViewModel = mainViewModel,
+                    onArtistSelected = { artist ->
+                        musicVideoArtistChoices = emptyList()
+                        onArtistClick(artist)
+                    },
+                    onDismiss = { musicVideoArtistChoices = emptyList() }
                 )
             }
         }
@@ -1318,8 +1347,7 @@ fun ArtistScreen(
                             title = item.metadata.fileName,
                             mimeType = item.metadata.mimeType
                         )
-                    },
-                    onDismiss = { musicVideoInfoTarget = null }
+                    }
                 )
             }
         }

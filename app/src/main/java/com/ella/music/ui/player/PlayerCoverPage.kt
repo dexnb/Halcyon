@@ -391,6 +391,7 @@ internal fun CoverPlayerPage(
                 (id != ActionMenuIds.VIEW_MV || quickActionMusicVideo.available)
         }
     }
+    val posterNavigator = com.ella.music.ui.navigation.LocalAppNavigator.current
     var localActionMenuPage by remember { mutableStateOf<PlayerActionSheetPage?>(null) }
     val executePlayerAction: (String) -> Unit = { actionId ->
         when (actionId) {
@@ -401,12 +402,14 @@ internal fun CoverPlayerPage(
             ActionMenuIds.PLAY_NEXT -> onPlayNext()
             ActionMenuIds.ADD_TO_QUEUE -> onAddToQueue()
             ActionMenuIds.SHARE -> onShareSong()
+            ActionMenuIds.LYRIC_SHARE -> onLyricShare()
             ActionMenuIds.AI -> onAiInterpret()
             ActionMenuIds.INFO -> onSongInfo()
             ActionMenuIds.AUDIO_OUTPUT -> localActionMenuPage = PlayerActionSheetPage.AudioOutput
             ActionMenuIds.CASTING -> openSystemOutputSwitcher(context)
             ActionMenuIds.AB_REPEAT -> onAbRepeat()
             ActionMenuIds.LANDSCAPE -> onLandscape()
+            ActionMenuIds.POSTER_WALL -> posterNavigator(com.ella.music.ui.navigation.Screen.PosterWall.route)
             ActionMenuIds.LYRICS_DISPLAY -> localActionMenuPage = PlayerActionSheetPage.LyricDisplay
             ActionMenuIds.SPECTRUM -> onSpectrum()
             ActionMenuIds.RATING -> onSetRating()

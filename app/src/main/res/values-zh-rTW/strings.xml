@@ -1656,7 +1656,9 @@
     <string name="lx_online_song_expired">線上歌曲已失效</string>
     <string name="lx_online_source_management">來源管理</string>
     <string name="lx_online_no_source_selected">未選擇 LX 來源</string>
+    <string name="musicfree_online_no_source_selected">未選擇 MusicFree 來源</string>
     <string name="lx_online_no_source_hint">點一下右上角齒輪以匯入或選擇 LX 來源</string>
+    <string name="musicfree_online_no_source_hint">點一下右上角齒輪以匯入或選擇 MusicFree 來源</string>
     <string name="lx_online_no_songs_found">找不到相關歌曲</string>
     <string name="lx_online_songs_found">找到 %1$d 首歌曲</string>
     <string name="lx_online_search_failed">搜尋失敗</string>
@@ -2538,7 +2540,7 @@
     <string name="settings_xiaomi_super_island_dismiss_five">5 seconds</string>
     <string name="continue_playback_title">繼續播放</string>
     <string name="continue_playback_song">%1$s - %2$s</string>
-    <string name="settings_continue_playback_row">顯示「繼續播放」功能列</string>
+    <string name="settings_continue_playback_row">音樂庫頁：顯示「繼續播放」功能列</string>
     <string name="settings_continue_playback_row_summary">在音樂庫分類與詳細頁顯示該分類最近播放的歌曲</string>
     <string name="folder_playlist_associate_multi_done">已關聯到 %1$d 個資料夾播放清單</string>
     <string name="settings_music_video_orientation">有聲 MV 螢幕方向</string>
@@ -2801,7 +2803,7 @@
     <string name="player_sleep_timer_ends_at">%1$s 結束</string>
     <string name="recent_playback_clear">清空</string>
     <string name="recent_playback_clear_message">確定清空「%1$s」分頁的最近播放記錄嗎？其他分頁的記錄不會被清除。</string>
-    <string name="recent_playback_collection_types">合輯分頁顯示類型</string>
+    <string name="recent_playback_collection_types">合集分頁顯示類型</string>
     <string name="recent_playback_empty">這裡還沒有最近播放記錄</string>
     <string name="recent_playback_home_summary">%1$d 條記錄，查看全部最近播放內容</string>
     <string name="recent_playback_limit_100">100</string>
@@ -2890,11 +2892,11 @@
     <string name="player_queue">播放佇列</string>
     <string name="settings_apple_music_use_apple_favorite">使用 Apple 的收藏按鈕</string>
     <string name="settings_apple_music_use_apple_favorite_summary">在 Apple Music 播放頁中使用原生星標收藏與更多操作圖示</string>
-    <string name="lastfm_cloudflare_verification_title">安全驗證</string>
-    <string name="lastfm_cloudflare_verification_button">通過安全驗證</string>
-    <string name="lastfm_cloudflare_verification_complete">完成驗證</string>
-    <string name="lastfm_cloudflare_verification_success">安全驗證已完成，正在重新整理傳記</string>
-    <string name="lastfm_cloudflare_verification_hint">遇到 Cloudflare 安全驗證，請在下方網頁中完成人機驗證</string>
+    <string name="lastfm_verification_title">安全驗證</string>
+    <string name="lastfm_verification_button">通過安全驗證</string>
+    <string name="lastfm_verification_complete">完成驗證</string>
+    <string name="lastfm_verification_success">安全驗證已完成，正在重新整理傳記</string>
+    <string name="lastfm_verification_hint">網站要求安全驗證，請在下方網頁中完成驗證</string>
     <string name="settings_lyric_hdr_highlight">歌詞 HDR 高亮（長音）</string>
     <string name="settings_lyric_hdr_highlight_summary">開啟後提亮卡拉 OK 高亮、長音發光與輝光進度條；支援 HDR 的螢幕（Android 14+）會真正超出一般白色亮度，其他裝置為 SDR 提亮；預設關閉</string>
     <string name="library_cache_cancelled">快取已取消</string>
@@ -3036,7 +3038,7 @@
     <string name="netease_mv_resolution_title">MV 在线播放分辨率</string>
     <string name="netease_mv_download_resolution_title">MV 下载分辨率</string>
     <string name="netease_download_song">下载歌曲到本地</string>
-    <string name="netease_download_mv">下载 MV 到本地</string>
+    <string name="netease_download_mv">下载MV到本地</string>
     <string name="netease_local_downloads">本地下载</string>
     <string name="netease_download_failed">下载失败：%1$s</string>
     <string name="netease_download_complete">下载完成</string>

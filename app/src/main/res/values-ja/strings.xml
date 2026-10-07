@@ -1592,7 +1592,9 @@
     <string name="lx_online_song_expired">オンライン曲が無効になりました</string>
     <string name="lx_online_source_management">ソース管理</string>
     <string name="lx_online_no_source_selected">LX ソースが選択されていません</string>
+    <string name="musicfree_online_no_source_selected">MusicFree ソースが選択されていません</string>
     <string name="lx_online_no_source_hint">右上の歯車アイコンから LX ソースをインポートまたは選択してください</string>
+    <string name="musicfree_online_no_source_hint">右上の歯車アイコンから MusicFree ソースをインポートまたは選択してください</string>
     <string name="lx_online_no_songs_found">関連する曲が見つかりません</string>
     <string name="lx_online_songs_found">%1$d 曲が見つかりました</string>
     <string name="lx_online_search_failed">検索に失敗しました</string>
@@ -2881,11 +2883,11 @@
     <string name="player_queue">再生キュー</string>
     <string name="settings_apple_music_use_apple_favorite">Apple のお気に入りボタンを使用</string>
     <string name="settings_apple_music_use_apple_favorite_summary">Apple Music 再生画面でネイティブの星マークお気に入りとその他アクションアイコンを使用します</string>
-    <string name="lastfm_cloudflare_verification_title">セキュリティ認証</string>
-    <string name="lastfm_cloudflare_verification_button">認証を通過する</string>
-    <string name="lastfm_cloudflare_verification_complete">認証完了</string>
-    <string name="lastfm_cloudflare_verification_success">認証が完了しました。伝記を更新しています</string>
-    <string name="lastfm_cloudflare_verification_hint">Cloudflareセキュリティ認証が要求されました。下記で認証を完了してください。</string>
+    <string name="lastfm_verification_title">セキュリティ認証</string>
+    <string name="lastfm_verification_button">認証を通過する</string>
+    <string name="lastfm_verification_complete">認証完了</string>
+    <string name="lastfm_verification_success">認証が完了しました。伝記を更新しています</string>
+    <string name="lastfm_verification_hint">ウェブサイトでセキュリティ認証が必要です。下記のページで認証を完了してください。</string>
     <string name="library_cache_cancelled">Caching cancelled</string>
     <string name="library_cache_done">Cached %1$d, failed %2$d</string>
     <string name="library_cache_nothing">No remote songs to cache</string>

@@ -271,10 +271,10 @@ androidComponents {
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation(libs.androidx.appcompat)
     // Installs the bundled baseline profile (src/main/baseline-prof.txt) so ART AOT-compiles
     // the startup/library paths at install time instead of JIT-compiling them on first launch.
-    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -287,7 +287,7 @@ dependencies {
     implementation(libs.androidx.media3.cast)
     // Optional on-device enhancement: enables HONOR's 96-192 kHz playback path when the
     // device exposes HNAUDIO_SERVICE_HIGHSAMPLERATEPLAY. Unsupported devices simply no-op.
-    implementation("com.hihonor.mcs:media-audio:1.2.0.300")
+    implementation(libs.honor.media.audio)
     implementation(libs.androidx.documentfile)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
@@ -296,15 +296,15 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.lyricon.provider)
     implementation(libs.lyric.getter.api)
-    implementation("com.github.HChenX:SuperLyricApi:3.4")
+    implementation(libs.superlyric.api)
     // Full LGPL build supplies muxers and encoders for the local conversion tool.
-    implementation("com.arthenica:ffmpeg-kit-full:6.0-2.LTS")
+    implementation(libs.ffmpeg.kit.full)
     implementation(libs.reorderable)
     implementation(libs.compose.material.icons.extended)
     implementation(project(":lyrico-audiotag"))
-    implementation("wang.harlon.quickjs:wrapper-android:2.4.0")
+    implementation(libs.quickjs.wrapper)
     implementation(project(":ffmpeg-decoder"))
-    implementation("com.google.oboe:oboe:1.9.0")
+    implementation(libs.oboe)
 
     implementation(libs.miuix.ui)
     implementation(libs.miuix.icons)

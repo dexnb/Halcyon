@@ -260,6 +260,7 @@ internal fun parseTtml(content: String): LrcParser.LrcResult? {
                 transliteration?.words?.isNotEmpty() == true ->
                     transliteration.words.shiftedWordsBy(lineClock.baseMs).alignPronunciationWords(
                         mainWords = displayWords,
+                        sourceWords = words,
                         mainText = displayText,
                         lineStart = start,
                         lineEnd = end
@@ -267,6 +268,7 @@ internal fun parseTtml(content: String): LrcParser.LrcResult? {
                 inlinePronunciationWords?.isNotEmpty() == true ->
                     inlinePronunciationWords.alignPronunciationWords(
                         mainWords = displayWords,
+                        sourceWords = words,
                         mainText = displayText,
                         lineStart = start,
                         lineEnd = end
@@ -771,6 +773,7 @@ private fun List<LyricWord>.expandSyllableWords(mainText: String): List<LyricWor
 
 private fun List<LyricWord>.alignPronunciationWords(
     mainWords: List<LyricWord>,
+    sourceWords: List<LyricWord>,
     mainText: String,
     lineStart: Long? = null,
     lineEnd: Long? = null
@@ -778,6 +781,16 @@ private fun List<LyricWord>.alignPronunciationWords(
     if (isEmpty()) return emptyList()
     val expandedWords = expandSyllableWords(mainText)
     val timedWords = expandedWords.filter { it.endMs > it.startMs }
+    // Sparse Japanese readings can include Latin words ("ソー" over "So") and compounds
+    // ("もみじ" over "紅葉"). Their explicit source-word boundaries outrank a coincidental
+    // match between the number of readings and the number of kanji character slots. Display
+    // words may include a separately timed comma/question mark; match the original spans too.
+    val timingAnchors = sourceWords + mainWords
+    if (timedWords.isNotEmpty() && timedWords.all { reading ->
+            timingAnchors.any { word ->
+                abs(word.startMs - reading.startMs) <= 25L && abs(word.endMs - reading.endMs) <= 25L
+            }
+        }) return expandedWords
     if (timedWords.isEmpty()) {
         if (mainWords.size == expandedWords.size) {
             return mainWords.mapIndexed { index, word -> word.copy(text = expandedWords[index].text) }

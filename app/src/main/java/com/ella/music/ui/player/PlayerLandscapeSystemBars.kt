@@ -10,7 +10,8 @@ import androidx.compose.ui.platform.LocalView
 @Composable
 internal fun ForceLandscapePlayerBars(
     onDismiss: () -> Unit,
-    interceptBack: Boolean = true
+    interceptBack: Boolean = true,
+    forceLandscape: Boolean = true
 ) {
     val activity = LocalContext.current.findActivity()
     val view = LocalView.current

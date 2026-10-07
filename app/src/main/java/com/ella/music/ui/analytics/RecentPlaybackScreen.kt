@@ -91,6 +91,7 @@ import com.ella.music.data.PlaylistExportFormat
 import com.ella.music.data.model.FAVORITES_PLAYLIST_ID
 import com.ella.music.data.tagIdentityKey
 import com.ella.music.ui.components.AddToPlaylistSheet
+import com.ella.music.ui.components.ArtistPickerContent
 import com.ella.music.ui.components.ConfirmDangerDialog
 import com.ella.music.ui.components.EllaMiuixBottomSheet
 import com.ella.music.ui.components.EllaMiuixDialog
@@ -182,7 +183,8 @@ internal data class RecentPlaybackRow(
     val albumId: Long = 0L,
     /** Songs belonging to this row (recent matches); actions prefer ViewModel resolve when possible. */
     val rowSongs: List<Song> = emptyList(),
-    val mediaUri: String = ""
+    val mediaUri: String = "",
+    val nestedFolder: Boolean = false
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -292,6 +294,8 @@ fun RecentPlaybackScreen(
     val collectionTypes by mainViewModel.settingsManager.recentPlaybackCollectionTypes.collectAsState(
         initial = com.ella.music.data.SettingsManager.DEFAULT_RECENT_PLAYBACK_COLLECTION_TYPES.split(',').toSet()
     )
+    val folderTypes by mainViewModel.settingsManager.recentPlaybackFolderTypes.collectAsState(initial = setOf("folder", "nested_folder"))
+    val mvTypes by mainViewModel.settingsManager.recentPlaybackMvTypes.collectAsState(initial = setOf("local", "online"))
     val listActionMenuLayout by mainViewModel.settingsManager.listActionMenuLayout.collectAsState(initial = "")
     val visibleListActionIds = remember(listActionMenuLayout) {
         ActionMenuLayout.parse(listActionMenuLayout, ActionMenuIds.listDefaults)
@@ -302,8 +306,9 @@ fun RecentPlaybackScreen(
         return rowsFor(tab)
             .filter { row ->
                 tab != RecentPlaybackTab.Collection ||
-                    row.key.substringBefore(':') in collectionTypes
+                    row.kind.routeValue in collectionTypes
             }
+            .filter { row -> recentPlaybackTypeVisible(row, tab, folderTypes, mvTypes) }
             .filter { row ->
                 val q = searchQuery.trim()
                 q.isEmpty() ||
@@ -320,7 +325,7 @@ fun RecentPlaybackScreen(
             }
     }
     val currentRows = rowsFor(currentTab)
-    val visibleRows = remember(currentRows, recentLimitByTab, collectionTypes, currentTab, searchQuery) {
+    val visibleRows = remember(currentRows, recentLimitByTab, collectionTypes, folderTypes, mvTypes, currentTab, searchQuery) {
         visibleRowsFor(currentTab)
     }
     val tabSongs = remember(visibleRows) { visibleRows.mapNotNull { it.song } }
@@ -334,6 +339,7 @@ fun RecentPlaybackScreen(
     var playlistPickerSongs by remember { mutableStateOf<List<Song>?>(null) }
     var createPlaylistSongs by remember { mutableStateOf<List<Song>?>(null) }
     var entityMenuRow by remember { mutableStateOf<RecentPlaybackRow?>(null) }
+    var musicVideoArtistChoices by remember { mutableStateOf<List<String>>(emptyList()) }
     var pendingDeleteSongs by remember { mutableStateOf<List<Song>>(emptyList()) }
     var playlistToRename by remember { mutableStateOf<UserPlaylist?>(null) }
     var playlistPendingDelete by remember { mutableStateOf<UserPlaylist?>(null) }
@@ -537,7 +543,7 @@ fun RecentPlaybackScreen(
                     modifier = Modifier
                         .wrapContentWidth()
                         .bringIntoViewRequester(bringIntoView)
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(CircleShape)
                         .background(
                             if (selected) MiuixTheme.colorScheme.primary
                             else MiuixTheme.colorScheme.surfaceContainer.copy(alpha = 0.72f)
@@ -672,7 +678,7 @@ fun RecentPlaybackScreen(
             // swipe previews the tab that is actually coming in (not the settled one).
             val pageTab = tabs[page]
             val pageSourceRows = rowsFor(pageTab)
-            val pageRows = remember(pageSourceRows, recentLimitByTab, collectionTypes, pageTab, searchQuery) {
+            val pageRows = remember(pageSourceRows, recentLimitByTab, collectionTypes, folderTypes, mvTypes, pageTab, searchQuery) {
                 visibleRowsFor(pageTab)
             }
             val pageShowDate = showDateByTab.getValue(pageTab)
@@ -876,112 +882,135 @@ fun RecentPlaybackScreen(
     )
 
     entityMenuRow?.let { menuRow ->
-        val resolvedSongs = remember(menuRow, playlists, folderPlaylists, songs) {
-            resolveRecentRowSongs(menuRow, mainViewModel, playlists, folderPlaylists, songs)
-        }
-        val displayName = recentRowDisplayName(menuRow)
-        LibraryEntityActionSheet(
-            show = true,
-            title = stringResource(R.string.player_more_actions),
-            onDismissRequest = { entityMenuRow = null },
-            actions = buildRecentEntityActions(
-                row = menuRow,
-                displayName = displayName,
-                resolvedSongs = resolvedSongs,
-                playlists = playlists,
-                folderPlaylists = folderPlaylists,
-                context = context,
-                mainViewModel = mainViewModel,
-                playerViewModel = playerViewModel,
-                onDismiss = { entityMenuRow = null },
-                onShare = {
-                    if (menuRow.kind == RecentPlaybackTab.Mv && menuRow.mediaUri.isNotBlank()) {
-                        com.ella.music.MusicVideoLauncher.share(context, android.net.Uri.parse(menuRow.mediaUri), menuRow.title)
-                    } else if (resolvedSongs.isNotEmpty()) shareLocalSongs(context, resolvedSongs)
-                    entityMenuRow = null
-                },
-                onAddToPlaylist = {
-                    if (resolvedSongs.isNotEmpty()) playlistPickerSongs = resolvedSongs
-                    entityMenuRow = null
-                },
-                onAddToQueue = {
-                    if (resolvedSongs.isNotEmpty()) {
-                        playerViewModel.addToPlaylist(resolvedSongs)
-                        Toast.makeText(context, context.getString(R.string.song_more_added_to_queue), Toast.LENGTH_SHORT).show()
-                    }
-                    entityMenuRow = null
-                },
-                onPlayNext = {
-                    if (resolvedSongs.isNotEmpty()) {
-                        playerViewModel.playNext(resolvedSongs)
-                        Toast.makeText(context, context.getString(R.string.song_more_added_to_play_next), Toast.LENGTH_SHORT).show()
-                    }
-                    entityMenuRow = null
-                },
-                onRemoveFromRecent = {
-                    deleteIdenticalEntryIds = menuRow.entryIds.toSet()
-                    deleteIdenticalTitle = displayName
-                    entityMenuRow = null
-                },
-                onDeletePermanently = {
-                    if (menuRow.kind == RecentPlaybackTab.Mv) pendingDeleteVideo = menuRow
-                    else if (resolvedSongs.isNotEmpty()) pendingDeleteSongs = resolvedSongs
-                    entityMenuRow = null
-                },
-                onExportPlaylist = { playlist ->
-                    exportPlaylistTarget = playlist
-                    showExportFormatSheet = true
-                    entityMenuRow = null
-                },
-                onRenamePlaylist = { playlist ->
-                    playlistToRename = playlist
-                    entityMenuRow = null
-                },
-                onDeletePlaylist = { playlist ->
-                    playlistPendingDelete = playlist
-                    entityMenuRow = null
-                },
-                onRefreshFolderPlaylist = { playlist ->
-                    scope.launch { mainViewModel.refreshFolderPlaylistFolders(playlist.folders) }
-                    entityMenuRow = null
-                },
-                onAssociateFolders = { paths ->
-                    associateFolderPaths = paths
-                    entityMenuRow = null
-                },
-                onEditFolderPlaylist = { playlist ->
-                    folderPlaylistEditorTarget = playlist
-                    editorDraftName = playlist.name
-                    editorDraftFolders = playlist.folders.toSet()
-                    editorPinnedFolders = emptySet()
-                    showFolderPlaylistEditor = true
-                    entityMenuRow = null
-                },
-                onDeleteFolderPlaylist = { playlist ->
-                    folderPlaylistPendingDelete = playlist
-                    entityMenuRow = null
-                },
-                onMvInfo = { song ->
-                    mvInfoSong = song
-                    entityMenuRow = null
-                },
-                onDesktopShortcut = { id, label, route ->
-                    val ok = requestPinnedEllaShortcut(
-                        context = context,
-                        id = id,
-                        label = label,
-                        route = route
+        if (menuRow.kind == RecentPlaybackTab.Mv) {
+            menuRow.song?.let { videoSong ->
+                EllaMiuixBottomSheet(
+                    show = true,
+                    title = stringResource(R.string.player_more_actions),
+                    onDismissRequest = { entityMenuRow = null }
+                ) {
+                    com.ella.music.ui.components.MusicVideoActionMenu(
+                        song = videoSong,
+                        onNavigateToArtist = onNavigateToArtist,
+                        onShare = { com.ella.music.MusicVideoLauncher.share(context, android.net.Uri.parse(menuRow.mediaUri), videoSong.title) },
+                        onInfo = { mvInfoSong = videoSong },
+                        onDelete = { pendingDeleteVideo = menuRow },
+                        onDismiss = { entityMenuRow = null },
+                        onArtistPickerRequested = { artists ->
+                            entityMenuRow = null
+                            musicVideoArtistChoices = artists
+                        }
                     )
-                    Toast.makeText(
-                        context,
-                        if (ok) context.getString(R.string.playlist_shortcut_requested, label)
-                        else context.getString(R.string.playlist_shortcut_unsupported),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    entityMenuRow = null
                 }
+            }
+        } else {
+            val resolvedSongs = remember(menuRow, playlists, folderPlaylists, songs) {
+                resolveRecentRowSongs(menuRow, mainViewModel, playlists, folderPlaylists, songs)
+            }
+            val displayName = recentRowDisplayName(menuRow)
+            LibraryEntityActionSheet(
+                show = true,
+                title = stringResource(R.string.player_more_actions),
+                onDismissRequest = { entityMenuRow = null },
+                actions = buildRecentEntityActions(
+                    row = menuRow,
+                    displayName = displayName,
+                    resolvedSongs = resolvedSongs,
+                    playlists = playlists,
+                    folderPlaylists = folderPlaylists,
+                    context = context,
+                    mainViewModel = mainViewModel,
+                    playerViewModel = playerViewModel,
+                    onDismiss = { entityMenuRow = null },
+                    onShare = {
+                        if (menuRow.kind == RecentPlaybackTab.Mv && menuRow.mediaUri.isNotBlank()) {
+                            com.ella.music.MusicVideoLauncher.share(context, android.net.Uri.parse(menuRow.mediaUri), menuRow.title)
+                        } else if (resolvedSongs.isNotEmpty()) shareLocalSongs(context, resolvedSongs)
+                        entityMenuRow = null
+                    },
+                    onAddToPlaylist = {
+                        if (resolvedSongs.isNotEmpty()) playlistPickerSongs = resolvedSongs
+                        entityMenuRow = null
+                    },
+                    onAddToQueue = {
+                        if (resolvedSongs.isNotEmpty()) {
+                            playerViewModel.addToPlaylist(resolvedSongs)
+                            Toast.makeText(context, context.getString(R.string.song_more_added_to_queue), Toast.LENGTH_SHORT).show()
+                        }
+                        entityMenuRow = null
+                    },
+                    onPlayNext = {
+                        if (resolvedSongs.isNotEmpty()) {
+                            playerViewModel.playNext(resolvedSongs)
+                            Toast.makeText(context, context.getString(R.string.song_more_added_to_play_next), Toast.LENGTH_SHORT).show()
+                        }
+                        entityMenuRow = null
+                    },
+                    onRemoveFromRecent = {
+                        deleteIdenticalEntryIds = menuRow.entryIds.toSet()
+                        deleteIdenticalTitle = displayName
+                        entityMenuRow = null
+                    },
+                    onDeletePermanently = {
+                        if (menuRow.kind == RecentPlaybackTab.Mv) pendingDeleteVideo = menuRow
+                        else if (resolvedSongs.isNotEmpty()) pendingDeleteSongs = resolvedSongs
+                        entityMenuRow = null
+                    },
+                    onExportPlaylist = { playlist ->
+                        exportPlaylistTarget = playlist
+                        showExportFormatSheet = true
+                        entityMenuRow = null
+                    },
+                    onRenamePlaylist = { playlist ->
+                        playlistToRename = playlist
+                        entityMenuRow = null
+                    },
+                    onDeletePlaylist = { playlist ->
+                        playlistPendingDelete = playlist
+                        entityMenuRow = null
+                    },
+                    onRefreshFolderPlaylist = { playlist ->
+                        scope.launch { mainViewModel.refreshFolderPlaylistFolders(playlist.folders) }
+                        entityMenuRow = null
+                    },
+                    onAssociateFolders = { paths ->
+                        associateFolderPaths = paths
+                        entityMenuRow = null
+                    },
+                    onEditFolderPlaylist = { playlist ->
+                        folderPlaylistEditorTarget = playlist
+                        editorDraftName = playlist.name
+                        editorDraftFolders = playlist.folders.toSet()
+                        editorPinnedFolders = emptySet()
+                        showFolderPlaylistEditor = true
+                        entityMenuRow = null
+                    },
+                    onDeleteFolderPlaylist = { playlist ->
+                        folderPlaylistPendingDelete = playlist
+                        entityMenuRow = null
+                    },
+                    onMvInfo = { song ->
+                        mvInfoSong = song
+                        entityMenuRow = null
+                    },
+                    onDesktopShortcut = { id, label, route ->
+                        val ok = requestPinnedEllaShortcut(
+                            context = context,
+                            id = id,
+                            label = label,
+                            route = route
+                        )
+                        Toast.makeText(
+                            context,
+                            if (ok) context.getString(R.string.playlist_shortcut_requested, label)
+                            else context.getString(R.string.playlist_shortcut_unsupported),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        entityMenuRow = null
+                    }
+                )
             )
-        )
+        }
     }
 
     playlistPickerSongs?.let { songsToAdd ->
@@ -1166,18 +1195,39 @@ fun RecentPlaybackScreen(
         }
     )
 
+    if (musicVideoArtistChoices.isNotEmpty()) {
+        EllaMiuixBottomSheet(
+            show = true,
+            enableNestedScroll = false,
+            title = stringResource(R.string.song_more_select_artist),
+            onDismissRequest = { musicVideoArtistChoices = emptyList() }
+        ) {
+            ArtistPickerContent(
+                artists = musicVideoArtistChoices,
+                mainViewModel = mainViewModel,
+                onArtistSelected = { artist ->
+                    musicVideoArtistChoices = emptyList()
+                    onNavigateToArtist(artist)
+                },
+                onDismiss = { musicVideoArtistChoices = emptyList() }
+            )
+        }
+    }
+
     mvInfoSong?.let { infoSong ->
         RecentMusicVideoInfo(infoSong, onDismiss = { mvInfoSong = null })
     }
     pendingDeleteVideo?.let { row ->
         ConfirmDangerDialog(
             show = true, title = stringResource(R.string.song_more_delete_permanently),
-            message = row.title, confirmText = stringResource(R.string.song_more_delete_permanently),
+            message = if (recentVideoType(row.mediaUri) == "online") {
+                stringResource(R.string.recent_playback_delete_online_mv_message, recentRowDisplayName(row))
+            } else row.title, confirmText = stringResource(R.string.song_more_delete_permanently),
             onDismiss = { pendingDeleteVideo = null },
             onConfirm = {
                 pendingDeleteVideo = null
                 scope.launch {
-                    val deleted = withContext(Dispatchers.IO) {
+                    val deleted = recentVideoType(row.mediaUri) == "online" || withContext(Dispatchers.IO) {
                         runCatching {
                             val uri = android.net.Uri.parse(row.mediaUri)
                             when (uri.scheme) {
@@ -1347,6 +1397,32 @@ fun RecentPlaybackScreen(
                     title = stringResource(R.string.recent_playback_show_date),
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (currentTab == RecentPlaybackTab.Folder || currentTab == RecentPlaybackTab.Mv) {
+                    val folder = currentTab == RecentPlaybackTab.Folder
+                    Text(
+                        text = stringResource(if (folder) R.string.recent_playback_folder_types else R.string.recent_playback_mv_types),
+                        color = MiuixTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 6.dp)
+                    )
+                    val selected = if (folder) folderTypes else mvTypes
+                    val options = if (folder) listOf(
+                        "folder" to R.string.category_folder,
+                        "nested_folder" to R.string.recent_playback_nested_folder
+                    ) else listOf("local" to R.string.recent_playback_local_mv, "online" to R.string.recent_playback_online_mv)
+                    options.forEach { (id, label) ->
+                        SwitchPreference(
+                            title = stringResource(label), checked = id in selected,
+                            onCheckedChange = { checked ->
+                                val updated = if (checked) selected + id else selected - id
+                                scope.launch {
+                                    if (folder) mainViewModel.settingsManager.setRecentPlaybackFolderTypes(updated)
+                                    else mainViewModel.settingsManager.setRecentPlaybackMvTypes(updated)
+                                }
+                            }, modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
                 if (currentTab == RecentPlaybackTab.Collection) {
                     Text(
                         text = stringResource(R.string.recent_playback_collection_types),
@@ -1688,6 +1764,7 @@ internal fun buildRecentPlaybackRowsForResolved(
         .groupBy { it.entry.categorySourceKey }.mapNotNull { (source, entries) ->
             val category = recentCategoryFromSource(source) ?: return@mapNotNull null
             val (kind, id) = category
+            val nestedFolder = kind == RecentPlaybackTab.Folder && source.startsWith("folder:")
             if (tab != RecentPlaybackTab.Collection && tab != kind) return@mapNotNull null
             val latestEntry = com.ella.music.data.latestCategoryPlayback(entries.map { it.entry }, source) ?: return@mapNotNull null
             val latest = entries.first { it.entry.entryId == latestEntry.entryId }
@@ -1700,7 +1777,9 @@ internal fun buildRecentPlaybackRowsForResolved(
                 RecentPlaybackTab.FolderPlaylists -> folderPlaylists.find { it.id == id }?.let {
                     allSongs.songsForFolderPlaylist(it.folders)
                 }.orEmpty()
-                RecentPlaybackTab.Folder -> allSongs.filter { it.folderPathValue().equals(id, true) || it.folderPathValue().startsWith("${id.trimEnd('/')}/", true) }
+                RecentPlaybackTab.Folder -> allSongs.filter {
+                    it.folderPathValue().equals(id, true) || (nestedFolder && it.folderPathValue().startsWith("${id.trimEnd('/')}/", true))
+                }
                 else -> indexedMembers(kind, id)
             }
             val title = when (kind) {
@@ -1711,13 +1790,13 @@ internal fun buildRecentPlaybackRowsForResolved(
                 else -> id
             }
             RecentPlaybackRow(
-                key = "${kind.routeValue}:$id",
-                title = if (tab == RecentPlaybackTab.Collection) formatCollectionTitle(kind, title) else title,
+                key = "${if (nestedFolder) "nested_folder" else kind.routeValue}:$id",
+                title = if (nestedFolder) "嵌套文件夹：$title" else if (tab == RecentPlaybackTab.Collection || kind == RecentPlaybackTab.Folder) formatCollectionTitle(kind, title) else title,
                 subtitle = formatPlayedToSubtitle(members.size, latest.entry.title, latest.entry.artist),
                 playedAt = latest.entry.playedAt, song = latest.song ?: members.firstOrNull(),
                 entryIds = entries.map { it.entry.entryId },
                 circularArt = kind in setOf(RecentPlaybackTab.Artist, RecentPlaybackTab.Composer, RecentPlaybackTab.Arranger, RecentPlaybackTab.Lyricist),
-                kind = kind, entityId = id, albumId = albumId, rowSongs = members
+                kind = kind, entityId = id, albumId = albumId, rowSongs = members, nestedFolder = nestedFolder
             )
         }.sortedByDescending { it.playedAt }
 }
@@ -1743,7 +1822,8 @@ internal fun recentPlaybackRowRoute(row: RecentPlaybackRow): String? = when (row
     RecentPlaybackTab.FolderPlaylists -> Screen.FolderPlaylistDetail.createRoute(row.entityId)
     RecentPlaybackTab.Album -> Screen.AlbumDetail.createRoute(row.albumId)
     RecentPlaybackTab.Artist -> Screen.ArtistDetail.createRoute(row.entityId)
-    RecentPlaybackTab.Folder -> Screen.FolderDetail.createRoute(row.entityId)
+    RecentPlaybackTab.Folder -> if (row.nestedFolder) Screen.FolderDetail.createRoute(row.entityId)
+        else Screen.MetadataCategoryDetail.createRoute("folder", row.entityId)
     RecentPlaybackTab.Year, RecentPlaybackTab.Genre, RecentPlaybackTab.Composer,
     RecentPlaybackTab.Arranger, RecentPlaybackTab.Lyricist -> Screen.MetadataCategoryDetail.createRoute(row.kind.routeValue, row.entityId)
     else -> null
@@ -1769,10 +1849,11 @@ private fun ResolvedRecentEntry.asMvRow(): RecentPlaybackRow {
         id = Long.MIN_VALUE + entry.mediaUri.hashCode().toLong(),
         title = entry.title, artist = entry.artist, album = entry.album,
         albumId = song?.albumId ?: 0L, duration = entry.durationMs,
-        path = entry.mediaUri, fileName = entry.mediaUri.substringAfterLast('/'), mimeType = "video/*"
+        path = entry.mediaUri, fileName = entry.mediaUri.substringAfterLast('/'), mimeType = "video/*",
+        coverUrl = song?.coverUrl.orEmpty()
     )
     return RecentPlaybackRow(
-        key = "mv:${entry.mediaUri}", title = entry.title,
+        key = "mv:${entry.mediaUri}", title = "${if (recentVideoType(entry.mediaUri) == "local") "本地" else "在线"}：${entry.title}",
         subtitle = listOf(entry.artist, entry.durationMs.formatPlaybackDuration()).filter { it.isNotBlank() }.joinToString(" · "),
         playedAt = entry.playedAt, song = videoSong, entryIds = listOf(entry.entryId),
         kind = RecentPlaybackTab.Mv, mediaUri = entry.mediaUri, rowSongs = listOf(videoSong)
@@ -1889,7 +1970,7 @@ private fun resolveRecentRowSongs(
             allSongs.filter {
                 val folder = it.path.substringBeforeLast('/', missingDelimiterValue = "")
                 folder.equals(path, ignoreCase = true) ||
-                    folder.startsWith("$path/", ignoreCase = true)
+                    (row.nestedFolder && folder.startsWith("$path/", ignoreCase = true))
             }.ifEmpty { fallback }
         }
         RecentPlaybackTab.Year,
@@ -2013,7 +2094,7 @@ private fun buildRecentEntityActions(
         onDesktopShortcut(
             "folder_${row.entityId.tagIdentityKey()}",
             displayName.ifBlank { row.entityId.substringAfterLast('/') },
-            Screen.FolderDetail.createRoute(row.entityId)
+            recentPlaybackRowRoute(row) ?: Screen.FolderDetail.createRoute(row.entityId)
         )
     }
     val categoryShortcut = LibraryEntityActions.desktopShortcut {

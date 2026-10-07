@@ -203,14 +203,19 @@ internal fun buildMonthlyListeningReport(
 
 internal fun buildReplayMonthTabs(
     count: Int? = null,
-    now: Calendar = Calendar.getInstance()
+    now: Calendar = Calendar.getInstance(),
+    year: Int = now.get(Calendar.YEAR)
 ): List<ReplayMonthTab> {
-    val resolvedCount = (count ?: (now.get(Calendar.MONTH) + 1)).coerceAtMost(12)
+    if (year !in 1..now.get(Calendar.YEAR)) return emptyList()
+    val lastMonth = if (year == now.get(Calendar.YEAR)) now.get(Calendar.MONTH) else Calendar.DECEMBER
+    val resolvedCount = (count ?: (lastMonth + 1)).coerceAtMost(lastMonth + 1)
     if (resolvedCount <= 0) return emptyList()
     val locale = Locale.getDefault()
     val labelPattern = if (locale.language in setOf("zh", "ja", "ko")) "M月" else "MMM"
-    return (resolvedCount - 1 downTo 0).map { offset ->
+    return (lastMonth - resolvedCount + 1..lastMonth).map { index ->
+        val offset = replayMonthOffset(year, index, now)
         val month = (now.clone() as Calendar).apply {
+            set(Calendar.DAY_OF_MONTH, 1)
             add(Calendar.MONTH, -offset)
         }
         ReplayMonthTab(
@@ -219,6 +224,33 @@ internal fun buildReplayMonthTabs(
             year = month.get(Calendar.YEAR)
         )
     }
+}
+
+/** Calendar years are derived from listening dates, including imports with no library match. */
+internal fun buildReplayYears(
+    history: List<PlaybackHistoryEntry>, dailyListenMs: Map<String, Long>,
+    now: Calendar = Calendar.getInstance()
+): List<Int> {
+    val currentYear = now.get(Calendar.YEAR)
+    val calendar = now.clone() as Calendar
+    return buildSet {
+        add(currentYear)
+        history.filter { it.playedAt > 0L }.forEach {
+            calendar.timeInMillis = it.playedAt
+            calendar.get(Calendar.YEAR).takeIf { year -> year in 1..currentYear }?.let(::add)
+        }
+        dailyListenMs.filterValues { it > 0L }.keys.forEach { date ->
+            runCatching { java.time.LocalDate.parse(date).year }.getOrNull()
+                ?.takeIf { it in 1..currentYear }?.let(::add)
+        }
+    }.sortedDescending()
+}
+
+internal fun replayMonthOffset(year: Int, month: Int, now: Calendar): Int {
+    val currentYear = now.get(Calendar.YEAR)
+    val safeYear = year.coerceIn(1, currentYear)
+    val lastMonth = if (safeYear == currentYear) now.get(Calendar.MONTH) else Calendar.DECEMBER
+    return (currentYear - safeYear) * 12 + now.get(Calendar.MONTH) - month.coerceIn(0, lastMonth)
 }
 
 internal fun List<ResolvedHistoryEntry>.favoriteArtistInsight(): ListeningInsight? {

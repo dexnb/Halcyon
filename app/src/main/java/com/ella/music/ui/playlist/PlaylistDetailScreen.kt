@@ -430,6 +430,7 @@ fun PlaylistDetailScreen(
                         songCount = sortedSongs.size,
                         playCount = playlistPlayCount,
                         duration = sortedSongs.sumOf { it.duration },
+                        contentEndPadding = songActionsEndPadding,
                         onShuffle = if (selection.selectionMode) {
                             null
                         } else {
@@ -457,6 +458,7 @@ fun PlaylistDetailScreen(
 
                 item {
                     PlaylistPlayAllBar(
+                        modifier = Modifier.padding(end = songActionsEndPadding),
                         songCount = displayedSongs.size,
                         sortLabel = com.ella.music.ui.components.sortLabel(sortMode.labelRes, sortMode.isDescending()),
                         onPlayAll = {
@@ -546,6 +548,7 @@ fun PlaylistDetailScreen(
 
                 item {
                     com.ella.music.ui.components.ContinuePlaybackRow(
+                        modifier = Modifier.padding(end = songActionsEndPadding),
                         songs = displayedSongs,
                         categoryKey = com.ella.music.data.CategoryResumeKeys.playlist(playlistId),
                         playbackStats = playbackStats,
@@ -682,7 +685,7 @@ fun PlaylistDetailScreen(
                                 }
                             } else null,
                             showTrailingContentInSelectionMode = reorderHandlesVisible,
-                            modifier = Modifier
+                            modifier = Modifier.padding(end = songActionsEndPadding)
                         )
                     }
                 }

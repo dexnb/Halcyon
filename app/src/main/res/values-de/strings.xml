@@ -1591,7 +1591,9 @@
     <string name="lx_online_song_expired">Online-Titel ist nicht mehr gültig</string>
     <string name="lx_online_source_management">Quellenverwaltung</string>
     <string name="lx_online_no_source_selected">Keine LX-Quelle ausgewählt</string>
+    <string name="musicfree_online_no_source_selected">Keine MusicFree-Quelle ausgewählt</string>
     <string name="lx_online_no_source_hint">Tippe auf das Zahnrad, um eine LX-Quelle zu importieren oder auszuwählen</string>
+    <string name="musicfree_online_no_source_hint">Tippe auf das Zahnrad, um eine MusicFree-Quelle zu importieren oder auszuwählen</string>
     <string name="lx_online_no_songs_found">Keine Titel gefunden</string>
     <string name="lx_online_songs_found">%1$d Titel gefunden</string>
     <string name="lx_online_search_failed">Suche fehlgeschlagen</string>
@@ -2881,11 +2883,11 @@
     <string name="player_queue">Warteschlange</string>
     <string name="settings_apple_music_use_apple_favorite">Apple-Favoriten-Schaltfläche verwenden</string>
     <string name="settings_apple_music_use_apple_favorite_summary">Verwendet native Stern-Favoriten und Mehr-Aktionssymbole auf der Apple Music-Wiedergabeseite</string>
-    <string name="lastfm_cloudflare_verification_title">Sicherheitsüberprüfung</string>
-    <string name="lastfm_cloudflare_verification_button">Überprüfung durchführen</string>
-    <string name="lastfm_cloudflare_verification_complete">Fertig</string>
-    <string name="lastfm_cloudflare_verification_success">Überprüfung abgeschlossen, Biografie wird aktualisiert</string>
-    <string name="lastfm_cloudflare_verification_hint">Cloudflare-Sicherheitsüberprüfung erkannt. Bitte schließen Sie diese unten ab.</string>
+    <string name="lastfm_verification_title">Sicherheitsüberprüfung</string>
+    <string name="lastfm_verification_button">Überprüfung durchführen</string>
+    <string name="lastfm_verification_complete">Fertig</string>
+    <string name="lastfm_verification_success">Überprüfung abgeschlossen, Biografie wird aktualisiert</string>
+    <string name="lastfm_verification_hint">Die Website verlangt eine Sicherheitsüberprüfung. Bitte schließen Sie diese unten ab.</string>
     <string name="library_cache_cancelled">Caching cancelled</string>
     <string name="library_cache_done">Cached %1$d, failed %2$d</string>
     <string name="library_cache_nothing">No remote songs to cache</string>

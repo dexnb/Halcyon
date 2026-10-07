@@ -83,6 +83,7 @@ private const val AlbumListRestoreAnchorOffsetKey = "album_list_restore_anchor_o
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Library : Screen("library")
+    data object PosterWall : Screen("poster_wall")
     data object LibrarySearch : Screen("library_search?type={type}&keyword={keyword}&focus={focus}&localOnly={localOnly}") {
         const val baseRoute = "library_search"
         fun createRoute(type: String? = null, keyword: String? = null, focus: Boolean = false, localOnly: Boolean = false): String {
@@ -268,6 +269,10 @@ fun AppNavigation(
         }
     }
 
+    // Navigation 2.10 has separate predictive transitions and a NavigationEvent handler.
+    // Keep the existing pop animations, but dispatch Back only when the gesture completes so
+    // transparent pages never shrink and reveal the preceding page while the finger is down.
+    NavigationBackScope {
     NavHost(
         navController = navController,
         startDestination = initialStartDestination,
@@ -310,6 +315,7 @@ fun AppNavigation(
                 onNavigateToWebDav = { navController.navigate(Screen.WebDav.route) },
                 onNavigateToAnalytics = { navController.navigate(Screen.Analytics.route) },
                 onNavigateToRecentPlayback = { navController.navigate(Screen.RecentPlayback.createRoute()) },
+                onNavigateToPosterWall = { navController.navigate(Screen.PosterWall.route) },
                 onNavigateToAiChat = { navController.navigate(Screen.AiChat.route) },
                 onNavigateToMetadataCategory = { type -> navigateRestorableTopLevel(Screen.MetadataCategory.createRoute(type)) },
                 onNavigateToPlayer = onNavigateToPlayer,
@@ -320,6 +326,17 @@ fun AppNavigation(
                         navController.navigate(Screen.Settings.createRoute())
                     }
                 }
+            )
+        }
+
+        composable(Screen.PosterWall.route) {
+            com.ella.music.ui.poster.PosterWallScreen(
+                mainViewModel, playerViewModel,
+                onBack = { navController.popBackStack() }, onOpenPlayer = onNavigateToPlayer,
+                onAlbum = { navController.navigate(Screen.AlbumDetail.createRoute(it)) },
+                onArtist = { navController.navigate(Screen.ArtistDetail.createRoute(it)) },
+                bottomContentPadding = posterWallBottomPadding,
+                onFullscreenChanged = onPosterWallFullscreenChanged
             )
         }
 
@@ -1253,6 +1270,7 @@ fun AppNavigation(
                 onBack = { navController.popBackStack() }
             )
         }
+    }
     }
 }
 

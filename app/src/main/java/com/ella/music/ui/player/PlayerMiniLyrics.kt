@@ -250,7 +250,7 @@ internal fun MiniLyricsPreview(
     val denseMultiPartPreview = !compact && visiblePartCount >= 3
     // In a cramped floating window, shrink the type so long (e.g. English) lines fit the narrow
     // width instead of overflowing, and take less vertical room.
-    val primarySizeSp = miniPrimarySize * if (compact) 0.816f else 1f
+    val primarySizeSp = primaryTextSizeOverrideSp ?: (miniPrimarySize * if (compact) 0.816f else 1f)
     val secondarySizeSp = miniSecondarySize * if (compact) 0.80f else 1f
     AppleMusicLyricsView(
         lyrics = previewLyrics,
@@ -268,7 +268,7 @@ internal fun MiniLyricsPreview(
         translationFontFamily = translationFontFamily,
         fontWeight = fontWeight,
         // Match the 1.2.0 preview density at 100%, while keeping the control accurate to 1%.
-        fontScale = miniScale.coerceIn(50, 150) / 100f * 0.92f,
+        fontScale = miniScale.coerceIn(50, 150) / 100f * if (primaryTextSizeOverrideSp == null) 0.92f else 1f,
         secondaryFontScale = 1f,
         lyricTextAlign = miniTextAlign,
         primaryTextSizeSp = primarySizeSp,

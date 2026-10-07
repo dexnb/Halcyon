@@ -442,11 +442,23 @@ private fun ScrollIndicator(
                             dragOffsetPx = currentThumbOffsetPx
                             dragging = true
                             down.consume()
-                            dispatch(down.position.y, force = true)
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                val change = event.changes.firstOrNull() ?: break
-                                if (change.changedToUpIgnoreConsumed()) {
+                            // Start from the grabbed thumb position: touching its middle must
+                            // not jump the list. Conflation keeps only the latest drag request.
+                            try {
+                                while (true) {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                    val delta = change.position.y - change.previousPosition.y
+                                    if (delta != 0f) moved = true
+                                    dragOffsetPx = (dragOffsetPx + delta)
+                                        .coerceIn(0f, currentGeometry.travel)
+                                    if (change.changedToUpIgnoreConsumed()) {
+                                        if (moved) dispatch()
+                                        change.consume()
+                                        break
+                                    }
+                                    if (!change.pressed) break
+                                    if (moved) dispatch()
                                     change.consume()
                                     break
                                 }

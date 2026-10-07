@@ -63,6 +63,7 @@ internal fun WebDavCloudRestorePromptDialog(
         EllaMiuixDialogActions(
             cancelText = stringResource(R.string.common_cancel),
             confirmText = stringResource(R.string.settings_backup_webdav_restore_now),
+            confirmDangerous = true,
             onCancel = { if (!restoring) onDismiss() },
             onConfirm = { if (!restoring) onRestore() }
         )

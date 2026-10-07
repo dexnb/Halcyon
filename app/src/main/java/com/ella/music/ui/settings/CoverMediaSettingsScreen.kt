@@ -2,6 +2,8 @@
 
 package com.ella.music.ui.settings
 
+import com.ella.music.data.netease.commentResource
+
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -797,6 +799,25 @@ internal fun SettingsMusicVideoSection(highlightKey: String? = null) {
             } // search-anchor:end
 
             // search-anchor:start
+            SettingsSearchAnchor(R.string.netease_comments_default_tab) {
+            WindowSpinnerPreference(
+                title = stringResource(R.string.netease_comments_default_tab),
+                summary = stringResource(R.string.netease_comments_default_tab_summary),
+                items = listOf(
+                    DropdownItem(title = stringResource(R.string.netease_comments_sort_recommend)),
+                    DropdownItem(title = stringResource(R.string.netease_comments_sort_hot)),
+                    DropdownItem(title = stringResource(R.string.netease_comments_sort_latest))
+                ),
+                selectedIndex = com.ella.music.data.netease.NeteaseCommentSort.entries.indexOf(neteaseLinkSettings.defaultCommentSort),
+                onSelectedIndexChange = { index ->
+                    com.ella.music.data.netease.NeteaseCommentSort.entries.getOrNull(index)?.let { sort ->
+                        com.ella.music.data.netease.NeteaseLinks.update(context) { it.copy(defaultCommentSort = sort) }
+                    }
+                }
+            )
+            } // search-anchor:end
+
+            // search-anchor:start
             SettingsSearchAnchor(R.string.netease_link_target) {
             WindowSpinnerPreference(
                 title = stringResource(R.string.netease_link_target),
@@ -825,7 +846,9 @@ internal fun SettingsMusicVideoSection(highlightKey: String? = null) {
                     SplitSettingTextField(
                         label = stringResource(labelRes),
                         value = neteaseLinkSettings.custom[kind].orEmpty(),
-                        summary = stringResource(
+                        summary = if (kind.commentResource() != null) {
+                            stringResource(R.string.netease_link_custom_comments_summary)
+                        } else stringResource(
                             R.string.netease_link_custom_summary,
                             com.ella.music.data.netease.NeteaseLinks.defaultPrefix(com.ella.music.data.netease.NeteaseLinkTarget.Web, kind)
                         ),

@@ -87,6 +87,7 @@ private val manualSettingsSearchCatalog = listOf(
     SettingsSearchDefinition(R.string.settings_artist_image_sources, R.string.settings_artist_image_sources_summary, "艺术家 图片 封面 来源 优先级 Last.fm Spotify 网易云 酷狗 QQ音乐", SettingsSearchTarget.CoverMedia("artist_image_sources")),
 
     SettingsSearchDefinition(R.string.settings_library_source, R.string.settings_library_source_summary, "音乐来源 音乐库来源 本地 Navidrome Emby 远程 曲库", SettingsSearchTarget.Library("library_source")),
+    SettingsSearchDefinition(R.string.netease_playback_provider_title, R.string.netease_playback_provider_summary, "网易云 账号 歌单 收藏 搜索 播放解析 LX MusicFree 音源 插件", SettingsSearchTarget.Library("library_source")),
     SettingsSearchDefinition(R.string.settings_library_scan, R.string.settings_library_scan_summary, "音乐库 扫描 标签 搜索 艺术家 歌手", SettingsSearchTarget.Library("scan")),
     SettingsSearchDefinition(R.string.settings_scan_folders, R.string.settings_scan_folders_summary, "扫描 文件夹 USB 隐藏目录 存储权限", SettingsSearchTarget.Scan("scan_folders")),
     SettingsSearchDefinition(R.string.settings_full_tag_search, R.string.settings_full_tag_search_summary_on, "全字段 全标签 元数据 作曲 作词 注释 别名 标签", SettingsSearchTarget.Scan("scan_media_source")),

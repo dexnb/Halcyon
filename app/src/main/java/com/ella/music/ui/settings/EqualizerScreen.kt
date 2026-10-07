@@ -294,7 +294,8 @@ fun EqualizerScreen(
                             EqControlSlider(
                                 title = stringResource(R.string.equalizer_master_gain),
                                 valueText = String.format(Locale.ROOT, "%+.1f dB", masterGainTenthsDb / 10f),
-                                value = masterGainTenthsDb,
+                            value = masterGainTenthsDb,
+                            inputScale = 10f,
                                 range = AudioEffectSettings.MASTER_GAIN_MIN_TENTHS_DB..AudioEffectSettings.MASTER_GAIN_MAX_TENTHS_DB,
                                 onChange = { scope.launch { settingsManager.setMasterGainTenthsDb(it) } }
                             )
@@ -813,7 +814,8 @@ fun EqualizerScreen(
                             EqControlSlider(
                                 title = stringResource(R.string.equalizer_crossfeed_attenuation),
                                 valueText = String.format(Locale.ROOT, "%.1f dB", crossfeedAttenuationTenthsDb / 10f),
-                                value = crossfeedAttenuationTenthsDb,
+                            value = crossfeedAttenuationTenthsDb,
+                            inputScale = 10f,
                                 range = AudioEffectSettings.CROSSFEED_ATTENUATION_MIN_TENTHS_DB..AudioEffectSettings.CROSSFEED_ATTENUATION_MAX_TENTHS_DB,
                                 onChange = { scope.launch { settingsManager.setCrossfeedAttenuationTenthsDb(it) } }
                             )

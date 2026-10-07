@@ -2310,7 +2310,9 @@
     <string name="lx_online_song_expired">Çevrim içi şarkı artık geçerli değil</string>
     <string name="lx_online_source_management">Kaynak yönetimi</string>
     <string name="lx_online_no_source_selected">Hiçbir LX kaynağı seçilmedi</string>
+    <string name="musicfree_online_no_source_selected">Hiçbir MusicFree kaynağı seçilmedi</string>
     <string name="lx_online_no_source_hint">Bir LX kaynağını içe aktarmak veya seçmek için dişli simgesine dokunun</string>
+    <string name="musicfree_online_no_source_hint">Bir MusicFree kaynağını içe aktarmak veya seçmek için dişli simgesine dokunun</string>
     <string name="lx_online_no_songs_found">Şarkı bulunamadı</string>
     <string name="lx_online_songs_found">%1$d şarkı bulundu</string>
     <string name="lx_online_search_failed">Arama başarısız oldu</string>
@@ -2841,11 +2843,11 @@
     <string name="player_queue">Çalma Kuyruğu</string>
     <string name="settings_apple_music_use_apple_favorite">Apple favori düğmesini kullan</string>
     <string name="settings_apple_music_use_apple_favorite_summary">Apple Music oynatıcıda yerel yıldız favori ve daha fazla işlem simgelerini kullanın</string>
-    <string name="lastfm_cloudflare_verification_title">Güvenlik Doğrulaması</string>
-    <string name="lastfm_cloudflare_verification_button">Doğrulamayı Geç</string>
-    <string name="lastfm_cloudflare_verification_complete">Tamamlandı</string>
-    <string name="lastfm_cloudflare_verification_success">Doğrulama tamamlandı, biyografi yenileniyor</string>
-    <string name="lastfm_cloudflare_verification_hint">Cloudflare doğrulaması algılandı. Lütfen doğrulamayı aşağıda tamamlayın.</string>
+    <string name="lastfm_verification_title">Güvenlik Doğrulaması</string>
+    <string name="lastfm_verification_button">Doğrulamayı Geç</string>
+    <string name="lastfm_verification_complete">Tamamlandı</string>
+    <string name="lastfm_verification_success">Doğrulama tamamlandı, biyografi yenileniyor</string>
+    <string name="lastfm_verification_hint">Web sitesi güvenlik doğrulaması gerektiriyor. Aşağıdaki sayfada doğrulamayı tamamlayın.</string>
     <string name="library_cache_cancelled">Caching cancelled</string>
     <string name="library_cache_done">Cached %1$d, failed %2$d</string>
     <string name="library_cache_nothing">No remote songs to cache</string>

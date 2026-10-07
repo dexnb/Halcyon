@@ -52,7 +52,12 @@ fun ContinuePlaybackRow(
     if (songs.isEmpty()) return
     val context = LocalContext.current
     val settingsManager = remember(context) { SettingsManager.getInstance(context) }
-    val visible by settingsManager.continuePlaybackRowVisible.collectAsState(initial = true)
+    val visibility = if (categoryKey == com.ella.music.data.CategoryResumeKeys.HOME) {
+        settingsManager.continuePlaybackRowVisible
+    } else {
+        settingsManager.categoryContinuePlaybackRowVisible
+    }
+    val visible by visibility.collectAsState(initial = true)
     if (!visible) return
     // This row is commonly hosted inside a LazyColumn. A plain remember would be lost when the
     // item leaves the viewport, making a dismissed row reappear while scrolling. Key the state by

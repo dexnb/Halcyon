@@ -82,12 +82,20 @@ internal fun PlayerLandscapeOverlayHost(
     onArtist: () -> Unit,
     onDismiss: () -> Unit,
     interceptBack: Boolean = true,
-    showBackButton: Boolean = true
+    showBackButton: Boolean = true,
+    forceLandscape: Boolean = true
 ) {
     if (!expanded) return
 
-    ForceLandscapePlayerBars(onDismiss = onDismiss, interceptBack = interceptBack)
+    ForceLandscapePlayerBars(onDismiss = onDismiss, interceptBack = interceptBack, forceLandscape = forceLandscape)
     if (layoutStyle == SettingsManager.PLAYER_LANDSCAPE_STYLE_WIDE) return
+    if (layoutStyle == SettingsManager.PLAYER_LANDSCAPE_STYLE_COVER_CLOCK) {
+        LandscapeClockPlayer(song, embeddedCover, palette, isPlaying,
+            onPrevious, onPlayPause, onNext, onDismiss, showBackButton = showBackButton || forceLandscape,
+            lyrics = lyrics, currentLyricIndex = currentLyricIndex, currentPosition = currentPosition,
+            fontFamily = fontFamily, fontWeight = fontWeight, fontScale = fontScale)
+        return
+    }
 
     val dynamicCoverSongKey = song?.dynamicCoverResolutionKey().orEmpty()
     val useMusicVideoBackground =

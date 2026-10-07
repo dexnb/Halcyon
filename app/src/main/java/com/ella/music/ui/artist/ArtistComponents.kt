@@ -166,6 +166,7 @@ internal fun ArtistBiographyPanel(
     artistName: String,
     songs: List<Song> = emptyList(),
     downloadMode: Int,
+    onOpenLastFmSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -199,7 +200,7 @@ internal fun ArtistBiographyPanel(
     var failed by remember(artistName, selectedRegion, selectedSource) { mutableStateOf(false) }
     var errorMessage by remember(artistName, selectedRegion, selectedSource) { mutableStateOf<String?>(null) }
     var challengeUrl by remember(artistName, selectedRegion, selectedSource) { mutableStateOf<String?>(null) }
-    var showCloudflareSheet by remember { mutableStateOf(false) }
+    var showVerificationSheet by remember { mutableStateOf(false) }
     var retryTrigger by remember { mutableIntStateOf(0) }
     var saving by remember(artistName, selectedRegion, selectedSource) { mutableStateOf(false) }
     LaunchedEffect(artistName, allowed, selectedRegion, selectedSource, lastFmApiKey.apiKey, retryTrigger) {
@@ -231,7 +232,7 @@ internal fun ArtistBiographyPanel(
             }
         }.onFailure { error ->
             failed = true
-            if (error is LastFmCloudflareChallengeException) {
+            if (error is LastFmVerificationRequiredException) {
                 challengeUrl = error.url
             }
             errorMessage = error.message?.takeIf { it.isNotBlank() }
@@ -409,13 +410,24 @@ internal fun ArtistBiographyPanel(
                         fontSize = 11.sp,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )
+                    if (selectedSource == ArtistBioMenuSource.LastFm) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = stringResource(R.string.lastfm_biography_api_hint),
+                            fontSize = 13.sp,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                        )
+                        Button(onClick = onOpenLastFmSettings, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.lastfm_biography_api_settings))
+                        }
+                    }
                     if (challengeUrl != null) {
                         Spacer(modifier = Modifier.height(10.dp))
                         Button(
-                            onClick = { showCloudflareSheet = true },
+                            onClick = { showVerificationSheet = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(text = stringResource(R.string.lastfm_cloudflare_verification_button))
+                            Text(text = stringResource(R.string.lastfm_verification_button))
                         }
                     }
                 }
@@ -496,12 +508,16 @@ internal fun ArtistBiographyPanel(
             }
         }
     }
-    if (showCloudflareSheet && challengeUrl != null) {
-        LastFmCloudflareVerificationSheet(
+    if (showVerificationSheet && challengeUrl != null) {
+        LastFmVerificationSheet(
             url = challengeUrl!!,
-            onDismissRequest = { showCloudflareSheet = false },
+            onDismissRequest = { showVerificationSheet = false },
+            onOpenApiSettings = {
+                showVerificationSheet = false
+                onOpenLastFmSettings()
+            },
             onVerified = {
-                showCloudflareSheet = false
+                showVerificationSheet = false
                 retryTrigger++
             }
         )

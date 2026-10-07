@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -35,6 +36,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.graphics.layer.CompositingStrategy
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -53,6 +60,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.constrainWidth
+import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ella.music.data.SettingsManager
@@ -62,6 +72,10 @@ import com.ella.music.data.parser.isRtlText
 import kotlin.math.cos
 import kotlin.math.PI
 import kotlin.math.sin
+import kotlin.math.roundToInt
+
+/** Specialized lyric scenes retain their own palette while the normal player follows settings. */
+internal val LocalKaraokeRainbowOverride = staticCompositionLocalOf<Boolean?> { null }
 
 internal fun isInlineRubyPronunciation(text: String): Boolean {
     val compact = text.filterNot { it.isWhitespace() }
@@ -193,9 +207,10 @@ internal fun TimedLyricText(
     // instead of a value they take as a parameter, so a frame no longer recomposes the whole
     // line's worth of word subtrees just to move one feathered edge.
     val context = LocalContext.current
-    val rainbowEnabled by remember(context) {
+    val savedRainbowEnabled by remember(context) {
         SettingsManager.getInstance(context).lyricRainbowEnabled
     }.collectAsState(initial = false)
+    val rainbowEnabled = LocalKaraokeRainbowOverride.current ?: savedRainbowEnabled
     val hdrHighlightEnabled by remember(context) {
         SettingsManager.getInstance(context).lyricHdrHighlightEnabled
     }.collectAsState(initial = false)
@@ -421,8 +436,7 @@ private fun AppleMusicKaraokeWord(
             )
         }
     }
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Layout(
         modifier = Modifier
             .onGloballyPositioned { coordinates ->
                 val parent = coordinates.parentLayoutCoordinates
@@ -538,6 +552,7 @@ private fun AppleMusicKaraokeGlyphs(
     baseStyle: TextStyle,
     contentColor: Color,
     sustainGlowScale: Float,
+    layoutCache: KaraokeGlyphLayout,
     outlineColor: Color? = null,
     outlineWidth: Float = 0f,
     glowColor: Color? = null,
@@ -549,7 +564,7 @@ private fun AppleMusicKaraokeGlyphs(
     val referenceMotion = LocalReferenceLyricMotion.current
     val word = renderWord.word
     val measurer = rememberTextMeasurer()
-    val cache = remember { KaraokeGlyphLayout() }
+    val cache = layoutCache
     val baseAlpha = baseStyle.color.alpha
     val bright = contentColor.copy(alpha = baseAlpha)
     val dimFactor = DefaultKaraokeDimAlphaFactor
@@ -557,6 +572,7 @@ private fun AppleMusicKaraokeGlyphs(
     val sustainDurationMs = renderWord.sustainDurationMs
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl || word.text.isRtlText()
     val useRainbow = rainbowEnabled && active
+    val maskedGlow = if (glowColor != null && glowRadius > 0f) rememberGraphicsLayer() else null
     val trailSustainGlowScale = sustainGlowScale
     // lyric_hdr_highlight_enabled: ~1.5× sustain glow / bright highlight (settings summary).
     val effectiveSustainGlowScale = if (hdrHighlightEnabled) {
@@ -894,8 +910,12 @@ private fun AppleMusicKaraokeGlyphs(
 
 internal fun AppleMusicRenderWord.karaokeProgress(positionMs: Long, active: Boolean): Float =
     if (active) {
-        ((positionMs - word.startMs).toFloat() / (word.endMs - word.startMs).coerceAtLeast(1L))
-            .coerceIn(0f, 1f)
+        if (word.endMs == word.startMs) {
+            if (positionMs >= word.startMs) 1f else 0f
+        } else {
+            ((positionMs - word.startMs).toFloat() / (word.endMs - word.startMs).coerceAtLeast(1L))
+                .coerceIn(0f, 1f)
+        }
     } else {
         0f
     }
@@ -1135,6 +1155,7 @@ internal fun rubiesForTimedWords(
 /**
  * Groups timed readings under whole words when they line up with them: every reading lies inside
  * one word, and each word's readings together start and end with that word (within [toleranceMs]).
+ * A Latin word's trailing punctuation may extend its display timing beyond its reading.
  * A word may carry several readings ("ima" + "mo" over "今も"); they are joined with a space.
  * Returns null when the readings do not follow word boundaries.
  */
@@ -1157,7 +1178,14 @@ internal fun groupRubySpansByWord(
     grouped.forEachIndexed { i, group ->
         if (group.isEmpty()) return@forEachIndexed
         if (kotlin.math.abs(group.first().startMs - words[i].startMs) > toleranceMs) return null
-        if (kotlin.math.abs(group.last().endMs - words[i].endMs) > toleranceMs) return null
+        if (kotlin.math.abs(group.last().endMs - words[i].endMs) > toleranceMs) {
+            val text = words[i].text.trim()
+            val stem = text.dropLastWhile { it.isLyricPunctuation() }
+            val punctuatedLatinWord = stem.length < text.length &&
+                stem.any { it.isAppleMusicLatinLetter() } &&
+                stem.all { it.isLetterOrDigit() || it in "'’-" }
+            if (!punctuatedLatinWord) return null
+        }
     }
     return grouped.map { group -> group.joinToString(" ") { it.text } }
 }
@@ -1477,7 +1505,7 @@ internal data class AppleMusicRenderWord(
     val sustainDurationMs: Long get() = (sustainEndMs ?: word.endMs) - word.startMs
 }
 
-private fun List<LyricWord>.toAppleMusicRenderWords(
+internal fun List<LyricWord>.toAppleMusicRenderWords(
     lineText: String,
     sustainThresholdMs: Int
 ): List<AppleMusicRenderWord> {
@@ -1485,7 +1513,9 @@ private fun List<LyricWord>.toAppleMusicRenderWords(
     val result = mutableListOf<AppleMusicRenderWord>()
     var cursor = 0
     forEachIndexed { index, word ->
-        if (word.text.isBlank() || word.endMs <= word.startMs) return@forEachIndexed
+        // TTML credit punctuation often has begin == end. Keep it visible and reveal it
+        // at that timestamp instead of silently dropping the colon/slash from the line.
+        if (word.text.isBlank() || word.endMs < word.startMs) return@forEachIndexed
         val start = lineText.indexOf(word.text, cursor)
         if (start < 0) return emptyList()
         val end = start + word.text.length

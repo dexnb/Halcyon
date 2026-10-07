@@ -207,7 +207,11 @@ internal class PlaybackSettingsAccessImpl(private val context: Context) : Playba
         context.dataStore.data.map { it[KEY_USB_DAC_MODE] ?: false }
 
     override val sleepTimerCustomMinutes: Flow<Int> =
-        context.dataStore.data.map { it[KEY_SLEEP_TIMER_CUSTOM_MINUTES]?.coerceIn(5, 120) ?: 45 }
+        context.dataStore.data.map {
+            it[KEY_SLEEP_TIMER_CUSTOM_MINUTES]?.coerceIn(
+                SettingsManager.SLEEP_TIMER_MIN_MINUTES, SettingsManager.SLEEP_TIMER_MAX_MINUTES
+            ) ?: 45
+        }
     override val sleepTimerStopAfterCurrent: Flow<Boolean> =
         context.dataStore.data.map { it[KEY_SLEEP_TIMER_STOP_AFTER_CURRENT] ?: false }
 
@@ -323,7 +327,11 @@ internal class PlaybackSettingsAccessImpl(private val context: Context) : Playba
     }
 
     override suspend fun setSleepTimerCustomMinutes(minutes: Int) {
-        context.dataStore.edit { it[KEY_SLEEP_TIMER_CUSTOM_MINUTES] = minutes.coerceIn(5, 120) }
+        context.dataStore.edit {
+            it[KEY_SLEEP_TIMER_CUSTOM_MINUTES] = minutes.coerceIn(
+                SettingsManager.SLEEP_TIMER_MIN_MINUTES, SettingsManager.SLEEP_TIMER_MAX_MINUTES
+            )
+        }
     }
 
     override suspend fun setSleepTimerStopAfterCurrent(enabled: Boolean) {
