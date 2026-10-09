@@ -2741,7 +2741,7 @@
     <string name="settings_lyric_touch_feedback_summary">إظهار توهج متوسع من نقطة اللمس عند الضغط أو النقر على الكلمات</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">مزامنة كلمات سطح المكتب مع لون محتوى الغلاف</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">استخدام نفس اللون المستمد من الغلاف مثل خيار المشغل – لون محتوى الغلاف</string>
-    <string name="settings_player_mini_lyrics">كلمات الأغاني المصغرة للمشغل</string>
+    <string name="settings_player_mini_lyrics">نمط الكلمات المصغّرة للمشغّل</string>
     <string name="settings_player_mini_lyrics_summary">ضبط المقياس والحجم والتباعد والمحاذاة للكلمات أسفل الغلاف بشكل مستقل</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">ضبط مقياس الكلمات المصغرة بزيادات قدرها 1% (50%–150%)</string>
     <string name="settings_player_mini_lyrics_line_spacing">تباعد أسطر الكلمات المصغرة</string>
@@ -2769,8 +2769,8 @@
     <string name="settings_spotify_client_id_summary">يُستخدم لجلب صور فناني Spotify؛ اتركه فارغاً لتخطي Spotify</string>
     <string name="settings_spotify_client_secret">السر المشترك لعميل Spotify</string>
     <string name="settings_spotify_client_secret_summary">يُستخدم فقط لطلبات اعتمادات عميل Spotify (Client Credentials)</string>
-    <string name="settings_artist_image_region">منطقة Last.fm / Spotify</string>
-    <string name="settings_artist_image_region_summary">حدد لغة Last.fm وسوق Spotify المستخدمة للبحث عن صور الفنانين</string>
+    <string name="settings_artist_image_region">Last.fm</string>
+    <string name="settings_artist_image_region_summary">Language used for Last.fm artist images</string>
     <string name="settings_music_video_fullscreen_button">زر ملء الشاشة للفيديو الموسيقي الصامت</string>
     <string name="settings_music_video_fullscreen_button_summary">إظهار أو إخفاء زر ملء الشاشة في أعلى يمين مشغل الفيديو الموسيقي الصامت</string>
     <string name="settings_music_video_long_press_info">اضغط مطولاً على شريط معلومات الفيديو الموسيقي لعرض معلومات الفيديو</string>

@@ -121,7 +121,7 @@ class DesktopLyricService : Service() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         loadSettingsFromStoreAsync(applyToExistingView = true)
         serviceScope.launch {
-            settingsManager.appleMusicLyricsWordLift.distinctUntilChanged().collect { enabled ->
+            settingsManager.desktopLyricWordLift.distinctUntilChanged().collect { enabled ->
                 if (appleMusicWordLiftEnabled == enabled) return@collect
                 appleMusicWordLiftEnabled = enabled
                 withContext(Dispatchers.Main.immediate) { applyCurrentSettingsToViews() }
@@ -879,7 +879,7 @@ class DesktopLyricService : Service() {
         },
         lyricFontWeight = settingsManager.lyricFontWeight.first().coerceIn(100, 900),
         lyricFontItalic = settingsManager.lyricFontItalic.first(),
-        appleMusicWordLiftEnabled = settingsManager.appleMusicLyricsWordLift.first(),
+        appleMusicWordLiftEnabled = settingsManager.desktopLyricWordLift.first(),
         savedX = settingsManager.desktopLyricX.first(),
         savedY = settingsManager.desktopLyricY.first()
         )

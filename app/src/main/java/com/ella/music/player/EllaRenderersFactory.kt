@@ -40,7 +40,7 @@ class EllaRenderersFactory(context: Context) : DefaultRenderersFactory(context) 
         extraAudioProcessors = processors
     }
 
-    /** Keeps transient fades separate from Media3's persistent player/replay-gain volume. */
+    /** Each decoder owns its fade envelope and ReplayGain before handing PCM to the sink. */
     internal fun setTransitionGainAudioProcessor(processor: CrossfadeGainAudioProcessor?) {
         transitionGainAudioProcessor = processor
     }

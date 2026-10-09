@@ -2767,7 +2767,7 @@
     <string name="settings_lyric_touch_feedback_summary">Show an expanding glow from the touch point when pressing or tapping a lyric</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">Sync desktop lyrics with cover content color</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">Use the same cover-derived color as Player – Cover content color</string>
-    <string name="settings_player_mini_lyrics">Player mini lyrics</string>
+    <string name="settings_player_mini_lyrics">Player mini lyrics style</string>
     <string name="settings_player_mini_lyrics_summary">Adjust the scale, size, spacing, and alignment of lyrics below the cover independently</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">Adjust mini lyric scale in 1% increments (50%–150%)</string>
     <string name="settings_player_mini_lyrics_line_spacing">Mini lyric line spacing</string>
@@ -2801,8 +2801,8 @@
     <string name="lyric_timing_editor_delete_word_title">Delete word timing?</string>
     <string name="lyric_timing_editor_delete_word_message">This removes the timing data for the current word. Continue?</string>
     <string name="playlist_sort_play_count">Play count</string>
-    <string name="settings_artist_image_region">Last.fm / Spotify region</string>
-    <string name="settings_artist_image_region_summary">Select the Last.fm language and Spotify market used for artist image searches</string>
+    <string name="settings_artist_image_region">Last.fm region</string>
+    <string name="settings_artist_image_region_summary">Language used for Last.fm artist images</string>
     <string name="settings_music_video_fullscreen_button">Silent MV fullscreen button</string>
     <string name="settings_music_video_fullscreen_button_summary">Show or hide the fullscreen entry in the top-right of the silent MV player</string>
     <string name="settings_music_video_long_press_info">Long-press MV info strip for video information</string>

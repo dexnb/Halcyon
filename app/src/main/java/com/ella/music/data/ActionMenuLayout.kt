@@ -66,6 +66,7 @@ object ActionMenuIds {
     const val REMOTE_QUALITY = "remote_quality"
     const val LANDSCAPE = "landscape"
     const val LYRICS_DISPLAY = "lyrics_display"
+    const val MINI_LYRICS_STYLE = "mini_lyrics_style"
     const val DYNAMIC_COVER = "dynamic_cover"
     const val VISUALIZER = "visualizer"
     const val ONLINE_LYRICS = "online_lyrics"
@@ -103,7 +104,7 @@ object ActionMenuIds {
     val playerShortcutCatalog = listOf(
         SPEED, EQUALIZER, TIMER, ADD_TO_PLAYLIST, PLAY_NEXT,
         ADD_TO_QUEUE, SHARE, AI, INFO, AUDIO_OUTPUT, CASTING,
-        AB_REPEAT, LANDSCAPE, LYRICS_DISPLAY, SPECTRUM, RATING,
+        AB_REPEAT, LANDSCAPE, LYRICS_DISPLAY, MINI_LYRICS_STYLE, SPECTRUM, RATING,
         DYNAMIC_COVER, VISUALIZER, EDIT_TAGS, LYRIC_TIMING,
         ONLINE_LYRICS, LYRIC_OFFSET, KEEP_SCREEN_ON, DOWNLOAD, VIEW_MV, DELETE, LYRIC_SHARE, POSTER_WALL
     )

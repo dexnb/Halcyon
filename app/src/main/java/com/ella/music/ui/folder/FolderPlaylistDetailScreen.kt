@@ -84,6 +84,9 @@ import com.ella.music.ui.components.ellaPageBackground
 import com.ella.music.ui.components.requestPinnedEllaShortcut
 import com.ella.music.ui.components.shareLocalSongs
 import com.ella.music.ui.navigation.Screen
+import com.ella.music.ui.playlist.shouldApplyPersistedPlaylistOrder
+import com.ella.music.ui.settings.findComponentActivity
+import androidx.lifecycle.lifecycleScope
 import com.ella.music.ui.home.HomeRatingFilterUiState
 import com.ella.music.ui.home.RatingFilterMenu
 import com.ella.music.ui.playlist.ImmediateOrLongPressDragGestureDetector
@@ -125,6 +128,7 @@ fun FolderPlaylistDetailScreen(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val scope = rememberCoroutineScope()
+    val saveScope = context.findComponentActivity()?.lifecycleScope ?: scope
     val songs by mainViewModel.songs.collectAsState()
     val playlists by mainViewModel.settingsManager.folderPlaylists.collectAsState(initial = emptyList())
     val openPlayerOnPlay by mainViewModel.settingsManager.openPlayerOnPlay.collectAsState(initial = false)
@@ -247,13 +251,23 @@ fun FolderPlaylistDetailScreen(
             playlist?.folderOrder.orEmpty()
         )
     }
-    var manualSongs by remember(customSongs) { mutableStateOf(customSongs) }
-    var manualFolderEntries by remember(customFolderEntries) { mutableStateOf(customFolderEntries) }
+    var manualSongs by remember(playlistId) { mutableStateOf(customSongs) }
+    var manualFolderEntries by remember(playlistId) { mutableStateOf(customFolderEntries) }
+    var songOrderDirty by remember(playlistId) { mutableStateOf(false) }
+    var folderOrderDirty by remember(playlistId) { mutableStateOf(false) }
     LaunchedEffect(customSongs) {
-        manualSongs = customSongs
+        if (shouldApplyPersistedPlaylistOrder(songOrderDirty,
+                customSongs.map { it.playlistIdentityKey() }, manualSongs.map { it.playlistIdentityKey() })) {
+            manualSongs = customSongs
+            songOrderDirty = false
+        }
     }
     LaunchedEffect(customFolderEntries) {
-        manualFolderEntries = customFolderEntries
+        if (shouldApplyPersistedPlaylistOrder(folderOrderDirty,
+                customFolderEntries.map { it.path }, manualFolderEntries.map { it.path })) {
+            manualFolderEntries = customFolderEntries
+            folderOrderDirty = false
+        }
     }
     val songReorderEnabled = selectionMode &&
         selectedTab == FolderPlaylistTab.Songs &&
@@ -264,8 +278,8 @@ fun FolderPlaylistDetailScreen(
         selectedTab == FolderPlaylistTab.Folders &&
         folderSortMode == FolderPlaylistFolderSortMode.Custom &&
         detailQuery.isBlank()
-    val displayedSongSource = if (songReorderEnabled) manualSongs else sortedPlaylistSongs
-    val displayedFolderSource = if (folderReorderEnabled) manualFolderEntries else sortedFolderEntries
+    val displayedSongSource = if (songReorderEnabled || (songOrderDirty && ratingFilter.isUnfiltered() && songSortMode == FolderPlaylistSongSortMode.Custom)) manualSongs else sortedPlaylistSongs
+    val displayedFolderSource = if (folderReorderEnabled || (folderOrderDirty && folderSortMode == FolderPlaylistFolderSortMode.Custom)) manualFolderEntries else sortedFolderEntries
     val displayedSongs = remember(displayedSongSource, detailQuery) {
         if (detailQuery.isBlank()) {
             displayedSongSource
@@ -398,12 +412,16 @@ fun FolderPlaylistDetailScreen(
             if (fromIndex !in manualSongs.indices || toIndex !in manualSongs.indices) {
                 return@rememberEllaReorderableLazyListState
             }
-            manualSongs = manualSongs.moveSelectedItemsAsBlock(
+            val moved = manualSongs.moveSelectedItemsAsBlock(
                 from = fromIndex,
                 to = toIndex,
                 selectedKeys = selectedSongKeys,
                 keyOf = { it.playlistIdentityKey() }
             )
+            if (moved != manualSongs) {
+                manualSongs = moved
+                songOrderDirty = true
+            }
         }
     )
     val folderReorderableState = rememberEllaReorderableLazyListState(
@@ -419,30 +437,36 @@ fun FolderPlaylistDetailScreen(
             if (fromIndex !in manualFolderEntries.indices || toIndex !in manualFolderEntries.indices) {
                 return@rememberEllaReorderableLazyListState
             }
-            manualFolderEntries = manualFolderEntries.moveSelectedItemsAsBlock(
+            val moved = manualFolderEntries.moveSelectedItemsAsBlock(
                 from = fromIndex,
                 to = toIndex,
                 selectedKeys = selectedFolderPaths,
                 keyOf = FolderPlaylistFolderEntry::path
             )
+            if (moved != manualFolderEntries) {
+                manualFolderEntries = moved
+                folderOrderDirty = true
+            }
         }
     )
     fun persistSongOrder() {
         playlist?.let { target ->
-            scope.launch {
+            val keys = manualSongs.map { it.playlistIdentityKey() }
+            saveScope.launch {
                 mainViewModel.settingsManager.setFolderPlaylistSongOrder(
                     target.id,
-                    manualSongs.map { it.playlistIdentityKey() }
+                    keys
                 )
             }
         }
     }
     fun persistFolderOrder() {
         playlist?.let { target ->
-            scope.launch {
+            val paths = manualFolderEntries.map { it.path }
+            saveScope.launch {
                 mainViewModel.settingsManager.setFolderPlaylistFolderOrder(
                     target.id,
-                    manualFolderEntries.map { it.path }
+                    paths
                 )
             }
         }
@@ -464,6 +488,8 @@ fun FolderPlaylistDetailScreen(
     }
 
     fun exitSelection() {
+        if (songOrderDirty) persistSongOrder()
+        if (folderOrderDirty) persistFolderOrder()
         selectionMode = false
         selectedSongKeys = emptySet()
         selectedFolderPaths = emptySet()

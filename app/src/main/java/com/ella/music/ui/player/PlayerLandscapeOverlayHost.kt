@@ -104,35 +104,16 @@ internal fun PlayerLandscapeOverlayHost(
     // Resolve off the main thread (file scan + media probe) so opening the landscape player
     // doesn't jank, even for songs without a dynamic cover. Clear the previous source first so
     // switching songs cannot keep the old video attached while the next source is resolving.
-    val landscapeDynamicCoverSource by produceState<DynamicCoverSource?>(
-        initialValue = null,
-        dynamicCoverEnabled,
-        musicVideoEnabled,
-        useMusicVideoBackground,
-        dynamicCoverCustomFolders,
-        musicVideoCustomFolders,
-        dynamicCoverSongKey,
-        dynamicCoverFailedPath
+    val coverSource = rememberPlayerDynamicCoverSource(
+        if (useMusicVideoBackground) null else song, dynamicCoverEnabled, dynamicCoverCustomFolders, dynamicCoverFailedPath
+    )
+    val musicVideoSource by produceState<DynamicCoverSource?>(null,
+        useMusicVideoBackground, dynamicCoverCustomFolders, musicVideoCustomFolders, dynamicCoverSongKey, dynamicCoverFailedPath
     ) {
-        val current = song
-        if (current == null) {
-            value = null
-        } else {
-            value = withContext(Dispatchers.IO) {
-                if (useMusicVideoBackground) {
-                    current.musicVideoSource(
-                        context,
-                        customRootPaths = dynamicCoverCustomFolders,
-                        musicVideoCustomFolders = musicVideoCustomFolders
-                    )?.takeUnless { it.failureKey == dynamicCoverFailedPath }
-                } else {
-                    current.dynamicCoverSource(
-                        context,
-                        includeExternalFiles = dynamicCoverEnabled,
-                        customRootPaths = dynamicCoverCustomFolders
-                    )?.takeUnless { it.failureKey == dynamicCoverFailedPath }
-                }
-            }
+        value = null
+        value = if (!useMusicVideoBackground || song == null) null else withContext(Dispatchers.IO) {
+            song.musicVideoSource(context, customRootPaths = dynamicCoverCustomFolders,
+                musicVideoCustomFolders = musicVideoCustomFolders)?.takeUnless { it.failureKey == dynamicCoverFailedPath }
         }
     }
     if (layoutStyle == SettingsManager.PLAYER_LANDSCAPE_STYLE_CLASSIC_SPLIT) {

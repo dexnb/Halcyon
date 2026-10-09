@@ -140,7 +140,6 @@ class ExoPlayerManager(private val context: Context) {
     private var isRestoringSavedQueue = false
     private var playNextAnchorKey: String? = null
     private var playNextForwardCount = 0
-    private var replayGainVolume = 1f
     private var resumePlaybackPositionEnabled = false
     private val perSongResumePositions = LinkedHashMap<String, Long>()
     private var externalSnapshotGuard: ExternalSnapshotGuard? = null
@@ -691,7 +690,6 @@ class ExoPlayerManager(private val context: Context) {
         playerListener = listener
         controller.addListener(listener)
         // A recreated MediaController does not retain app-owned ReplayGain state.
-        controller.volume = replayGainVolume
 
         val pending = pendingPlaylist
         if (pending != null) {
@@ -1720,11 +1718,6 @@ class ExoPlayerManager(private val context: Context) {
         _playbackSpeed.value = safeSpeed
         _playbackPitch.value = safePitch
         savePlaybackState()
-    }
-
-    fun setReplayGainVolume(volume: Float) {
-        replayGainVolume = volume.coerceIn(0f, 1f)
-        mediaController?.volume = replayGainVolume
     }
 
     fun updatePosition() {

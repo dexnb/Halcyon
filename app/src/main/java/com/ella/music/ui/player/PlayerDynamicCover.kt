@@ -124,6 +124,33 @@ internal fun Song.dynamicCoverResolutionKey(): String =
     ).joinToString("|")
 
 @Composable
+internal fun rememberPlayerDynamicCoverSource(
+    song: Song?, localEnabled: Boolean, customFolders: List<String>, failedPath: String?
+): DynamicCoverSource? {
+    val context = LocalContext.current
+    val settings = remember(context) { SettingsManager.getInstance(context) }
+    val spotifyEnabled by settings.spotifyCanvasEnabled.collectAsState(initial = false)
+    val credentials = remember(context) { com.ella.music.data.spotify.SpotifyCanvasCredentialsStore.getInstance(context) }
+    val cookie by credentials.cookie.collectAsState()
+    val songKey = song?.dynamicCoverResolutionKey()
+    val source by produceState<DynamicCoverSource?>(null, songKey, localEnabled, customFolders, failedPath, spotifyEnabled, cookie) {
+        value = null
+        if (song == null) return@produceState
+        val local = withContext(Dispatchers.IO) {
+            song.dynamicCoverSource(context, localEnabled, customFolders)?.takeUnless { it.failureKey == failedPath }
+        }
+        value = local
+        if (local != null || !spotifyEnabled || cookie.isBlank()) return@produceState
+        val clip = com.ella.music.data.spotify.SpotifyCanvasRepository.getInstance(context).resolve(song, cookie)
+        value = clip?.let {
+            DynamicCoverSource(Uri.fromFile(it.file), "spotify-canvas:${it.trackUri}", aspectRatio = 9f / 16f,
+                playbackOwnerKey = song.dynamicCoverResolutionKey()).takeUnless { it.failureKey == failedPath }
+        }
+    }
+    return source?.takeIf { it.playbackOwnerKey == songKey }
+}
+
+@Composable
 internal fun DynamicCoverVideo(
     source: DynamicCoverSource,
     isPlaying: Boolean,

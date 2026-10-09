@@ -472,6 +472,7 @@ class PlaybackService : MediaLibraryService() {
             val remotePlayer = RemoteCastPlayer.Builder(this)
                 .setMediaItemConverter(HalcyonCastMediaItemConverter(mediaServer))
                 .build()
+            bindRemotePlayerReplayGain(remotePlayer, settingsManager, musicRepository, serviceScope)
             CastPlayer.Builder(this)
                 .setLocalPlayer(localPlayer)
                 .setRemotePlayer(remotePlayer)
@@ -576,7 +577,10 @@ class PlaybackService : MediaLibraryService() {
                 crossfadePresentationSettlementJob = null
                 sessionPresentationPlayer?.clearCrossfadePresentation()
             },
-            scope = serviceScope
+            scope = serviceScope,
+            onPlayerCreated = { decoder, gain ->
+                bindPlayerReplayGain(decoder, gain, settingsManager, musicRepository, serviceScope)
+            }
         )
         var currentCrossfadeDurationMs = 0
         serviceScope.launch {

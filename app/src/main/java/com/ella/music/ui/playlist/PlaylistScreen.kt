@@ -178,7 +178,11 @@ fun PlaylistScreen(
         playlistSortMode == PlaylistSortMode.Custom &&
         searchQuery.isBlank() &&
         customPlaylists.none { it.isRemote }
-    val customPlaylistsSource = if (reorderEnabled) manualCustomPlaylists else customPlaylists
+    val customPlaylistsSource = when {
+        reorderEnabled || (manualCustomOrderDirty && playlistSortMode == PlaylistSortMode.Custom) -> manualCustomPlaylists
+        manualCustomOrderDirty && playlistSortMode == PlaylistSortMode.CustomDesc -> manualCustomPlaylists.asReversed()
+        else -> customPlaylists
+    }
     val displayedCustomPlaylists = remember(customPlaylistsSource, searchQuery) {
         val query = searchQuery.trim()
         if (query.isBlank()) customPlaylistsSource else customPlaylistsSource.filter { it.matchesPlaylistSearch(query) }
@@ -205,16 +209,25 @@ fun PlaylistScreen(
             }
         }
     }
-    val randomPlaylistSongs = remember(displayedCustomPlaylists, librarySongs) {
-        displayedCustomPlaylists
-            .flatMap { mainViewModel.playlistSongs(it) }
+    // Resolving each playlist rebuilt the full library index on every drag move. Resolve once
+    // for the stored data, off the UI thread; changing only the visible order reuses that result.
+    val playlistSongsById by com.ella.music.ui.components.rememberBackgroundBrowseCalculation(
+        emptyMap<String, List<com.ella.music.data.model.Song>>(), playlists, librarySongs
+    ) { mainViewModel.playlistSongsById(playlists) }
+    val randomPlaylistSongs = remember(storedCustomPlaylists, searchQuery, playlistSongsById) {
+        storedCustomPlaylists
+            .filter { searchQuery.isBlank() || it.matchesPlaylistSearch(searchQuery.trim()) }
+            .flatMap { playlistSongsById[it.id].orEmpty() }
             .distinctBy { it.id }
     }
-    val playlistCoverModels = remember(playlists, librarySongs) {
-        playlists.associate { playlist ->
-            playlist.id to mainViewModel.playlistSongs(playlist).firstOrNull().playlistCoverModel()
+    val playlistCoverModels = remember(playlistSongsById) {
+        playlistSongsById.mapValues { (_, songs) ->
+            songs.firstOrNull().playlistCoverModel()
         }
     }
+    val playlistIndexLettersById by com.ella.music.ui.components.rememberBackgroundBrowseCalculation(
+        emptyMap<String, String>(), playlists
+    ) { playlists.associate { it.id to it.name.musicSortKey().toFastIndexSection() } }
     val showFavorites = remember(favorites, searchQuery, specialPlaylistEntriesVisible) {
         specialPlaylistEntriesVisible &&
             favorites != null &&
@@ -418,6 +431,11 @@ fun PlaylistScreen(
     fun persistManualPlaylistOrder() {
         mainViewModel.reorderPlaylists(manualCustomPlaylists.map(UserPlaylist::id))
     }
+    fun applyManualPlaylistOrder(ids: List<String>) {
+        manualCustomPlaylists = storedCustomPlaylists.applyPlaylistCustomOrder(ids)
+        manualCustomOrderDirty = true
+        mainViewModel.reorderPlaylists(ids)
+    }
     val playlistListHeaderCount = (if (showFavorites) 1 else 0) + (if (showFiveStar) 1 else 0) + 1
     val reorderableLazyListState = rememberEllaReorderableLazyListState(
         lazyListState = listState,
@@ -524,7 +542,7 @@ fun PlaylistScreen(
                     val orderedIds = keys + storedCustomPlaylists
                         .map(UserPlaylist::id)
                         .filterNot { it in keys }
-                    mainViewModel.reorderPlaylists(orderedIds)
+                    applyManualPlaylistOrder(orderedIds)
                     finishSelectionMode()
                 }
             },
@@ -608,8 +626,8 @@ fun PlaylistScreen(
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
-        val playlistFastIndexLetters = remember(reorderablePlaylists) {
-            reorderablePlaylists.map { it.name.musicSortKey().toFastIndexSection() }
+        val playlistFastIndexLetters = remember(reorderablePlaylists, playlistIndexLettersById) {
+            reorderablePlaylists.map { playlistIndexLettersById[it.id] ?: "#" }
         }
         val playlistFastIndexTargets = remember(playlistFastIndexLetters, playlistListHeaderCount) {
             buildMap {
@@ -864,7 +882,7 @@ fun PlaylistScreen(
             actions = listOf(
                 com.ella.music.ui.components.LibraryEntityActions.pinToTop {
                     val orderedIds = (listOf(playlist.id) + storedCustomPlaylists.map { it.id }).distinct()
-                    mainViewModel.reorderPlaylists(orderedIds)
+                    applyManualPlaylistOrder(orderedIds)
                     playlistMenuTarget = null
                 },
                 com.ella.music.ui.components.LibraryEntityActions.export {

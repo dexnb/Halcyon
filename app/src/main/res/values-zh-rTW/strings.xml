@@ -2687,7 +2687,7 @@
     <string name="settings_lyric_touch_feedback_summary">按下或點擊歌詞時顯示從觸點擴散的泛光回饋</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">桌面歌詞同步封面內容色</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">使用與「播放頁－封面內容色」相同的封面取色邏輯</string>
-    <string name="settings_player_mini_lyrics">播放頁迷你歌詞</string>
+    <string name="settings_player_mini_lyrics">播放頁迷你歌詞樣式</string>
     <string name="settings_player_mini_lyrics_summary">獨立調整封面下方迷你歌詞的縮放、字號、間距與對齊</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">以 1% 精度調整迷你歌詞整體縮放（50%–150%）</string>
     <string name="settings_player_mini_lyrics_line_spacing">迷你歌詞行間距</string>
@@ -2722,8 +2722,8 @@
     <string name="lyric_timing_editor_delete_word_title">要刪除整詞時間嗎？</string>
     <string name="lyric_timing_editor_delete_word_message">這會刪除目前字詞的時間資訊。要繼續嗎？</string>
     <string name="playlist_sort_play_count">播放次數</string>
-    <string name="settings_artist_image_region">Last.fm / Spotify 地區</string>
-    <string name="settings_artist_image_region_summary">選擇用於搜尋藝人圖片的 Last.fm 語言與 Spotify 區域</string>
+    <string name="settings_artist_image_region">Last.fm 地區</string>
+    <string name="settings_artist_image_region_summary">僅用於 Last.fm 藝術家圖片的語言地區</string>
     <string name="settings_music_video_fullscreen_button">靜音 MV 全螢幕按鈕</string>
     <string name="settings_music_video_fullscreen_button_summary">控制播放頁靜音 MV 右上角的全螢幕入口</string>
     <string name="settings_music_video_long_press_info">長按 MV 資訊列顯示影片資訊</string>

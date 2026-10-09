@@ -5,6 +5,12 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ArtistCoverRepositoryTest {
+    @Test fun parenthesizedNumberedCoversPreserveCaseAndOrdering() {
+        assertEquals("LiSA", artistCoverMatch("LiSA (1).jpg", ignoreCase = false)?.key)
+        assertEquals(1, artistCoverMatch("LiSA (1).jpg")?.order)
+        assertEquals(2, artistCoverMatch("LiSA (2).png")?.order)
+        assertEquals("lisa", artistCoverMatch("LISA_001.jpg")?.key)
+    }
     @Test
     fun imageExtensionsMatchArtistNamesCaseInsensitively() {
         assertEquals(

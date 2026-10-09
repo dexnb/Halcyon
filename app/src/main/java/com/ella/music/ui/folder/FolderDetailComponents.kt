@@ -40,6 +40,7 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.basic.ArrowRight
+import top.yukonga.miuix.kmp.icon.extended.Pin
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -93,7 +94,8 @@ internal fun CreatePlaylistAndAddSelectedSheet(
 internal fun ChildFolderRow(
     folder: FolderTreeEntry,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    isPinned: Boolean = false
 ) {
     val display = rememberFolderDisplaySettings()
     val scale = display.sizePercent / 100f
@@ -132,6 +134,11 @@ internal fun ChildFolderRow(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
+        }
+        if (isPinned) {
+            Icon(imageVector = MiuixIcons.Regular.Pin, contentDescription = null,
+                tint = MiuixTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
         }
         Icon(
             imageVector = MiuixIcons.Basic.ArrowRight,

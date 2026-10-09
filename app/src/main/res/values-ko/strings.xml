@@ -2687,7 +2687,7 @@
     <string name="settings_lyric_touch_feedback_summary">가사를 누르거나 탭할 때 터치 지점에서 퍼지는 빛 효과를 표시합니다</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">데스크톱 가사를 커버 콘텐츠 색상과 동기화</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">플레이어와 동일한 커버 기반 색상을 사용합니다</string>
-    <string name="settings_player_mini_lyrics">플레이어 미니 가사</string>
+    <string name="settings_player_mini_lyrics">재생 화면 미니 가사 스타일</string>
     <string name="settings_player_mini_lyrics_summary">표지 아래 미니 가사의 배율, 크기, 간격 및 정렬을 별도로 조정합니다</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">미니 가사 배율을 1% 단위로 조정합니다(50%–150%)</string>
     <string name="settings_player_mini_lyrics_line_spacing">미니 가사 줄 간격</string>
@@ -2722,8 +2722,8 @@
     <string name="lyric_timing_editor_delete_word_title">단어 타이밍을 삭제할까요?</string>
     <string name="lyric_timing_editor_delete_word_message">현재 단어의 타이밍 정보가 삭제됩니다. 계속할까요?</string>
     <string name="playlist_sort_play_count">재생 횟수</string>
-    <string name="settings_artist_image_region">Last.fm / Spotify 지역</string>
-    <string name="settings_artist_image_region_summary">아티스트 이미지 검색에 사용할 Last.fm 언어와 Spotify 지역을 선택합니다</string>
+    <string name="settings_artist_image_region">Last.fm</string>
+    <string name="settings_artist_image_region_summary">Language used for Last.fm artist images</string>
     <string name="settings_music_video_fullscreen_button">무음 MV 전체 화면 버튼</string>
     <string name="settings_music_video_fullscreen_button_summary">무음 MV 플레이어 오른쪽 위 전체 화면 진입 버튼 표시</string>
     <string name="settings_music_video_long_press_info">MV 정보 표시줄 길게 눌러 동영상 정보 보기</string>

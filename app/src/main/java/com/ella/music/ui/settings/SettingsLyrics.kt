@@ -635,7 +635,7 @@ private fun SettingsPlayerLyricSizingControls(initialBlurPercent: Int? = null) {
 }
 
 @Composable
-private fun SettingsPlayerMiniLyricControls() {
+internal fun SettingsPlayerMiniLyricControls() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val settingsManager = remember { SettingsManager.getInstance(context) }

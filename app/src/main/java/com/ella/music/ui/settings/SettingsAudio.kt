@@ -91,6 +91,7 @@ fun AudioSettingsScreen(
     )
     var showCrossfadeDurationDialog by remember { mutableStateOf(false) }
     val replayGainMode by settingsManager.replayGainMode.collectAsState(initial = SettingsManager.REPLAY_GAIN_OFF)
+    val replayGainPreamp by settingsManager.replayGainPreampDb.collectAsState(initial = 0f)
     val resumePlaybackPosition by settingsManager.resumePlaybackPosition.collectAsState(initial = false)
     val audioFocusDisabled by settingsManager.audioFocusDisabled.collectAsState(initial = false)
     val shuffleMode by settingsManager.shuffleMode.collectAsState(initial = SettingsManager.SHUFFLE_MODE_PSEUDO)
@@ -594,6 +595,20 @@ fun AudioSettingsScreen(
                             scope.launch { settingsManager.setReplayGainMode(index) }
                         }
                     )
+                    } // search-anchor:end
+
+                    // search-anchor:start
+                    SettingsSearchAnchor(R.string.settings_replay_gain_preamp) {
+                        SettingsFloatSliderPreference(
+                            title = stringResource(R.string.settings_replay_gain_preamp),
+                            summary = stringResource(R.string.settings_replay_gain_preamp_summary),
+                            value = replayGainPreamp,
+                            valueRange = -12f..12f,
+                            manualValueRange = -30f..30f,
+                            valueText = String.format(java.util.Locale.getDefault(), "%+.2f dB", replayGainPreamp),
+                            decimalPlaces = 2,
+                            onValueChange = { scope.launch { settingsManager.setReplayGainPreampDb(it) } }
+                        )
                     } // search-anchor:end
 
                     // search-anchor:start

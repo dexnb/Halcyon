@@ -2687,7 +2687,7 @@
     <string name="settings_lyric_touch_feedback_summary">Beim Drücken oder Tippen einen sich ausbreitenden Leuchteffekt anzeigen</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">Desktop-Liedtext mit Cover-Inhaltsfarbe synchronisieren</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">Verwendet dieselbe Coverfarbe wie die Player-Einstellung</string>
-    <string name="settings_player_mini_lyrics">Mini-Liedtext im Player</string>
+    <string name="settings_player_mini_lyrics">Stil der Mini-Liedtexte im Player</string>
     <string name="settings_player_mini_lyrics_summary">Skalierung, Größe, Abstand und Ausrichtung unter dem Cover separat anpassen</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">Skalierung in 1-%-Schritten anpassen (50 %–150 %)</string>
     <string name="settings_player_mini_lyrics_line_spacing">Zeilenabstand der Mini-Liedtexte</string>
@@ -2722,8 +2722,8 @@
     <string name="lyric_timing_editor_delete_word_title">Wort-Timing löschen?</string>
     <string name="lyric_timing_editor_delete_word_message">Die Zeitinformationen des aktuellen Wortes werden gelöscht. Fortfahren?</string>
     <string name="playlist_sort_play_count">Anzahl der Wiedergaben</string>
-    <string name="settings_artist_image_region">Last.fm-/Spotify-Region</string>
-    <string name="settings_artist_image_region_summary">Legt die Last.fm-Sprache und den Spotify-Markt für die Suche nach Interpretenbildern fest</string>
+    <string name="settings_artist_image_region">Last.fm</string>
+    <string name="settings_artist_image_region_summary">Language used for Last.fm artist images</string>
     <string name="settings_music_video_fullscreen_button">Vollbildschaltfläche für stummes MV</string>
     <string name="settings_music_video_fullscreen_button_summary">Den Vollbildzugang oben rechts im stummen MV-Player ein- oder ausblenden</string>
     <string name="settings_music_video_long_press_info">MV-Infoleiste für Videoinformationen lange drücken</string>

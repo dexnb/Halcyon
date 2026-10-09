@@ -234,6 +234,7 @@ internal fun PlayerActionMenu(
                                     ActionMenuIds.LANDSCAPE -> onLandscape()
                                     ActionMenuIds.POSTER_WALL -> openPosterWall()
                                     ActionMenuIds.LYRICS_DISPLAY -> if (showLyricsDisplayEntry) setPage(PlayerActionSheetPage.LyricDisplay)
+                                    ActionMenuIds.MINI_LYRICS_STYLE -> setPage(PlayerActionSheetPage.MiniLyricStyle)
                                     ActionMenuIds.SPECTRUM -> onSpectrum()
                                     ActionMenuIds.RATING -> onSetRating()
                                     ActionMenuIds.DYNAMIC_COVER -> onMatchDynamicCover()
@@ -363,6 +364,11 @@ internal fun PlayerActionMenu(
                                     icon = icon
                                 )
                             }
+                            ActionMenuIds.MINI_LYRICS_STYLE -> PlayerActionMenuItem(
+                                icon = actionMenuIcon(ActionMenuIds.MINI_LYRICS_STYLE),
+                                text = stringResource(R.string.player_mini_lyrics_style),
+                                onClick = { setPage(PlayerActionSheetPage.MiniLyricStyle) }
+                            )
                             ActionMenuIds.SPECTRUM -> PlayerActionMenuItem(
                                 stringResource(R.string.song_more_view_spectrum),
                                 onSpectrum,
@@ -537,6 +543,9 @@ internal fun PlayerActionMenu(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+            PlayerActionSheetPage.MiniLyricStyle -> {
+                com.ella.music.ui.settings.SettingsPlayerMiniLyricControls()
+            }
             PlayerActionSheetPage.LyricStyle -> {
                 LyricStyleSettingsContent(
                     layoutProfile = lyricLayoutProfile,
@@ -577,5 +586,6 @@ internal enum class PlayerActionSheetPage {
     Visualizer,
     AudioOutput,
     LyricDisplay,
-    LyricStyle
+    LyricStyle,
+    MiniLyricStyle
 }

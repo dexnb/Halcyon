@@ -44,6 +44,7 @@ internal object NeteaseLinks {
 
     private val webPrefixes = mapOf(
         NeteaseLinkKind.Song to "https://y.music.163.com/m/song?id=",
+        NeteaseLinkKind.SongWiki to "https://music.163.com/#/song?id=",
         NeteaseLinkKind.Comment to "https://music.163.com/#/song?id=",
         NeteaseLinkKind.Artist to "https://y.music.163.com/m/artist?id=",
         NeteaseLinkKind.ArtistWiki to "https://music.163.com/st/artistwiki?artistId=",
@@ -55,6 +56,7 @@ internal object NeteaseLinks {
 
     private fun appPrefixes(scheme: String) = mapOf(
         NeteaseLinkKind.Song to "$scheme://song/",
+        NeteaseLinkKind.SongWiki to "$scheme://rnpage?component=rn-music-correlation-new&songId=",
         NeteaseLinkKind.Comment to "$scheme://comment?threadId=R_SO_4_",
         NeteaseLinkKind.Artist to "$scheme://artist/",
         NeteaseLinkKind.ArtistWiki to "$scheme://rnpage?component=music-reactnative-artistwiki&artistId=",
@@ -124,6 +126,43 @@ internal object NeteaseLinks {
             }
         }.apply()
         mutableSettings.value = next
+    }
+
+    internal fun backupSchema(): Map<String, com.ella.music.data.SettingsBackupValueType> = buildMap {
+        put("netease_link_target", com.ella.music.data.SettingsBackupValueType.STRING)
+        put("netease_link_mv_external", com.ella.music.data.SettingsBackupValueType.BOOLEAN)
+        put("netease_link_comment_sort", com.ella.music.data.SettingsBackupValueType.INT)
+        NeteaseLinkKind.entries.forEach { put("netease_link_custom_${it.key}", com.ella.music.data.SettingsBackupValueType.STRING) }
+    }
+
+    internal fun exportBackup(context: Context): org.json.JSONObject {
+        val value = read(context)
+        return org.json.JSONObject().put("netease_link_target", value.target.id)
+            .put("netease_link_mv_external", value.openMusicVideoExternally)
+            .put("netease_link_comment_sort", value.defaultCommentSort.apiValue).apply {
+                NeteaseLinkKind.entries.forEach { put("netease_link_custom_${it.key}", value.custom[it].orEmpty()) }
+            }
+    }
+
+    internal fun restoreBackup(context: Context, payload: org.json.JSONObject) {
+        val valid = backupSchema().filter { (key, type) -> payload.has(key) && type.accepts(payload.opt(key)) }.keys
+        if (valid.isEmpty()) return
+        update(context) { old ->
+            old.copy(
+                target = if ("netease_link_target" in valid) NeteaseLinkTarget.fromId(payload.optString("netease_link_target")) else old.target,
+                openMusicVideoExternally = if ("netease_link_mv_external" in valid) payload.optBoolean("netease_link_mv_external") else old.openMusicVideoExternally,
+                defaultCommentSort = if ("netease_link_comment_sort" in valid) NeteaseCommentSort.fromApiValue(payload.optInt("netease_link_comment_sort")) ?: old.defaultCommentSort else old.defaultCommentSort,
+                custom = old.custom.toMutableMap().apply {
+                    NeteaseLinkKind.entries.forEach { kind ->
+                        val key = "netease_link_custom_${kind.key}"
+                        if (key in valid) {
+                            val value = payload.optString(key).trim()
+                            if (value.isBlank()) remove(kind) else put(kind, value)
+                        }
+                    }
+                }
+            )
+        }
     }
 
     /** Opens [kind]/[id] with the user's link settings, falling back to the web page if no app handles it. */

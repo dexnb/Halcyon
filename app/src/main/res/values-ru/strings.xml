@@ -2674,7 +2674,7 @@
     <string name="settings_lyric_touch_feedback_summary">Показывать расходящееся свечение от точки касания строки текста</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">Синхронизировать текст с цветом обложки</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">Использовать тот же цвет обложки, что и в проигрывателе</string>
-    <string name="settings_player_mini_lyrics">Мини-текст в проигрывателе</string>
+    <string name="settings_player_mini_lyrics">Стиль мини-текста в плеере</string>
     <string name="settings_player_mini_lyrics_summary">Отдельно настройте масштаб, размер, интервал и выравнивание текста под обложкой</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">Масштаб с шагом 1% (50%–150%)</string>
     <string name="settings_player_mini_lyrics_line_spacing">Интервал мини-текста</string>
@@ -2709,8 +2709,8 @@
     <string name="lyric_timing_editor_delete_word_title">Удалить тайминг слова?</string>
     <string name="lyric_timing_editor_delete_word_message">Будут удалены данные тайминга текущего слова. Продолжить?</string>
     <string name="playlist_sort_play_count">Число воспроизведений</string>
-    <string name="settings_artist_image_region">Регион Last.fm / Spotify</string>
-    <string name="settings_artist_image_region_summary">Выберите язык Last.fm и регион Spotify для поиска изображений исполнителей</string>
+    <string name="settings_artist_image_region">Last.fm</string>
+    <string name="settings_artist_image_region_summary">Language used for Last.fm artist images</string>
     <string name="settings_music_video_fullscreen_button">Кнопка полного экрана для беззвучного MV</string>
     <string name="settings_music_video_fullscreen_button_summary">Показывать вход в полноэкранный режим в правом верхнем углу беззвучного MV</string>
     <string name="settings_music_video_long_press_info">Долгое нажатие на строку информации MV</string>

@@ -438,12 +438,14 @@ internal fun ArtistBiographyPanel(
                 color = MiuixTheme.colorScheme.onSurfaceVariantSummary
             )
             else -> {
-                Text(
-                    text = wiki?.text.orEmpty(),
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp,
-                    color = MiuixTheme.colorScheme.onSurface
-                )
+                androidx.compose.foundation.text.selection.SelectionContainer {
+                    Text(
+                        text = wiki?.text.orEmpty(),
+                        fontSize = 15.sp,
+                        lineHeight = 22.sp,
+                        color = MiuixTheme.colorScheme.onSurface
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = stringResource(

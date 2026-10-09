@@ -109,6 +109,8 @@ fun FolderScreen(
     val scanExcludeFolders by mainViewModel.settingsManager.scanExcludeFolders.collectAsState(initial = "")
     val blockedFolders = remember(scanExcludeFolders) { scanExcludeFolders.toFolderSettingList() }
     val pinnedFolderPaths by mainViewModel.settingsManager.pinnedKeysFlow("folder").collectAsState(initial = emptyList())
+    val listState = rememberLazyListState()
+    var unpinToTopPath by remember { mutableStateOf<String?>(null) }
     val folderSortIndex by mainViewModel.settingsManager.folderListSortIndex.collectAsState(initial = LibrarySortUiState.folderListSortIndex)
     val folderSortMode = FolderListSortMode.entries.getOrElse(folderSortIndex) { FolderListSortMode.Name }
     val folderDetailSongSortIndex by mainViewModel.settingsManager.folderDetailSongSortIndex.collectAsState(
@@ -313,6 +315,7 @@ fun FolderScreen(
                 onTogglePin = {
                     val isPinned = pinnedFolderPaths.any { it.equals(folder.path, ignoreCase = true) }
                     folderMenuTarget = null
+                    if (isPinned) unpinToTopPath = folder.path
                     scope.launch { mainViewModel.settingsManager.setPinned("folder", folder.path, !isPinned) }
                 },
                 onShare = {

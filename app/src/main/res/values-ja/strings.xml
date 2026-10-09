@@ -2687,7 +2687,7 @@
     <string name="settings_lyric_touch_feedback_summary">歌詞を押す／タップすると、触点から広がる発光を表示します</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">デスクトップ歌詞をカバー内容色に同期</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">プレーヤーと同じカバー由来の色を使用します</string>
-    <string name="settings_player_mini_lyrics">プレーヤーのミニ歌詞</string>
+    <string name="settings_player_mini_lyrics">再生画面のミニ歌詞スタイル</string>
     <string name="settings_player_mini_lyrics_summary">カバー下のミニ歌詞の拡大率、サイズ、間隔、配置を個別に調整します</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">ミニ歌詞を 1% 単位で調整します（50%～150%）</string>
     <string name="settings_player_mini_lyrics_line_spacing">ミニ歌詞の行間</string>
@@ -2722,8 +2722,8 @@
     <string name="lyric_timing_editor_delete_word_title">単語のタイミングを削除しますか？</string>
     <string name="lyric_timing_editor_delete_word_message">現在の単語のタイミング情報を削除します。続行しますか？</string>
     <string name="playlist_sort_play_count">再生回数</string>
-    <string name="settings_artist_image_region">Last.fm / Spotify 地域</string>
-    <string name="settings_artist_image_region_summary">アーティスト画像の検索に使う Last.fm の言語と Spotify の地域を選択します</string>
+    <string name="settings_artist_image_region">Last.fm</string>
+    <string name="settings_artist_image_region_summary">Language used for Last.fm artist images</string>
     <string name="settings_music_video_fullscreen_button">無音MVの全画面ボタン</string>
     <string name="settings_music_video_fullscreen_button_summary">無音MVプレーヤー右上の全画面入口を表示する</string>
     <string name="settings_music_video_long_press_info">MV情報バーの長押しで動画情報を表示</string>

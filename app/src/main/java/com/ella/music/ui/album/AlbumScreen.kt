@@ -181,15 +181,25 @@ fun AlbumScreen(
             AlbumSortMode.YearAsc -> filteredAlbums.sortedWith(compareBy<Album> { it.releaseDateSortKey <= 0 }.thenBy { it.releaseDateSortKey }.thenBy { it.name.musicSortKey() })
             AlbumSortMode.YearDesc -> filteredAlbums.sortedWith(compareBy<Album> { it.releaseDateSortKey <= 0 }.thenByDescending { it.releaseDateSortKey }.thenByDescending { it.name.musicSortKey() })
         }
-        if (pinnedAlbumKeys.isEmpty()) {
-            sorted
-        } else {
-            val pinnedRank = pinnedAlbumKeys.withIndex().associate { it.value to it.index }
-            val pinnedSet = pinnedRank.keys
-            val pinned = sorted
-                .filter { it.id.toString() in pinnedSet }
-                .sortedBy { pinnedRank[it.id.toString()] ?: Int.MAX_VALUE }
-            pinned + sorted.filterNot { it.id.toString() in pinnedSet }
+        sorted
+    }
+
+    val sortedAlbums = remember(sortedAlbumResult.value, pinnedAlbumKeys) {
+        val sorted = sortedAlbumResult.value
+        val pinnedRank = pinnedAlbumKeys.withIndex().associate { it.value to it.index }
+        val pinned = sorted.filter { it.id.toString() in pinnedRank }
+            .sortedBy { pinnedRank[it.id.toString()] }
+        pinned + sorted.filterNot { it.id.toString() in pinnedRank }
+    }
+    val albumOrderReady = storedPinnedAlbumKeys != null &&
+        (!durationSort || albumDurationResult.isReadyFor(songs)) &&
+        sortedAlbumResult.isReadyFor(filteredAlbums, sortMode, sortDurations)
+    var unpinToTopKey by remember { mutableStateOf<String?>(null) }
+    if (albumOrderReady && unpinToTopKey != null && unpinToTopKey !in pinnedAlbumKeys) {
+        androidx.compose.runtime.SideEffect {
+            // Disable lazy key anchoring before the reordered grid is measured.
+            gridState.requestScrollToItem(0)
+            unpinToTopKey = null
         }
     }
 
@@ -658,6 +668,7 @@ fun AlbumScreen(
             onDismissRequest = { albumMenuTarget = null },
             actions = listOf(
                 com.ella.music.ui.components.LibraryEntityActions.pin(isPinned = isPinned) {
+                    if (isPinned) unpinToTopKey = albumKey
                     scope.launch { mainViewModel.settingsManager.setPinned("album", albumKey, !isPinned) }
                     albumMenuTarget = null
                 },

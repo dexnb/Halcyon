@@ -789,6 +789,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return playlistCoordinator.playlistSongs(playlist)
     }
 
+    fun playlistSongsById(playlists: List<UserPlaylist>): Map<String, List<Song>> =
+        playlistCoordinator.playlistSongsById(playlists)
+
     fun createPlaylist(name: String, onCreated: (UserPlaylist?) -> Unit = {}) {
         playlistCoordinator.createPlaylist(name, onCreated)
     }

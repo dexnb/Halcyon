@@ -125,6 +125,7 @@ internal class CrossfadePlaybackCoordinator(
 
     init {
         primary.addListener(primaryListener)
+        onPlayerCreated(primary, primaryGainProcessor)
     }
 
     fun setDuration(durationMs: Int) {
@@ -318,7 +319,7 @@ internal class CrossfadePlaybackCoordinator(
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .setMediaSourceFactory(mediaSourceFactory)
             .build()
-            .also { secondary = it }
+            .also { secondary = it; onPlayerCreated(it, secondaryGainProcessor) }
         val queue = List(primary.mediaItemCount) { index -> primary.getMediaItemAt(index) }
         standby.volume = 0f
         secondaryGainProcessor.gain = 0f
@@ -516,6 +517,9 @@ internal object CrossfadeTransitionMath {
 @UnstableApi
 internal class CrossfadeGainAudioProcessor : BaseAudioProcessor() {
     @Volatile
+    var replayGain: Float = 1f
+        set(value) { field = if (value.isFinite()) value.coerceIn(0.000001f, 1000f) else 1f }
+    @Volatile
     private var currentGain = 1f
 
     var gain: Float
@@ -533,7 +537,7 @@ internal class CrossfadeGainAudioProcessor : BaseAudioProcessor() {
     override fun queueInput(inputBuffer: ByteBuffer) {
         val input = inputBuffer.duplicate().order(ByteOrder.LITTLE_ENDIAN)
         val output = replaceOutputBuffer(input.remaining()).order(ByteOrder.LITTLE_ENDIAN)
-        val appliedGain = currentGain
+        val appliedGain = currentGain * replayGain
         when (encoding) {
             C.ENCODING_PCM_FLOAT -> while (input.remaining() >= 4) {
                 output.putFloat((input.float * appliedGain).coerceIn(-1f, 1f))

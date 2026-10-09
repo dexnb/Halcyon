@@ -304,6 +304,8 @@ class SettingsManager(private val context: Context) :
         val KEY_SAMSUNG_FLOATING_LYRIC_TRANSLATION = booleanPreferencesKey("samsung_floating_lyric_translation")
         val KEY_STATUS_BAR_ALLOW_PHONETIC = booleanPreferencesKey("status_bar_allow_phonetic")
         val KEY_DESKTOP_LYRIC_ENABLED = booleanPreferencesKey("desktop_lyric_enabled")
+        val KEY_DESKTOP_LYRIC_WORD_LIFT = booleanPreferencesKey("desktop_lyric_word_lift")
+        val KEY_SPOTIFY_CANVAS_ENABLED = booleanPreferencesKey("spotify_canvas_enabled")
         val KEY_DESKTOP_LYRIC_HIDE_WHEN_PAUSED = booleanPreferencesKey("desktop_lyric_hide_when_paused")
         val KEY_DESKTOP_LYRIC_HIDE_IN_LANDSCAPE = booleanPreferencesKey("desktop_lyric_hide_in_landscape")
         val KEY_DESKTOP_LYRIC_HIDE_ON_PLAYER_PAGE = booleanPreferencesKey("desktop_lyric_hide_on_player_page")
@@ -347,6 +349,7 @@ class SettingsManager(private val context: Context) :
         val KEY_FOLDER_NAME_AS_ALBUM_WHEN_MISSING = booleanPreferencesKey("folder_name_as_album_when_missing")
         val KEY_REPLAYGAIN_ENABLED = booleanPreferencesKey("replaygain_enabled")
         val KEY_REPLAYGAIN_MODE = intPreferencesKey("replaygain_mode")
+        val KEY_REPLAYGAIN_PREAMP_HUNDREDTHS_DB = intPreferencesKey("replaygain_preamp_hundredths_db")
         val KEY_RESUME_PLAYBACK_POSITION = booleanPreferencesKey("resume_playback_position")
         val KEY_AUDIO_FOCUS_DISABLED = booleanPreferencesKey("audio_focus_disabled")
         val KEY_SHUFFLE_MODE = intPreferencesKey("shuffle_mode")
@@ -535,6 +538,7 @@ class SettingsManager(private val context: Context) :
         val KEY_ARTIST_IMAGE_DOWNLOAD = intPreferencesKey("artist_image_download")
         val KEY_ARTIST_IMAGE_SOURCES = stringPreferencesKey("artist_image_sources")
         val KEY_ARTIST_IMAGE_REGION = stringPreferencesKey("artist_image_region")
+        val KEY_ARTIST_SPOTIFY_REGION = stringPreferencesKey("artist_spotify_region")
         val KEY_SPOTIFY_CLIENT_ID = stringPreferencesKey("spotify_client_id")
         val KEY_SPOTIFY_CLIENT_SECRET = stringPreferencesKey("spotify_client_secret")
         const val BG_EFFECT_OS2 = 0
@@ -1499,6 +1503,10 @@ class SettingsManager(private val context: Context) :
     val desktopLyricOpacity get() = desktopLyricSettings.desktopLyricOpacity
     val desktopLyricTextColor get() = desktopLyricSettings.desktopLyricTextColor
     val desktopLyricGlowEnabled get() = desktopLyricSettings.desktopLyricGlowEnabled
+    val desktopLyricWordLift get() = desktopLyricSettings.desktopLyricWordLift
+    val spotifyCanvasEnabled: Flow<Boolean> = context.dataStore.data.map { it[KEY_SPOTIFY_CANVAS_ENABLED] ?: false }
+    suspend fun setSpotifyCanvasEnabled(enabled: Boolean) { context.dataStore.edit { it[KEY_SPOTIFY_CANVAS_ENABLED] = enabled } }
+    suspend fun setDesktopLyricWordLift(enabled: Boolean) = desktopLyricSettings.setDesktopLyricWordLift(enabled)
     val desktopLyricOutlineEnabled get() = desktopLyricSettings.desktopLyricOutlineEnabled
     val desktopLyricBackgroundMode get() = desktopLyricSettings.desktopLyricBackgroundMode
     val desktopLyricBackgroundOpacity get() = desktopLyricSettings.desktopLyricBackgroundOpacity
@@ -1559,6 +1567,12 @@ class SettingsManager(private val context: Context) :
                 is String -> payload.put(key.name, value)
             }
         }
+        com.ella.music.data.netease.NeteaseLinks.exportBackup(context).let { links ->
+            links.keys().forEach { key -> payload.put(key, links.opt(key)) }
+        }
+        AuxiliarySettingsBackup.export(context).let { auxiliary ->
+            auxiliary.keys().forEach { key -> payload.put(key, auxiliary.opt(key)) }
+        }
         return payload
     }
 
@@ -1574,6 +1588,8 @@ class SettingsManager(private val context: Context) :
         context.dataStore.edit { prefs ->
             applySettingsRestore(prefs, payload, restoreDeviceLocalAssets, onKey = null)
         }
+        com.ella.music.data.netease.NeteaseLinks.restoreBackup(context, payload)
+        AuxiliarySettingsBackup.restore(context, payload)
     }
 
     /**
@@ -1588,6 +1604,8 @@ class SettingsManager(private val context: Context) :
             payload = JSONObject(),
             restoreDeviceLocalAssets = true
         ) { name, type -> schema[name] = type }
+        schema.putAll(com.ella.music.data.netease.NeteaseLinks.backupSchema())
+        schema.putAll(AuxiliarySettingsBackup.schema())
         return schema
     }
 
@@ -1600,19 +1618,19 @@ class SettingsManager(private val context: Context) :
         run<Unit> {
             fun setBoolean(key: Preferences.Key<Boolean>) {
                 onKey?.invoke(key.name, SettingsBackupValueType.BOOLEAN)
-                if (payload.has(key.name) && !payload.isNull(key.name)) prefs[key] = payload.optBoolean(key.name)
+                if (SettingsBackupValueType.BOOLEAN.accepts(payload.opt(key.name))) prefs[key] = payload.optBoolean(key.name)
             }
             fun setInt(key: Preferences.Key<Int>) {
                 onKey?.invoke(key.name, SettingsBackupValueType.INT)
-                if (payload.has(key.name) && !payload.isNull(key.name)) prefs[key] = payload.optInt(key.name)
+                if (SettingsBackupValueType.INT.accepts(payload.opt(key.name))) prefs[key] = payload.optInt(key.name)
             }
             fun setString(key: Preferences.Key<String>) {
                 onKey?.invoke(key.name, SettingsBackupValueType.STRING)
-                if (payload.has(key.name) && !payload.isNull(key.name)) prefs[key] = payload.optString(key.name)
+                if (SettingsBackupValueType.STRING.accepts(payload.opt(key.name))) prefs[key] = payload.optString(key.name)
             }
             fun setFontPath(key: Preferences.Key<String>) {
                 onKey?.invoke(key.name, SettingsBackupValueType.STRING)
-                restoreFontPath(prefs, key, payload, restoreDeviceLocalAssets)
+                if (SettingsBackupValueType.STRING.accepts(payload.opt(key.name))) restoreFontPath(prefs, key, payload, restoreDeviceLocalAssets)
             }
 
             setBoolean(KEY_LYRICON_ENABLED)
@@ -1641,6 +1659,8 @@ class SettingsManager(private val context: Context) :
             setBoolean(KEY_SAMSUNG_FLOATING_LYRIC_TRANSLATION)
             setBoolean(KEY_STATUS_BAR_ALLOW_PHONETIC)
             setBoolean(KEY_DESKTOP_LYRIC_ENABLED)
+            setBoolean(KEY_DESKTOP_LYRIC_WORD_LIFT)
+            setBoolean(KEY_SPOTIFY_CANVAS_ENABLED)
             setBoolean(KEY_DESKTOP_LYRIC_HIDE_WHEN_PAUSED)
             setBoolean(KEY_DESKTOP_LYRIC_HIDE_IN_LANDSCAPE)
             setBoolean(KEY_DESKTOP_LYRIC_HIDE_ON_PLAYER_PAGE)
@@ -1661,6 +1681,7 @@ class SettingsManager(private val context: Context) :
             setBoolean(KEY_HIDE_LYRIC_EXTRA_INFO)
             setBoolean(KEY_REPLAYGAIN_ENABLED)
             setInt(KEY_REPLAYGAIN_MODE)
+            setInt(KEY_REPLAYGAIN_PREAMP_HUNDREDTHS_DB)
             setBoolean(KEY_RESUME_PLAYBACK_POSITION)
             setBoolean(KEY_AUDIO_FOCUS_DISABLED)
             setBoolean(KEY_SHUFFLE_RESHUFFLE_ON_STARTUP)
@@ -1774,6 +1795,13 @@ class SettingsManager(private val context: Context) :
             setInt(KEY_ARTIST_IMAGE_DOWNLOAD)
             setString(KEY_ARTIST_IMAGE_SOURCES)
             setString(KEY_ARTIST_IMAGE_REGION)
+            setString(KEY_ARTIST_SPOTIFY_REGION)
+            if (!payload.has(KEY_ARTIST_SPOTIFY_REGION.name) &&
+                SettingsBackupValueType.STRING.accepts(payload.opt(KEY_ARTIST_IMAGE_REGION.name))) {
+                prefs[KEY_ARTIST_SPOTIFY_REGION] = com.ella.music.data.lastfm.spotifyMarketForLastFmRegion(
+                    payload.getString(KEY_ARTIST_IMAGE_REGION.name)
+                )
+            }
             setString(KEY_SPOTIFY_CLIENT_ID)
             setString(KEY_SPOTIFY_CLIENT_SECRET)
             setBoolean(KEY_HOME_TILE_PIN_BUTTONS_VISIBLE)

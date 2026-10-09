@@ -168,17 +168,18 @@ fun FolderDetailScreen(
         saveScope.launch { mainViewModel.settingsManager.setFolderDetailSongSortIndex(nextSortIndex) }
     }
     val normalizedFolderPath = remember(folderPath) { folderPath.normalizeFolderPath() }
+    val listState = rememberSaveable(normalizedFolderPath, saver = LazyListState.Saver) { LazyListState() }
+    var unpinToTopPath by remember(normalizedFolderPath) { mutableStateOf<String?>(null) }
     var scrollToTopRequest by remember { mutableStateOf(0) }
 
     val folderContents by produceState<Pair<List<FolderTreeEntry>, List<Song>>?>(
         null,
         songs,
-        normalizedFolderPath,
-        pinnedFolderPaths
+        normalizedFolderPath
     ) {
         value = withContext(kotlinx.coroutines.Dispatchers.Default) {
             val children = songs.childFoldersOf(context, normalizedFolderPath)
-                .sortedForFolderList(FolderListSortMode.Name, pinnedFolderPaths)
+                .sortedForFolderList(FolderListSortMode.Name)
             val direct = songs.directSongsInFolder(normalizedFolderPath)
             children to direct
         }
@@ -509,8 +510,11 @@ fun FolderDetailScreen(
                 )
             }
         } else {
-            val listState = rememberSaveable(normalizedFolderPath, saver = LazyListState.Saver) {
-                LazyListState()
+            if (unpinToTopPath != null && pinnedFolderPaths.none { it.equals(unpinToTopPath, ignoreCase = true) }) {
+                androidx.compose.runtime.SideEffect {
+                    listState.requestScrollToItem(0)
+                    unpinToTopPath = null
+                }
             }
             RestoreListScrollAfterSearch(
                 searchExpanded = searchExpanded,
@@ -785,6 +789,7 @@ fun FolderDetailScreen(
                 onDismiss = { folderMenuTarget = null },
                 onTogglePin = {
                     folderMenuTarget = null
+                    if (isPinned) unpinToTopPath = folder.path
                     scope.launch { mainViewModel.settingsManager.setPinned("folder", folder.path, !isPinned) }
                 },
                 onShare = {

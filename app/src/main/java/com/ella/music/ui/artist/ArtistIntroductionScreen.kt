@@ -294,18 +294,20 @@ internal fun ArtistIntroductionScreen(
                         color = MiuixTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = record?.text?.takeIf(String::isNotBlank)
-                            ?: stringResource(R.string.artist_introduction_empty),
-                        modifier = Modifier.fillMaxWidth(),
-                        fontSize = 16.sp,
-                        lineHeight = 26.sp,
-                        color = if (record?.text.isNullOrBlank()) {
-                            MiuixTheme.colorScheme.onSurfaceVariantSummary
-                        } else {
-                            MiuixTheme.colorScheme.onSurface
-                        }
-                    )
+                    androidx.compose.foundation.text.selection.SelectionContainer {
+                        Text(
+                            text = record?.text?.takeIf(String::isNotBlank)
+                                ?: stringResource(R.string.artist_introduction_empty),
+                            modifier = Modifier.fillMaxWidth(),
+                            fontSize = 16.sp,
+                            lineHeight = 26.sp,
+                            color = if (record?.text.isNullOrBlank()) {
+                                MiuixTheme.colorScheme.onSurfaceVariantSummary
+                            } else {
+                                MiuixTheme.colorScheme.onSurface
+                            }
+                        )
+                    }
                 }
             }
         }

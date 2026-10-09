@@ -33,6 +33,7 @@ internal fun actionMenuStringRes(id: String): Int = when (id) {
     ActionMenuIds.LANDSCAPE -> R.string.player_landscape_lyrics
     ActionMenuIds.POSTER_WALL -> R.string.poster_wall_title
     ActionMenuIds.LYRICS_DISPLAY -> R.string.player_lyrics_display
+    ActionMenuIds.MINI_LYRICS_STYLE -> R.string.player_mini_lyrics_style
     ActionMenuIds.DYNAMIC_COVER -> R.string.player_match_dynamic_cover
     ActionMenuIds.VISUALIZER -> R.string.player_visualizer_settings
     ActionMenuIds.ONLINE_LYRICS -> R.string.player_match_online_lyrics

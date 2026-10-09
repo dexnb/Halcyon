@@ -2845,7 +2845,7 @@
     <string name="settings_lyric_touch_feedback_summary">按下或点击歌词时显示从触点扩散的泛光反馈</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">桌面歌词同步封面内容色</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">使用“播放页－封面内容色”相同的封面取色逻辑</string>
-    <string name="settings_player_mini_lyrics">播放页迷你歌词</string>
+    <string name="settings_player_mini_lyrics">播放页迷你歌词样式</string>
     <string name="settings_player_mini_lyrics_summary">独立调整封面下方迷你歌词的缩放、字号、间距与对齐</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">以 1% 精度调整迷你歌词整体缩放（50%–150%）</string>
     <string name="settings_player_mini_lyrics_line_spacing">迷你歌词行间距</string>
@@ -2874,8 +2874,8 @@
     <string name="settings_spotify_client_id_summary">用于获取 Spotify 艺术家图片；留空则跳过 Spotify</string>
     <string name="settings_spotify_client_secret">Spotify Client Secret</string>
     <string name="settings_spotify_client_secret_summary">仅用于 Spotify Client Credentials 请求</string>
-    <string name="settings_artist_image_region">Last.fm / Spotify 地区</string>
-    <string name="settings_artist_image_region_summary">选择 Last.fm 语言与 Spotify 区域，影响艺术家图片检索。</string>
+    <string name="settings_artist_image_region">Last.fm 地区</string>
+    <string name="settings_artist_image_region_summary">仅用于 Last.fm 艺术家图片的语言地区</string>
     <string name="settings_music_video_fullscreen_button">静音 MV 全屏按钮</string>
     <string name="settings_music_video_fullscreen_button_summary">控制播放页静音 MV 右上角的全屏入口</string>
     <string name="settings_music_video_long_press_info">长按 MV 信息条显示视频信息</string>

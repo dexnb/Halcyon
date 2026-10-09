@@ -449,6 +449,7 @@ internal fun actionMenuIcon(id: String): ImageVector? = when (id) {
     ActionMenuIds.LANDSCAPE -> MiuixIcons.Regular.HorizontalSplit
     ActionMenuIds.POSTER_WALL -> com.ella.music.ui.poster.PosterWallIcon
     ActionMenuIds.LYRICS_DISPLAY -> MiuixIcons.Regular.Notes
+    ActionMenuIds.MINI_LYRICS_STYLE -> MiuixIcons.Regular.Notes
     ActionMenuIds.DYNAMIC_COVER -> MiuixIcons.Regular.Image
     ActionMenuIds.VISUALIZER -> MenuVisualizerIcon
     ActionMenuIds.ONLINE_LYRICS -> MiuixIcons.Regular.Search

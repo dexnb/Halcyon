@@ -102,6 +102,23 @@ internal val LAST_FM_WIKI_REGIONS: List<LastFmWikiRegion> = listOf(
 
 internal const val DEFAULT_LAST_FM_WIKI_REGION = "en"
 
+internal val ARTIST_IMAGE_LASTFM_REGIONS = LAST_FM_WIKI_REGIONS.filterNot { it.code in setOf("zh-hk", "zh-tw", "ko") }
+internal val SPOTIFY_ARTIST_REGIONS = LAST_FM_WIKI_REGIONS.map { region ->
+    LastFmWikiRegion(spotifyMarketForLastFmRegion(region.code), when (region.code) {
+        "zh-hk" -> com.ella.music.R.string.artist_spotify_region_hk
+        "zh-tw" -> com.ella.music.R.string.artist_spotify_region_tw
+        "ko" -> com.ella.music.R.string.artist_spotify_region_kr
+        else -> region.countryNameRes
+    })
+}
+internal fun normalizeArtistImageLastFmRegion(code: String?): String = when (val normalized = normalizeLastFmWikiRegion(code)) {
+    "zh-hk", "zh-tw" -> "zh"
+    "ko" -> "en"
+    else -> normalized
+}
+internal fun normalizeSpotifyArtistRegion(code: String?): String =
+    code?.trim()?.uppercase(Locale.ROOT)?.takeIf { market -> SPOTIFY_ARTIST_REGIONS.any { it.code == market } } ?: "US"
+
 internal enum class ArtistWikiSource {
     LastFmApi,
     Netease,
@@ -151,6 +168,9 @@ internal fun spotifyMarketForLastFmRegion(regionCode: String): String = when (
     normalizeLastFmWikiRegion(regionCode)
 ) {
     "zh" -> "CN"
+    "zh-hk" -> "HK"
+    "zh-tw" -> "TW"
+    "ko" -> "KR"
     "ja" -> "JP"
     "de" -> "DE"
     "es" -> "ES"
@@ -212,6 +232,24 @@ internal fun parseLastFmWikiHtml(html: String): String {
     if (html.isBlank()) return ""
     val wikiBlock = wikiHtmlBlock(html) ?: return ""
     return htmlToPlainWikiText(wikiBlock)
+}
+
+internal fun parseLastFmCanonicalArtistName(html: String): String? {
+    val tags = Regex("""(?is)<link\b[^>]*>""").findAll(html)
+    for (tag in tags) {
+        val attributes = Regex("""(?is)\b([\w-]+)\s*=\s*(["'])(.*?)\2""")
+            .findAll(tag.value).associate { it.groupValues[1].lowercase(Locale.ROOT) to it.groupValues[3] }
+        if (!attributes["rel"].orEmpty().split(Regex("\\s+")).any { it.equals("canonical", true) }) continue
+        val href = attributes["href"]?.replace("&amp;", "&") ?: continue
+        val url = runCatching { href.toHttpUrl() }.getOrNull() ?: continue
+        if (!isLastFmWebsiteUrl(url.toString())) continue
+        val musicIndex = url.pathSegments.indexOf("music")
+        if (musicIndex < 0) continue
+        return url.encodedPathSegments.getOrNull(musicIndex + 1)?.let {
+            java.net.URLDecoder.decode(it, Charsets.UTF_8.name())
+        }?.trim()?.takeIf(String::isNotBlank)
+    }
+    return null
 }
 
 internal fun htmlToPlainWikiText(html: String): String {
@@ -314,11 +352,13 @@ internal fun wikipediaVariant(regionCode: String): String? = when (regionCode.tr
     else -> null
 }
 
-internal fun parseWikipediaSearchTitle(raw: String, artistName: String): String? {
+internal fun parseWikipediaSearchTitle(raw: String, artistName: String): String? = parseWikipediaSearchTitles(raw, artistName).firstOrNull()
+
+internal fun parseWikipediaSearchTitles(raw: String, artistName: String): List<String> {
     val search = runCatching {
         Json.parseToJsonElement(raw).jsonObject["query"]?.jsonObject
             ?.get("search")?.jsonArray
-    }.getOrNull() ?: return null
+    }.getOrNull() ?: return emptyList()
     val requested = artistName.trim()
     val titles = buildList {
         search.forEach { element ->
@@ -326,8 +366,8 @@ internal fun parseWikipediaSearchTitle(raw: String, artistName: String): String?
                 .getOrNull()?.trim()?.takeIf { it.isNotBlank() }?.let(::add)
         }
     }
-    return titles.firstOrNull { it == requested }
-        ?: titles.firstOrNull { it.equals(requested, ignoreCase = true) }
+    return titles.filter { it.equals(requested, ignoreCase = true) }
+        .sortedBy { com.ella.music.data.artistNameCaseRank(requested, it) }.distinct()
 }
 
 internal fun parseWikipediaExtract(raw: String): Pair<String, String>? {
@@ -345,25 +385,15 @@ internal fun parseWikipediaExtract(raw: String): Pair<String, String>? {
     return extract to title
 }
 
-internal fun parseNeteaseArtistId(raw: String, artistName: String): String? {
-    val artists = runCatching {
-        Json.parseToJsonElement(raw).jsonObject["result"]?.jsonObject
-            ?.get("artists")?.jsonArray
-    }.getOrNull() ?: return null
-    val requested = artistName.trim()
-    fun findArtistId(ignoreCase: Boolean): String? {
-        artists.forEach { element ->
-            val artist = runCatching { element.jsonObject }.getOrNull() ?: return@forEach
-            val name = artist["name"]?.jsonPrimitive?.contentOrNull.orEmpty().trim()
-            if (name.equals(requested, ignoreCase = ignoreCase)) {
-                return artist["id"]?.jsonPrimitive?.longOrNull?.takeIf { it > 0L }?.toString()
-            }
-        }
-        return null
-    }
-    findArtistId(ignoreCase = false)?.let { return it }
-    findArtistId(ignoreCase = true)?.let { return it }
-    return null
+internal fun parseNeteaseArtistId(raw: String, artistName: String): String? =
+    parseNeteaseArtistIds(raw, artistName).firstOrNull()
+
+internal fun parseNeteaseArtistIds(raw: String, artistName: String): List<String> {
+    val artists = runCatching { JSONObject(raw).optJSONObject("result")?.optJSONArray("artists") }.getOrNull() ?: return emptyList()
+    val candidates = (0 until artists.length()).mapNotNull { artists.optJSONObject(it) }
+    return candidates.filter { it.optString("name").trim().equals(artistName.trim(), ignoreCase = true) }
+        .sortedBy { com.ella.music.data.artistNameCaseRank(artistName, it.optString("name")) }
+        .mapNotNull { it.optLong("id").takeIf { id -> id > 0 }?.toString() }.distinct()
 }
 
 internal fun parseNeteaseArtistImageUrl(raw: String, artistName: String): String? {
@@ -380,7 +410,7 @@ internal fun parseNeteaseArtistImageUrl(raw: String, artistName: String): String
         }
     }.sortedWith(compareBy { artist ->
         val name = artist["name"]?.jsonPrimitive?.contentOrNull.orEmpty()
-        if (name == requested) 0 else 1
+        com.ella.music.data.artistNameCaseRank(requested, name)
     })
     return candidates.asSequence()
         .flatMap { artist ->
@@ -422,7 +452,7 @@ internal fun stripLastFmLicenseFooter(text: String): String {
         val index = result.indexOf(marker, ignoreCase = true)
         if (index >= 0) result = result.substring(0, index).trim()
     }
-    return result.trim()
+    return result.trim().replace(Regex("""(?i)(?:\s*Read more on Last\.fm[.!]?\s*)$"""), "").trim()
 }
 
 internal fun artistBioDownloadAllowed(mode: Int, wifiConnected: Boolean): Boolean = when (mode) {
@@ -575,20 +605,16 @@ private fun fetchNeteaseArtistWiki(
         .addQueryParameter("limit", "5")
         .build()
         .toString()
-    val artistId = parseNeteaseArtistId(client.executeNeteaseText(searchUrl), artistName) ?: return null
-    val biographyUrl = "https://music.163.com/api/artist/introduction".toHttpUrl().newBuilder()
-        .addQueryParameter("id", artistId)
-        .build()
-        .toString()
-    val text = parseNeteaseArtistBiography(client.executeNeteaseText(biographyUrl))
-    if (text.isBlank()) return null
-    val pageUrl = "https://y.music.163.com/m/artist?id=$artistId"
-    return LastFmArtistWiki(
-        text = text,
-        artistUrl = pageUrl,
-        wikiUrl = pageUrl,
-        source = ArtistWikiSource.Netease
-    )
+    val artistIds = parseNeteaseArtistIds(client.executeNeteaseText(searchUrl), artistName)
+    for (artistId in artistIds) {
+        val biographyUrl = "https://music.163.com/api/artist/introduction".toHttpUrl().newBuilder()
+            .addQueryParameter("id", artistId).build().toString()
+        val text = parseNeteaseArtistBiography(client.executeNeteaseText(biographyUrl))
+        if (text.isBlank()) continue
+        val pageUrl = "https://y.music.163.com/m/artist?id=$artistId"
+        return LastFmArtistWiki(text, pageUrl, pageUrl, ArtistWikiSource.Netease)
+    }
+    return null
 }
 
 internal class LastFmVerificationRequiredException(
@@ -654,7 +680,7 @@ private fun fetchLastFmArtistWikiFromApi(
     for ((autocorrect, ignoreCase) in listOf("0" to false, "1" to true)) {
         val url = LAST_FM_API_ROOT.toHttpUrl().newBuilder()
             .addQueryParameter("method", "artist.getinfo")
-            .addQueryParameter("artist", artistName)
+            .addQueryParameter("artist", queryName)
             .addQueryParameter("api_key", apiKey)
             .addQueryParameter("lang", lastFmApiLanguage(region))
             .addQueryParameter("autocorrect", autocorrect)
@@ -668,7 +694,7 @@ private fun fetchLastFmArtistWikiFromApi(
         val parsed = parseLastFmArtistGetInfoJson(
             raw = raw,
             regionCode = region,
-            requestedArtistName = artistName,
+            requestedArtistName = queryName,
             ignoreCase = ignoreCase
         )
         if (parsed != null && parsed.text.isNotBlank()) return parsed
@@ -722,33 +748,20 @@ private fun fetchWikipediaArtistWiki(
         .apply { variant?.let { addQueryParameter("variant", it) } }
         .build()
         .toString()
-    val title = parseWikipediaSearchTitle(client.executeText(searchUrl), artistName) ?: artistName
-    val extractUrl = apiRoot.toHttpUrl().newBuilder()
-        .addQueryParameter("action", "query")
-        .addQueryParameter("prop", "extracts")
-        .addQueryParameter("exlimit", "1")
-        .addQueryParameter("explaintext", "1")
-        .addQueryParameter("redirects", "1")
-        .addQueryParameter("titles", title)
-        .addQueryParameter("format", "json")
-        .addQueryParameter("utf8", "1")
-        .apply { variant?.let { addQueryParameter("variant", it) } }
-        .build()
-        .toString()
-    val (extract, pageTitle) = parseWikipediaExtract(client.executeText(extractUrl)) ?: return null
-    val page = pageTitle.ifBlank { title }
-    val encodedPage = page.replace(" ", "_")
-    val pageUrl = if (variant != null && language == "zh") {
-        "https://zh.wikipedia.org/$variant/$encodedPage"
-    } else {
-        "https://$language.wikipedia.org/wiki/$encodedPage"
+    val titles = parseWikipediaSearchTitles(client.executeText(searchUrl), artistName).ifEmpty { listOf(artistName) }
+    for (title in titles) {
+        val extractUrl = apiRoot.toHttpUrl().newBuilder()
+            .addQueryParameter("action", "query").addQueryParameter("prop", "extracts")
+            .addQueryParameter("exlimit", "1").addQueryParameter("explaintext", "1")
+            .addQueryParameter("redirects", "1").addQueryParameter("titles", title)
+            .addQueryParameter("format", "json").addQueryParameter("utf8", "1")
+            .apply { variant?.let { addQueryParameter("variant", it) } }.build().toString()
+        val (extract, canonicalTitle) = parseWikipediaExtract(client.executeText(extractUrl)) ?: continue
+        if (canonicalTitle.isNotBlank() && !canonicalTitle.equals(artistName.trim(), ignoreCase = true)) continue
+        val pageUrl = "https://$language.wikipedia.org/wiki/${canonicalTitle.ifBlank { title }.replace(' ', '_')}"
+        return LastFmArtistWiki(extract, pageUrl, pageUrl, ArtistWikiSource.WikipediaSelected)
     }
-    return LastFmArtistWiki(
-        text = extract,
-        artistUrl = pageUrl,
-        wikiUrl = pageUrl,
-        source = ArtistWikiSource.WikipediaSelected
-    )
+    return null
 }
 
 internal fun OkHttpClient.executeText(

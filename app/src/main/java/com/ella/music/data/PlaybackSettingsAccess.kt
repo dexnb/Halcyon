@@ -79,6 +79,7 @@ interface PlaybackSettingsAccess {
     val playCountThresholdDurationMs: Flow<Int>
     val replayGainEnabled: Flow<Boolean>
     val replayGainMode: Flow<Int>
+    val replayGainPreampDb: Flow<Float>
     val resumePlaybackPosition: Flow<Boolean>
     val audioFocusDisabled: Flow<Boolean>
     val audioOutputBackend: Flow<Int>
@@ -109,6 +110,7 @@ interface PlaybackSettingsAccess {
     suspend fun setPlayCountThresholdDurationMs(durationMs: Int)
     suspend fun setReplayGainEnabled(enabled: Boolean)
     suspend fun setReplayGainMode(mode: Int)
+    suspend fun setReplayGainPreampDb(value: Float)
     suspend fun setResumePlaybackPosition(enabled: Boolean)
     suspend fun setAudioFocusDisabled(disabled: Boolean)
     suspend fun setShuffleMode(mode: Int)
@@ -165,6 +167,15 @@ internal class PlaybackSettingsAccessImpl(private val context: Context) : Playba
             )
     }
 
+    override val replayGainPreampDb: Flow<Float> = context.dataStore.data.map {
+        (it[SettingsManager.KEY_REPLAYGAIN_PREAMP_HUNDREDTHS_DB] ?: 0).coerceIn(-3000, 3000) / 100f
+    }
+    override suspend fun setReplayGainPreampDb(value: Float) {
+        if (!value.isFinite()) return
+        context.dataStore.edit {
+            it[SettingsManager.KEY_REPLAYGAIN_PREAMP_HUNDREDTHS_DB] = kotlin.math.round(value.coerceIn(-30f, 30f) * 100f).toInt()
+        }
+    }
     override val replayGainEnabled: Flow<Boolean> = context.dataStore.data.map { it[KEY_REPLAYGAIN_ENABLED] ?: false }
     override val replayGainMode: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[KEY_REPLAYGAIN_MODE]

@@ -210,7 +210,11 @@ fun FolderPlaylistsScreen(
     val reorderEnabled = selection.selectionMode &&
         sortMode == FolderPlaylistSortMode.Custom &&
         searchQuery.isBlank()
-    val customPlaylistsSource = if (reorderEnabled) manualCustomPlaylists else sortedPlaylists
+    val customPlaylistsSource = when {
+        reorderEnabled || (manualCustomOrderDirty && sortMode == FolderPlaylistSortMode.Custom) -> manualCustomPlaylists
+        manualCustomOrderDirty && sortMode == FolderPlaylistSortMode.CustomDesc -> manualCustomPlaylists.asReversed()
+        else -> sortedPlaylists
+    }
     val filteredPlaylists = remember(customPlaylistsSource, searchQuery) {
         val query = searchQuery.trim()
         if (query.isBlank()) {
@@ -267,11 +271,17 @@ fun FolderPlaylistsScreen(
         }
     )
     fun persistManualFolderPlaylistOrder() {
+        val ids = manualCustomPlaylists.map(FolderPlaylist::id)
         scope.launch {
             mainViewModel.settingsManager.setFolderPlaylistCustomOrder(
-                manualCustomPlaylists.map(FolderPlaylist::id)
+                ids
             )
         }
+    }
+    fun applyManualFolderPlaylistOrder(ids: List<String>) {
+        manualCustomPlaylists = playlists.applyFolderPlaylistCustomOrder(ids)
+        manualCustomOrderDirty = true
+        scope.launch { mainViewModel.settingsManager.setFolderPlaylistCustomOrder(ids) }
     }
     val randomFolderPlaylistSongs = remember(filteredPlaylists, songs) {
         filteredPlaylists
@@ -395,12 +405,9 @@ fun FolderPlaylistsScreen(
                     IconButton(onClick = {
                         val keys = selection.selectedIdsInSelectionOrder()
                         if (keys.isNotEmpty()) {
-                            scope.launch {
-                                val orderedIds = keys + customSortedPlaylists
-                                    .map(FolderPlaylist::id)
-                                    .filterNot { it in keys }
-                                mainViewModel.settingsManager.setFolderPlaylistCustomOrder(orderedIds)
-                            }
+                            val orderedIds = keys + customSortedPlaylists
+                                .map(FolderPlaylist::id).filterNot { it in keys }
+                            applyManualFolderPlaylistOrder(orderedIds)
                             selection.finishSelectionMode()
                         }
                     }) {
@@ -720,11 +727,9 @@ fun FolderPlaylistsScreen(
             onDismissRequest = { moreMenuTarget = null },
             actions = listOf(
                 com.ella.music.ui.components.LibraryEntityActions.pinToTop {
-                    scope.launch {
-                        mainViewModel.settingsManager.setFolderPlaylistCustomOrder(
-                            (listOf(playlist.id) + customSortedPlaylists.map(FolderPlaylist::id)).distinct()
-                        )
-                    }
+                    applyManualFolderPlaylistOrder(
+                        (listOf(playlist.id) + customSortedPlaylists.map(FolderPlaylist::id)).distinct()
+                    )
                     moreMenuTarget = null
                 },
                 com.ella.music.ui.components.LibraryEntityActions.refresh {

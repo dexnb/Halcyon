@@ -2687,7 +2687,7 @@
     <string name="settings_lyric_touch_feedback_summary">Afficher une lueur qui s’étend depuis le point touché lors d’un appui</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">Synchroniser les paroles avec la couleur de la pochette</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">Utiliser la même couleur dérivée de la pochette que le lecteur</string>
-    <string name="settings_player_mini_lyrics">Mini-paroles du lecteur</string>
+    <string name="settings_player_mini_lyrics">Style des mini paroles du lecteur</string>
     <string name="settings_player_mini_lyrics_summary">Réglez séparément l’échelle, la taille, l’espacement et l’alignement sous la pochette</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">Réglez l’échelle par pas de 1 % (50 %–150 %)</string>
     <string name="settings_player_mini_lyrics_line_spacing">Espacement des mini-paroles</string>
@@ -2722,8 +2722,8 @@
     <string name="lyric_timing_editor_delete_word_title">Supprimer le minutage du mot ?</string>
     <string name="lyric_timing_editor_delete_word_message">Les données temporelles du mot actuel seront supprimées. Continuer ?</string>
     <string name="playlist_sort_play_count">Nombre de lectures</string>
-    <string name="settings_artist_image_region">Région Last.fm / Spotify</string>
-    <string name="settings_artist_image_region_summary">Choisissez la langue Last.fm et le marché Spotify utilisés pour rechercher les images d’artistes</string>
+    <string name="settings_artist_image_region">Last.fm</string>
+    <string name="settings_artist_image_region_summary">Language used for Last.fm artist images</string>
     <string name="settings_music_video_fullscreen_button">Bouton plein écran du MV silencieux</string>
     <string name="settings_music_video_fullscreen_button_summary">Afficher ou masquer l’accès plein écran en haut à droite du lecteur MV silencieux</string>
     <string name="settings_music_video_long_press_info">Appui long sur la barre d’info du MV</string>

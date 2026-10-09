@@ -2741,7 +2741,7 @@
     <string name="settings_lyric_touch_feedback_summary">Bir şarkı sözüne basarken veya dokunurken dokunma noktasından yayılan bir parlama göster</string>
     <string name="settings_desktop_lyric_sync_cover_content_color">Masaüstü şarkı sözlerini kapak içeriği rengiyle senkronize et</string>
     <string name="settings_desktop_lyric_sync_cover_content_color_summary">Oynatıcı – Kapak içerik rengi ile aynı kapaktan türetilen rengi kullan</string>
-    <string name="settings_player_mini_lyrics">Oynatıcı mini şarkı sözleri</string>
+    <string name="settings_player_mini_lyrics">Oynatıcı mini söz stili</string>
     <string name="settings_player_mini_lyrics_summary">Kapağın altındaki şarkı sözlerinin ölçeğini, boyutunu, aralığını ve hizalamasını bağımsız olarak ayarlayın</string>
     <string name="settings_player_mini_lyrics_scale_summary" formatted="false">Mini şarkı sözü ölçeğini %1\'lik adımlarla ayarlayın (%50–%150)</string>
     <string name="settings_player_mini_lyrics_line_spacing">Mini şarkı sözü satır aralığı</string>
@@ -2769,8 +2769,8 @@
     <string name="settings_spotify_client_id_summary">Spotify sanatçı resimlerini almak için kullanılır; Spotify\'ı atlamak için boş bırakın</string>
     <string name="settings_spotify_client_secret">Spotify Client Secret</string>
     <string name="settings_spotify_client_secret_summary">Yalnızca Spotify Client Credentials istekleri için kullanılır</string>
-    <string name="settings_artist_image_region">Last.fm / Spotify bölgesi</string>
-    <string name="settings_artist_image_region_summary">Sanatçı resmi aramalarında kullanılan Last.fm dilini ve Spotify pazarını seçin</string>
+    <string name="settings_artist_image_region">Last.fm</string>
+    <string name="settings_artist_image_region_summary">Language used for Last.fm artist images</string>
     <string name="settings_music_video_fullscreen_button">Sessiz klip tam ekran düğmesi</string>
     <string name="settings_music_video_fullscreen_button_summary">Sessiz klip oynatıcısının sağ üst kısmındaki tam ekran girişini gösterin veya gizleyin</string>
     <string name="settings_music_video_long_press_info">Video bilgileri için klip bilgi çubuğuna uzun basın</string>

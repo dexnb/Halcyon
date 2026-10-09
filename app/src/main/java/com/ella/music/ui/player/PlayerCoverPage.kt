@@ -411,6 +411,7 @@ internal fun CoverPlayerPage(
             ActionMenuIds.LANDSCAPE -> onLandscape()
             ActionMenuIds.POSTER_WALL -> posterNavigator(com.ella.music.ui.navigation.Screen.PosterWall.route)
             ActionMenuIds.LYRICS_DISPLAY -> localActionMenuPage = PlayerActionSheetPage.LyricDisplay
+            ActionMenuIds.MINI_LYRICS_STYLE -> localActionMenuPage = PlayerActionSheetPage.MiniLyricStyle
             ActionMenuIds.SPECTRUM -> onSpectrum()
             ActionMenuIds.RATING -> onSetRating()
             ActionMenuIds.DYNAMIC_COVER -> onMatchDynamicCover()
@@ -438,26 +439,9 @@ internal fun CoverPlayerPage(
     // composition janked every song change (even when no cover exists). Resolve it off the main
     // thread, only while the player page is shown. Clear the previous source first so a song
     // switch never keeps rendering the old video's PlayerView while the next source is resolving.
-    val resolvedDynamicCover by produceState<DynamicCoverSource?>(
-        initialValue = null,
-        dynamicCoverEnabled,
-        dynamicCoverCustomFolders,
-        dynamicCoverSongKey,
-        dynamicCoverFailedPath
-    ) {
-        val current = song
-        if (current == null) {
-            value = null
-        } else {
-            value = withContext(Dispatchers.IO) {
-                current.dynamicCoverSource(
-                    context,
-                    includeExternalFiles = dynamicCoverEnabled,
-                    customRootPaths = dynamicCoverCustomFolders
-                )?.takeUnless { it.failureKey == dynamicCoverFailedPath }
-            }
-        }
-    }
+    val resolvedDynamicCover = rememberPlayerDynamicCoverSource(
+        song, dynamicCoverEnabled, dynamicCoverCustomFolders, dynamicCoverFailedPath
+    )
     // Resolve MV separately.  Its lookup can be relatively expensive, and must never delay the
     // regular dynamic-cover lookup or prevent it from reaching the screen.
     val resolvedMusicVideo by produceState<DynamicCoverSource?>(

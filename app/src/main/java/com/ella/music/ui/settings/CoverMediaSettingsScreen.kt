@@ -100,6 +100,7 @@ fun CoverMediaSettingsScreen(
             SettingsArtistCoverSection(highlightKey = highlightKey)
             SettingsArtistImageSection(highlightKey = highlightKey)
             SettingsDynamicCoverSection(highlightKey = highlightKey)
+            SettingsSpotifyCanvasSection()
             SettingsMusicVideoSection(highlightKey = highlightKey)
             Spacer(modifier = Modifier.height(160.dp))
         }
@@ -156,8 +157,9 @@ internal fun SettingsArtistImageSection(highlightKey: String? = null) {
     )
     val selectedDownloadMode = downloadOptions.indexOfFirst { it.first == SettingsManager.normalizeArtistImageDownload(downloadMode) }
         .coerceAtLeast(0)
-    val selectedImageRegion = normalizeLastFmWikiRegion(imageRegion)
-    val selectedImageRegionIndex = LAST_FM_WIKI_REGIONS.indexOfFirst { it.code == selectedImageRegion }
+    val spotifyRegion by settingsManager.artistSpotifyRegion.collectAsState(initial = "US")
+    val selectedImageRegion = com.ella.music.data.lastfm.normalizeArtistImageLastFmRegion(imageRegion)
+    val selectedImageRegionIndex = com.ella.music.data.lastfm.ARTIST_IMAGE_LASTFM_REGIONS.indexOfFirst { it.code == selectedImageRegion }
         .takeIf { it >= 0 } ?: 0
     val sourceOptions = listOf(
         SettingsManager.ARTIST_IMAGE_SOURCE_LASTFM to stringResource(R.string.settings_artist_image_source_lastfm),
@@ -232,12 +234,12 @@ internal fun SettingsArtistImageSection(highlightKey: String? = null) {
                 WindowSpinnerPreference(
                     title = stringResource(R.string.settings_artist_image_region),
                     summary = stringResource(R.string.settings_artist_image_region_summary),
-                    items = LAST_FM_WIKI_REGIONS.map {
+                    items = com.ella.music.data.lastfm.ARTIST_IMAGE_LASTFM_REGIONS.map {
                         DropdownItem(title = stringResource(it.countryNameRes))
                     },
                     selectedIndex = selectedImageRegionIndex,
                     onSelectedIndexChange = { index ->
-                        LAST_FM_WIKI_REGIONS.getOrNull(index)?.let { region ->
+                        com.ella.music.data.lastfm.ARTIST_IMAGE_LASTFM_REGIONS.getOrNull(index)?.let { region ->
                             scope.launch { settingsManager.setArtistImageRegion(region.code) }
                         }
                     }
@@ -245,6 +247,16 @@ internal fun SettingsArtistImageSection(highlightKey: String? = null) {
                 } // search-anchor:end
 
             }
+            // search-anchor:start
+            SettingsSearchAnchor(R.string.settings_artist_spotify_region) {
+                WindowSpinnerPreference(
+                    title = stringResource(R.string.settings_artist_spotify_region),
+                    summary = stringResource(R.string.settings_artist_spotify_region_summary),
+                    items = com.ella.music.data.lastfm.SPOTIFY_ARTIST_REGIONS.map { DropdownItem(title = stringResource(it.countryNameRes)) },
+                    selectedIndex = com.ella.music.data.lastfm.SPOTIFY_ARTIST_REGIONS.indexOfFirst { it.code == spotifyRegion }.coerceAtLeast(0),
+                    onSelectedIndexChange = { index -> com.ella.music.data.lastfm.SPOTIFY_ARTIST_REGIONS.getOrNull(index)?.let { region -> scope.launch { settingsManager.setArtistSpotifyRegion(region.code) } } }
+                )
+            } // search-anchor:end
             val artistSourceSummary = remember(enabledSourceIds, sourceLabels) {
                 enabledSourceIds.mapNotNull { sourceLabels[it] }.joinToString(" · ")
             }
@@ -315,6 +327,7 @@ internal fun SettingsArtistCoverSection(highlightKey: String? = null) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val settingsManager = remember { SettingsManager.getInstance(context) }
+    var confirmRemoveFolder by remember { mutableStateOf(false) }
     val artistCoverFolderUri by settingsManager.artistCoverFolderUri.collectCachedAsState("artistCoverFolderUri", "")
     val artistCoverDownloadFolderUri by settingsManager.artistCoverDownloadFolderUri.collectCachedAsState("artistCoverDownloadFolderUri", "")
     val artistCoverCarousel by settingsManager.artistCoverCarousel.collectCachedAsState("artistCoverCarousel", true)
@@ -401,8 +414,7 @@ internal fun SettingsArtistCoverSection(highlightKey: String? = null) {
                     title = stringResource(R.string.settings_artist_cover_folder_remove),
                     summary = stringResource(R.string.settings_artist_cover_folder_remove_summary),
                     onClick = {
-                        scope.launch { settingsManager.setArtistCoverFolderUri("") }
-                        Toast.makeText(context, context.getString(R.string.settings_artist_cover_folder_cleared), Toast.LENGTH_SHORT).show()
+                        confirmRemoveFolder = true
                     }
                 )
                 } // search-anchor:end
@@ -461,6 +473,24 @@ internal fun SettingsArtistCoverSection(highlightKey: String? = null) {
             }
         }
     }
+    com.ella.music.ui.components.EllaMiuixDialog(
+        show = confirmRemoveFolder,
+        title = stringResource(R.string.settings_artist_cover_folder_remove),
+        summary = stringResource(R.string.settings_artist_cover_folder_remove_confirm),
+        onDismissRequest = { confirmRemoveFolder = false }
+    ) {
+        com.ella.music.ui.components.EllaMiuixDialogActions(
+            cancelText = stringResource(R.string.common_cancel),
+            confirmText = stringResource(R.string.common_confirm),
+            confirmDangerous = true,
+            onCancel = { confirmRemoveFolder = false },
+            onConfirm = {
+                confirmRemoveFolder = false
+                scope.launch { settingsManager.setArtistCoverFolderUri("") }
+            }
+        )
+    }
+
 }
 
 @Composable
@@ -835,6 +865,7 @@ internal fun SettingsMusicVideoSection(highlightKey: String? = null) {
             if (neteaseLinkSettings.target == com.ella.music.data.netease.NeteaseLinkTarget.Custom) {
                 listOf(
                     com.ella.music.data.netease.NeteaseLinkKind.Song to R.string.netease_link_kind_song,
+                    com.ella.music.data.netease.NeteaseLinkKind.SongWiki to R.string.netease_link_song_wiki,
                     com.ella.music.data.netease.NeteaseLinkKind.Comment to R.string.netease_link_song_comments,
                     com.ella.music.data.netease.NeteaseLinkKind.Artist to R.string.netease_link_kind_artist,
                     com.ella.music.data.netease.NeteaseLinkKind.ArtistWiki to R.string.netease_link_artist_wiki,

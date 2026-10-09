@@ -721,13 +721,14 @@ internal fun DetailPageContent(
     drawBackground: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    var neteaseCommentsSongId by androidx.compose.runtime.remember(song) { androidx.compose.runtime.mutableStateOf<String?>(null) }
-    val commentsSong = song
+    var neteaseCommentsSongId by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    var commentsSnapshot by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<com.ella.music.data.model.Song?>(null) }
+    val commentsSong = commentsSnapshot ?: song
     if (commentsSong != null) {
         NeteaseCommentsSheet(
             show = neteaseCommentsSongId != null,
             song = commentsSong,
-            onDismiss = { neteaseCommentsSongId = null },
+            onDismiss = { neteaseCommentsSongId = null; commentsSnapshot = null },
             songIdOverride = neteaseCommentsSongId
         )
     }
@@ -775,6 +776,7 @@ internal fun DetailPageContent(
                 if (com.ella.music.data.netease.NeteaseLinks.commentsOpenExternally(context)) {
                     com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.Comment, id)
                 } else {
+                    commentsSnapshot = song
                     neteaseCommentsSongId = id
                 }
             }

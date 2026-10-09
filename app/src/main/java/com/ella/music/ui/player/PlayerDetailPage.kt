@@ -88,6 +88,7 @@ internal fun PlayerDetailPage(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val neteaseLinkSettings by com.ella.music.data.netease.NeteaseLinks.settings(context).collectAsState()
     val showAlbumArtists by mainViewModel.settingsManager.showAlbumArtists.collectAsState(initial = true)
     val parseFeaturedArtists by mainViewModel.settingsManager.parseFeaturedArtists.collectAsState(initial = false)
     val composerNames = remember(tagInfo?.composer, song?.composer) {
@@ -468,6 +469,13 @@ internal fun PlayerDetailPage(
                                 summary = neteaseInfo.musicName.ifBlank { neteaseInfo.musicId },
                                 onClick = onNeteaseSong
                             )
+                            if ((neteaseLinkSettings?.target ?: com.ella.music.data.netease.NeteaseLinkTarget.Web) != com.ella.music.data.netease.NeteaseLinkTarget.Web) {
+                                PlayerDetailGroupedActionRow(
+                                    title = stringResource(R.string.netease_link_song_wiki),
+                                    summary = neteaseInfo.musicName.ifBlank { neteaseInfo.musicId },
+                                    onClick = { com.ella.music.data.netease.NeteaseLinks.open(context, com.ella.music.data.netease.NeteaseLinkKind.SongWiki, neteaseInfo.musicId) }
+                                )
+                            }
                             PlayerDetailGroupedActionRow(
                                 title = stringResource(R.string.netease_link_song_comments),
                                 summary = neteaseInfo.musicName.ifBlank { neteaseInfo.musicId },
