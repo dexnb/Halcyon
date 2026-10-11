@@ -50,9 +50,11 @@ internal fun rememberPlayerSongPresentationState(
     val shouldResolveLocalArtwork = song?.let {
         it.onlineSource.isBlank() && !it.path.isHttpAudioSource()
     } == true
-    var embeddedCover by remember { mutableStateOf<Bitmap?>(null) }
-    var paletteBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var palettePair by remember(playerLight) { mutableStateOf(paletteDefault to paletteDefault) }
+    // Artwork belongs to the presented song, even while the next asynchronous load is pending.
+    // Reusing these states across songs showed the previous cover beside the new title.
+    var embeddedCover by remember(songKey, artworkGeneration) { mutableStateOf<Bitmap?>(null) }
+    var paletteBitmap by remember(songKey, artworkGeneration) { mutableStateOf<Bitmap?>(null) }
+    var palettePair by remember(songKey, artworkGeneration, playerLight) { mutableStateOf(paletteDefault to paletteDefault) }
 
     LaunchedEffect(songKey, shouldResolveLocalArtwork, artworkGeneration, playerLight) {
         if (songKey == null) {

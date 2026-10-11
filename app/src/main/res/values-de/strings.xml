@@ -385,7 +385,7 @@
     <string name="aspect_pro_open_failed">Aspect Pro konnte nicht geöffnet werden. Bitte prüfen, ob es installiert ist</string>
     <string name="kaspek_open_failed">Kaspek konnte nicht geöffnet werden. Bitte prüfen, ob es installiert ist</string>
     <string name="media_info_open_failed">MediaInfo konnte nicht geöffnet werden. Bitte prüfen, ob es installiert ist</string>
-    <string name="spectrum_open_external">Mit Aspect Pro / Kaspek öffnen</string>
+    <string name="spectrum_open_external">In einer anderen App öffnen</string>
     <string name="spectrum_open_aspect_pro">Mit Aspect Pro öffnen</string>
     <string name="spectrum_open_kaspek">Mit Kaspek öffnen</string>
     <string name="spectrum_scanning">Audio wird analysiert und Spektrogramm erstellt…</string>
@@ -2003,7 +2003,7 @@
     <string name="settings_artist_cover_folder_remove_summary">Löscht den aktuellen Ordner für Interpreten-Cover; die Interpretenseite verwendet wieder die vorhandenen Album-Cover</string>
     <string name="settings_artist_cover_folder_saved">Ordner für Interpreten-Cover gespeichert</string>
     <string name="settings_artist_cover_folder_cleared">Ordner für Interpreten-Cover gelöscht</string>
-    <string name="settings_artist_cover_download_folder">Download-Pfad für Interpreten-Cover</string>
+    <string name="settings_artist_cover_download_folder">Cachepfad für Künstlerbilder</string>
     <string name="settings_artist_cover_download_folder_summary">Wählen Sie den Ordner, in dem automatisch heruntergeladene Interpreten-Cover gespeichert werden; leer lassen, um auf den Interpreten-Cover-Ordner oder den internen App-Speicher zurückzugreifen</string>
     <string name="settings_artist_cover_download_folder_selected">Download-Pfad für Interpreten-Cover ausgewählt</string>
     <string name="settings_artist_cover_download_folder_remove">Download-Pfad für Interpreten-Cover löschen</string>

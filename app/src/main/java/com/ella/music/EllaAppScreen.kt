@@ -136,7 +136,7 @@ fun EllaApp(
     val activity = context as? Activity
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = resolvedCurrentRoute(
+    val navigationRoute = resolvedCurrentRoute(
         destinationRoute = navBackStackEntry?.destination?.route,
         fromDock = navBackStackEntry?.arguments?.let { args ->
             if (args.containsKey("fromDock")) args.getBoolean("fromDock") else null
@@ -179,6 +179,15 @@ fun EllaApp(
             )
         }
     }
+    val mainPageCatalog = bottomDockTabCatalog()
+    val mainPageState = rememberMainPageState(
+        mainPageCatalog[initialUiSettings.bottomDockStartupItem.takeIf { it in initialUiSettings.bottomDockItems }]?.route ?: Screen.Home.route
+    )
+    DisposableEffect(navController, mainPageState) {
+        MainPageNavigation.register(navController, mainPageState)
+        onDispose { MainPageNavigation.unregister(navController) }
+    }
+    val currentRoute = if (navigationRoute == MAIN_PAGES_ROUTE) mainPageState.selectedRoute else navigationRoute
     val scope = rememberCoroutineScope()
     val pendingWebDavRestore by WebDavCloudRestoreCoordinator.pending.collectAsState()
     val pendingAppUpgradeNotice by com.ella.music.data.AppUpgradeNotice.pending.collectAsState()
@@ -274,14 +283,14 @@ fun EllaApp(
             openPlaybackSource()
         }
     }
-    val currentRouteIdentity = navRouteIdentity(
+    val currentRouteIdentity = if (navigationRoute == MAIN_PAGES_ROUTE) mainPageIdentity(mainPageState.selectedRoute) else navRouteIdentity(
         destinationRoute = navBackStackEntry?.destination?.route,
         argument = { name -> navBackStackEntry?.arguments.navArgument(name) }
     )
     var returnToPlayerRoute by remember { mutableStateOf<String?>(null) }
-    val previousRouteIdentity = remember(navBackStackEntry) {
+    val previousRouteIdentity = remember(navBackStackEntry, mainPageState.selectedRoute) {
         val previous = navController.previousBackStackEntry
-        navRouteIdentity(
+        if (previous?.destination?.route == MAIN_PAGES_ROUTE) mainPageIdentity(mainPageState.selectedRoute) else navRouteIdentity(
             destinationRoute = previous?.destination?.route,
             argument = { name -> previous?.arguments.navArgument(name) }
         )
@@ -786,7 +795,7 @@ fun EllaApp(
     val nowPlayingFlowVisible = !wallpaperVisible &&
         appNowPlayingFlowBackground &&
         currentSong != null &&
-        supportsNowPlayingFlowBackground(navBackStackEntry?.destination?.route)
+        supportsNowPlayingFlowBackground(currentRoute)
     val appNowPlayingArtwork = currentSong
         ?.takeIf { nowPlayingFlowVisible }
         ?.let { song ->
@@ -856,7 +865,7 @@ fun EllaApp(
     )
     val appNavigationModifier = contentModifier
         .nestedScroll(dockScrollConnection)
-        .then(normalBottomDockSwipe)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1030,6 +1039,11 @@ fun EllaApp(
                     playerViewModel = playerViewModel,
                     initialBottomDockItems = initialUiSettings.bottomDockItems,
                     initialStartDestination = startupRoute,
+                    mainPageState = mainPageState,
+                    mainPageRoutes = tabs.map { it.route }.let { routes ->
+                        if (routes.any { it.startsWith(Screen.LibrarySearch.baseRoute) }) routes else routes + homeSearchRoute
+                    },
+                    mainPageSwipeEnabled = showBottomBar && !showNavigationRail && !showPlayerOverlay,
                     modifier = appNavigationModifier,
                     posterWallBottomPadding = if (showMiniPlayer) bottomDockHeight else 0.dp,
                     onPosterWallFullscreenChanged = { posterWallFullscreen = it },
@@ -1059,6 +1073,7 @@ fun EllaApp(
                     currentTabRoute = currentTabRoute,
                     currentRoute = currentRoute,
                     bottomDockMode = bottomDockMode,
+                    searchReturnRoute = mainPageState.searchReturnRoute,
                     canCompact = canCompactBottomDock,
                     backdrop = if (hasSharedBackground) contentWithBackgroundBackdrop else miuixBackdrop,
                     bottomBarStyle = effectiveBottomBarStyle,
@@ -1098,7 +1113,7 @@ fun EllaApp(
                         bottomDockMode = BottomDockMode.Expanded
                     },
                     onExitSearch = {
-                        if (!navController.popBackStack()) {
+                        if (!MainPageNavigation.exitSearch(navController) && !navController.popBackStack()) {
                             navController.navigateBottomDockRoute(Screen.Home.route, currentRoute)
                         }
                     },

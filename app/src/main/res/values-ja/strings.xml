@@ -385,7 +385,7 @@
     <string name="aspect_pro_open_failed">Aspect Pro を開けませんでした。インストールを確認してください</string>
     <string name="kaspek_open_failed">Kaspek を開けませんでした。インストールを確認してください</string>
     <string name="media_info_open_failed">MediaInfo を開けませんでした。インストールを確認してください</string>
-    <string name="spectrum_open_external">Aspect Pro / Kaspek で開く</string>
+    <string name="spectrum_open_external">他のアプリで開く</string>
     <string name="spectrum_open_aspect_pro">Aspect Pro で開く</string>
     <string name="spectrum_open_kaspek">Kaspek で開く</string>
     <string name="spectrum_scanning">音声を解析してスペクトログラムを生成しています…</string>
@@ -2003,7 +2003,7 @@
     <string name="settings_artist_cover_folder_remove_summary">現在のアーティストカバーのフォルダ設定をクリアします。アーティストページは既存のアルバムカバーに戻ります</string>
     <string name="settings_artist_cover_folder_saved">アーティストカバーのフォルダを保存しました</string>
     <string name="settings_artist_cover_folder_cleared">アーティストカバーのフォルダをクリアしました</string>
-    <string name="settings_artist_cover_download_folder">アーティストカバーのダウンロード先</string>
+    <string name="settings_artist_cover_download_folder">アーティスト画像のキャッシュ先</string>
     <string name="settings_artist_cover_download_folder_summary">自動ダウンロードしたアーティストカバーを保存するフォルダを選択します。未設定の場合は「アーティストカバーのフォルダ」またはアプリの内部ストレージを使用します</string>
     <string name="settings_artist_cover_download_folder_selected">アーティストカバーのダウンロード先を選択しました</string>
     <string name="settings_artist_cover_download_folder_remove">アーティストカバーのダウンロード先を解除</string>

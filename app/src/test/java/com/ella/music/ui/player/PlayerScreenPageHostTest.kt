@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.defaultTextStyles
 import org.junit.Test
+import androidx.navigation.compose.composable
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = Application::class, qualifiers = "w840dp-h400dp-xxhdpi")

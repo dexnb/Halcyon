@@ -385,7 +385,7 @@
     <string name="aspect_pro_open_failed">Aspect Pro를 열 수 없습니다. 설치되어 있는지 확인하세요</string>
     <string name="kaspek_open_failed">Kaspek을 열 수 없습니다. 설치되어 있는지 확인하세요</string>
     <string name="media_info_open_failed">MediaInfo를 열 수 없습니다. 설치되어 있는지 확인하세요</string>
-    <string name="spectrum_open_external">Aspect Pro / Kaspek으로 열기</string>
+    <string name="spectrum_open_external">다른 앱에서 열기</string>
     <string name="spectrum_open_aspect_pro">Aspect Pro로 열기</string>
     <string name="spectrum_open_kaspek">Kaspek으로 열기</string>
     <string name="spectrum_scanning">오디오를 분석하여 스펙트로그램을 생성하는 중…</string>
@@ -2003,7 +2003,7 @@
     <string name="settings_artist_cover_folder_remove_summary">현재 아티스트 커버 폴더 설정을 지웁니다. 아티스트 페이지는 기존 앨범 커버로 되돌아갑니다</string>
     <string name="settings_artist_cover_folder_saved">아티스트 커버 폴더를 저장했습니다</string>
     <string name="settings_artist_cover_folder_cleared">아티스트 커버 폴더를 지웠습니다</string>
-    <string name="settings_artist_cover_download_folder">아티스트 커버 다운로드 경로</string>
+    <string name="settings_artist_cover_download_folder">아티스트 이미지 캐시 경로</string>
     <string name="settings_artist_cover_download_folder_summary">자동으로 다운로드된 아티스트 커버를 저장할 폴더를 선택합니다. 비워두면 기존 아티스트 커버 폴더 또는 앱 내부 저장소로 대체됩니다</string>
     <string name="settings_artist_cover_download_folder_selected">아티스트 커버 다운로드 경로를 선택했습니다</string>
     <string name="settings_artist_cover_download_folder_remove">아티스트 커버 다운로드 경로 삭제</string>

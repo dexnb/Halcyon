@@ -422,7 +422,7 @@
     <string name="settings_artist_cover_folder_remove_summary">مسح مجلد أغلفة الفنانين الحالي؛ ستعود صفحة الفنان إلى استخدام أغلفة الألبومات المتوفرة</string>
     <string name="settings_artist_cover_folder_saved">تم حفظ مجلد أغلفة الفنانين</string>
     <string name="settings_artist_cover_folder_cleared">تم مسح مجلد أغلفة الفنانين</string>
-    <string name="settings_artist_cover_download_folder">مسار تنزيل أغلفة الفنانين</string>
+    <string name="settings_artist_cover_download_folder">مسار ذاكرة صور الفنانين</string>
     <string name="settings_artist_cover_download_folder_summary">اختر الدليل الذي سيتم فيه حفظ أغلفة الفنانين التي يتم تنزيلها تلقائياً؛ اتركه فارغاً للاعتماد على مجلد أغلفة الفنانين أو وحدة التخزين الداخلية للتطبيق</string>
     <string name="settings_artist_cover_download_folder_selected">تم تحديد مسار تنزيل أغلفة الفنانين</string>
     <string name="settings_artist_cover_download_folder_remove">مسح مسار تنزيل أغلفة الفنانين</string>
@@ -503,7 +503,7 @@
     <string name="aspect_pro_open_failed">تعذر فتح Aspect Pro. يرجى التأكد من تثبيته</string>
     <string name="kaspek_open_failed">تعذر فتح Kaspek. يرجى التأكد من تثبيته</string>
     <string name="media_info_open_failed">تعذر فتح MediaInfo. يرجى التأكد من تثبيته</string>
-    <string name="spectrum_open_external">فتح باستخدام Aspect Pro / Kaspek</string>
+    <string name="spectrum_open_external">فتح في تطبيق آخر</string>
     <string name="spectrum_open_aspect_pro">فتح باستخدام Aspect Pro</string>
     <string name="spectrum_open_kaspek">فتح باستخدام Kaspek</string>
     <string name="spectrum_scanning">جارٍ مسح الصوت وتوليد المخطط الطيفي…</string>

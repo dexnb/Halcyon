@@ -451,7 +451,8 @@ internal class AppearanceSettingsAccessImpl(private val context: Context) : Appe
     override val homeShortcutItems: Flow<String> = context.dataStore.data.map {
         it[SettingsManager.KEY_HOME_SHORTCUT_ITEMS] ?: migratedHomeItems(
             it[KEY_HOME_LIBRARY_TILE_ORDER] ?: DEFAULT_HOME_LIBRARY_TILE_ORDER,
-            it[KEY_HOME_HIDDEN_LIBRARY_TILES].orEmpty(), true)
+            it[KEY_HOME_HIDDEN_LIBRARY_TILES].orEmpty(), true,
+            defaultHomeShortcutCount(context.resources.configuration.smallestScreenWidthDp))
     }
     override val homeFeatureItems: Flow<String> = context.dataStore.data.map { preferences ->
         val order = preferences[KEY_HOME_LIBRARY_TILE_ORDER] ?: DEFAULT_HOME_LIBRARY_TILE_ORDER
@@ -865,10 +866,12 @@ internal class AppearanceSettingsAccessImpl(private val context: Context) : Appe
     }
 }
 
-internal fun migratedHomeItems(order: String, hidden: String, shortcuts: Boolean): String {
+internal fun defaultHomeShortcutCount(smallestScreenWidthDp: Int): Int = if (smallestScreenWidthDp >= 600) 8 else 4
+
+internal fun migratedHomeItems(order: String, hidden: String, shortcuts: Boolean, shortcutCount: Int = 4): String {
     val defaults = SettingsManager.DEFAULT_HOME_LIBRARY_TILE_ORDER.split(',')
     val visible = (order.split(',') + defaults).distinct().filter { it in defaults && it !in hidden.split(',') }
-    return (if (shortcuts) visible.take(4) else visible.drop(4)).joinToString(",")
+    return (if (shortcuts) visible.take(shortcutCount) else visible.drop(shortcutCount)).joinToString(",")
 }
 
 internal fun normalizeHomeSearchTarget(value: String): String =

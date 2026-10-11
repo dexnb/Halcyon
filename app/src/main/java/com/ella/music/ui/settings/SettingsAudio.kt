@@ -597,6 +597,20 @@ fun AudioSettingsScreen(
                     )
                     } // search-anchor:end
 
+                        // search-anchor:start
+                        SettingsSearchAnchor(R.string.settings_replay_gain_preamp) {
+                        SettingsFloatSliderPreference(
+                            title = stringResource(R.string.settings_replay_gain_preamp),
+                            summary = stringResource(R.string.settings_replay_gain_preamp_summary),
+                            value = replayGainPreamp,
+                            valueRange = -12f..12f,
+                            manualValueRange = -30f..30f,
+                            valueText = String.format(java.util.Locale.getDefault(), "%+.2f dB", replayGainPreamp),
+                            decimalPlaces = 2,
+                            onValueChange = { scope.launch { settingsManager.setReplayGainPreampDb(it) } }
+                        )
+                        } // search-anchor:end
+
                     // search-anchor:start
                     SettingsSearchAnchor(R.string.settings_replay_gain_preamp) {
                         SettingsFloatSliderPreference(

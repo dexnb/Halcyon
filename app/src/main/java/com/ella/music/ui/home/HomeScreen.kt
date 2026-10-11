@@ -137,6 +137,7 @@ import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
@@ -892,6 +893,7 @@ fun LibraryScreen(
                             allSelected = sortedSongs.isNotEmpty() && selectedVisibleCount == sortedSongs.size,
                             onRangeSelect = { selection.applyRangeSelection(sortedSongs.map { it.id }, sortedSongIndexById) },
                             onSelectAll = { selection.toggleSelectAll(sortedSongs.map { it.id }) },
+                            onInvertSelection = { selection.invertSelection(sortedSongs.map { it.id }) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     } else {
@@ -1287,13 +1289,16 @@ fun LibraryScreen(
         }
 
         songInfoSheetSong?.let { song ->
+            val pickerTitle = remember(song.id) { mutableStateOf<String?>(null) }
             EllaMiuixBottomSheet(
                 show = true,
                 enableNestedScroll = false,
-                title = stringResource(R.string.player_song_info),
+                title = pickerTitle.value ?: stringResource(R.string.player_song_info),
                 onDismissRequest = { songInfoSheetSong = null }
             ) {
                 SongInfoMenu(
+                    onPickerTitleChange = { pickerTitle.value = it },
+                    mainViewModel = mainViewModel,
                     song = song,
                     audioInfoLoader = mainViewModel::getAudioInfo,
                     tagInfoLoader = mainViewModel::getSongTagInfo,
@@ -1349,12 +1354,19 @@ private fun LibrarySongsList(
     val multiRow = layout == SettingsManager.LIBRARY_LAYOUT_MULTI_ROW
     val grid = layout == SettingsManager.LIBRARY_LAYOUT_GRID
     val detailed = layout == SettingsManager.LIBRARY_LAYOUT_DETAILS
+    val dragColumns = if (grid || multiRow) libraryLayoutColumnCount(multiRow, grid, libraryLandscape, gridColumns) else 1
+    val dragIds = remember(songs) { songs.map { it.id } }
+    val dragKeys = remember(songs, dragColumns) {
+        songs.chunked(dragColumns).associate { (it.first().playlistIdentityKey() as Any) to it.map { song -> song.id } }
+    }
     CompositionLocalProvider(LocalLibraryMorphLane provides LibraryMorphLane(morphScene, layout, morphLaneId)) {
     LazyColumn(
         state = listState,
         userScrollEnabled = userScrollEnabled,
         overscrollEffect = null,
-        modifier = modifier.graphicsLayer {
+        modifier = modifier.dragSelectList(listState, selection.selectionMode && userScrollEnabled, dragIds, selection.selectedIds,
+            onSelectionChange = { selection.selectedIds = it; selection.rangeAnchorId = null; selection.rangeTargetId = null },
+            onToggle = selection::toggleSelection, itemIdsByKey = dragKeys, columns = dragColumns).graphicsLayer {
             this.alpha = alpha
             scaleX = scale
             scaleY = scale

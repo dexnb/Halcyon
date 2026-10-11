@@ -495,7 +495,7 @@
     <string name="aspect_pro_open_failed">Could not open Aspect Pro. Make sure it is installed</string>
     <string name="kaspek_open_failed">Could not open Kaspek. Make sure it is installed</string>
     <string name="media_info_open_failed">Could not open MediaInfo. Make sure it is installed</string>
-    <string name="spectrum_open_external">Open with Aspect Pro / Kaspek</string>
+    <string name="spectrum_open_external">Open in another app</string>
     <string name="spectrum_open_aspect_pro">Open with Aspect Pro</string>
     <string name="spectrum_open_kaspek">Open with Kaspek</string>
     <string name="spectrum_scanning">Scanning audio and generating spectrogram…</string>
@@ -2252,7 +2252,7 @@
     <string name="settings_artist_cover_folder_remove_summary">Clear the current artist cover folder; the artist page will fall back to existing album covers</string>
     <string name="settings_artist_cover_folder_saved">Artist cover folder saved</string>
     <string name="settings_artist_cover_folder_cleared">Artist cover folder cleared</string>
-    <string name="settings_artist_cover_download_folder">Artist cover download path</string>
+    <string name="settings_artist_cover_download_folder">Artist image cache location</string>
     <string name="settings_artist_cover_download_folder_summary">Choose directory where automatically downloaded artist covers will be saved; leave blank to fall back to artist cover folder or app internal storage</string>
     <string name="settings_artist_cover_download_folder_selected">Artist cover download path selected</string>
     <string name="settings_artist_cover_download_folder_remove">Clear artist cover download path</string>

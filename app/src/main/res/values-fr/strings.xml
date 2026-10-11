@@ -385,7 +385,7 @@
     <string name="aspect_pro_open_failed">Impossible d’ouvrir Aspect Pro. Vérifiez qu’il est installé</string>
     <string name="kaspek_open_failed">Impossible d’ouvrir Kaspek. Vérifiez qu’il est installé</string>
     <string name="media_info_open_failed">Impossible d’ouvrir MediaInfo. Vérifiez qu’il est installé</string>
-    <string name="spectrum_open_external">Ouvrir avec Aspect Pro / Kaspek</string>
+    <string name="spectrum_open_external">Ouvrir dans une autre application</string>
     <string name="spectrum_open_aspect_pro">Ouvrir avec Aspect Pro</string>
     <string name="spectrum_open_kaspek">Ouvrir avec Kaspek</string>
     <string name="spectrum_scanning">Analyse audio et création du spectrogramme…</string>
@@ -2003,7 +2003,7 @@
     <string name="settings_artist_cover_folder_remove_summary">Efface le dossier actuel des pochettes d\'artiste ; la page de l\'artiste reviendra aux pochettes d\'album existantes</string>
     <string name="settings_artist_cover_folder_saved">Dossier des pochettes d\'artiste enregistré</string>
     <string name="settings_artist_cover_folder_cleared">Dossier des pochettes d\'artiste effacé</string>
-    <string name="settings_artist_cover_download_folder">Chemin de téléchargement des pochettes d\'artiste</string>
+    <string name="settings_artist_cover_download_folder">Emplacement du cache des artistes</string>
     <string name="settings_artist_cover_download_folder_summary">Choisissez le dossier d\'enregistrement des pochettes d\'artiste téléchargées automatiquement ; laissez vide pour utiliser le dossier de pochettes d\'artiste ou le stockage interne de l\'application</string>
     <string name="settings_artist_cover_download_folder_selected">Chemin de téléchargement des pochettes d\'artiste sélectionné</string>
     <string name="settings_artist_cover_download_folder_remove">Effacer le chemin de téléchargement des pochettes d\'artiste</string>

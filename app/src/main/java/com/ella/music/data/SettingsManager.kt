@@ -70,6 +70,8 @@ class SettingsManager(private val context: Context) :
     SortSettingsAccess by SortSettingsAccessImpl(context),
     RemoteSourceSettingsAccess by RemoteSourceSettingsAccessImpl(context) {
 
+    internal val applicationContext: Context get() = context.applicationContext
+
     val musicFreePlugins: Flow<List<MusicFreePluginConfig>> = context.dataStore.data.map { it.musicFreePlugins() }
     val selectedMusicFreePluginId: Flow<String> = context.dataStore.data.map { it[KEY_MUSICFREE_SELECTED_PLUGIN_ID].orEmpty() }
     suspend fun setMusicFreePlugin(url: String, name: String, script: String) {
@@ -596,6 +598,7 @@ class SettingsManager(private val context: Context) :
         val KEY_ARTIST_BIO_DOWNLOAD = intPreferencesKey("artist_bio_download")
         val KEY_ARTIST_BIO_LASTFM_LANG = stringPreferencesKey("artist_bio_lastfm_lang")
         val KEY_ARTIST_BIO_SOURCE = stringPreferencesKey("artist_bio_source")
+        val KEY_ARTIST_BIO_MATCH_RULES = stringPreferencesKey("artist_bio_match_rules")
         val KEY_METADATA_EDITOR_ID = stringPreferencesKey("metadata_editor_id")
         val KEY_LYRIC_TIMING_EDITOR_ID = stringPreferencesKey("lyric_timing_editor_id")
         val KEY_SPECTRUM_VIEWER_ID = stringPreferencesKey("spectrum_viewer_id")
@@ -702,6 +705,7 @@ class SettingsManager(private val context: Context) :
         val KEY_FULL_TAG_SEARCH_PROMPT_HANDLED = booleanPreferencesKey("full_tag_search_prompt_handled")
         val KEY_COVER_EXPORT_FOLDER_URI = stringPreferencesKey("cover_export_folder_uri")
         val KEY_SEARCH_ALL_CATEGORY_TYPES = stringPreferencesKey("search_all_category_types")
+        val KEY_SEARCH_ALL_CATEGORY_TYPES_VERSION = intPreferencesKey("search_all_category_types_version")
         val KEY_SEARCH_ALL_SONG_MATCH_TYPES = stringPreferencesKey("search_all_song_match_types")
         val KEY_SONG_RATING_DISPLAY_MODE = intPreferencesKey("song_rating_display_mode")
         val KEY_INITIAL_SCAN_PROMPT_HANDLED = booleanPreferencesKey("initial_scan_prompt_handled")
@@ -757,6 +761,7 @@ class SettingsManager(private val context: Context) :
         val KEY_HOME_TOP_BAR_ACTION_ORDER = stringPreferencesKey("home_top_bar_action_order")
         val KEY_HOME_HIDDEN_TOP_BAR_ACTIONS = stringPreferencesKey("home_hidden_top_bar_actions")
         val KEY_HOME_SHORTCUT_ITEMS = stringPreferencesKey("home_shortcut_items")
+        val KEY_CUSTOM_METADATA_CATEGORIES = stringPreferencesKey("custom_metadata_categories")
         val KEY_HOME_FEATURE_ITEMS = stringPreferencesKey("home_feature_items")
         val KEY_HOME_POSTER_WALL_CONFIGURED = booleanPreferencesKey("home_poster_wall_configured")
         val KEY_POSTER_WALL_INFINITE_SCROLL = booleanPreferencesKey("poster_wall_infinite_scroll")
@@ -1146,6 +1151,9 @@ class SettingsManager(private val context: Context) :
         const val LIBRARY_SOURCE_OPENSUBSONIC = "opensubsonic"
         const val LIBRARY_SOURCE_EMBY = "emby"
         const val LIBRARY_SOURCE_WEBDAV = "webdav"
+        const val LIBRARY_SOURCE_SMB = "smb"
+        const val LIBRARY_SOURCE_FTP = "ftp"
+        const val LIBRARY_SOURCE_SFTP = "sftp"
 
         fun normalizeLibrarySource(source: String): String = when (source) {
             LIBRARY_SOURCE_NETEASE -> LIBRARY_SOURCE_NETEASE
@@ -1154,6 +1162,9 @@ class SettingsManager(private val context: Context) :
             LIBRARY_SOURCE_OPENSUBSONIC -> LIBRARY_SOURCE_OPENSUBSONIC
             LIBRARY_SOURCE_EMBY -> LIBRARY_SOURCE_EMBY
             LIBRARY_SOURCE_WEBDAV -> LIBRARY_SOURCE_WEBDAV
+            LIBRARY_SOURCE_SMB -> LIBRARY_SOURCE_SMB
+            LIBRARY_SOURCE_FTP -> LIBRARY_SOURCE_FTP
+            LIBRARY_SOURCE_SFTP -> LIBRARY_SOURCE_SFTP
             else -> LIBRARY_SOURCE_LOCAL
         }
 
@@ -1178,6 +1189,7 @@ class SettingsManager(private val context: Context) :
         const val BOTTOM_DOCK_ITEM_PLAYLISTS = "playlists"
         const val BOTTOM_DOCK_ITEM_FOLDER = "folder"
         const val BOTTOM_DOCK_ITEM_FOLDER_TREE = "folder_tree"
+        const val BOTTOM_DOCK_ITEM_FOLDER_PLAYLISTS = "folder_playlist"
         const val BOTTOM_DOCK_ITEM_ARTIST = "artist"
         const val BOTTOM_DOCK_ITEM_ALBUM = "album"
         const val BOTTOM_DOCK_ITEM_SCAN_SETTINGS = "scan_settings"
@@ -1264,7 +1276,7 @@ class SettingsManager(private val context: Context) :
                 .distinct()
                 .take(2)
         }
-        val SEARCH_ALL_CATEGORY_TYPES = setOf("folder", "composer", "arranger", "lyricist", "genre", "year")
+        val SEARCH_ALL_CATEGORY_TYPES = setOf("folder", "folder_playlist", "composer", "arranger", "lyricist", "genre", "year")
         val SEARCH_ALL_SONG_MATCH_TYPES = linkedSetOf(
             "title", "artist", "album", "file_name", "translated_name", "alias", "comment", "tag",
             "lyricist", "composer", "arranger", "album_artist", "genre", "year", "lyrics"
@@ -1375,6 +1387,7 @@ class SettingsManager(private val context: Context) :
             BOTTOM_DOCK_ITEM_PLAYLISTS,
             BOTTOM_DOCK_ITEM_FOLDER,
             BOTTOM_DOCK_ITEM_FOLDER_TREE,
+            BOTTOM_DOCK_ITEM_FOLDER_PLAYLISTS,
             BOTTOM_DOCK_ITEM_ARTIST,
             BOTTOM_DOCK_ITEM_ALBUM,
             BOTTOM_DOCK_ITEM_SCAN_SETTINGS,
@@ -1554,6 +1567,34 @@ class SettingsManager(private val context: Context) :
      * Exports settings for the legacy JSON format by default. Device-local artwork is only
      * included when the caller is building an archive that also carries the actual file.
      */
+    val artistBiographyMatchRules: Flow<List<ArtistBiographyMatchRule>> = context.dataStore.data
+        .map { decodeArtistBiographyMatchRules(it[KEY_ARTIST_BIO_MATCH_RULES].orEmpty()) }
+
+    suspend fun setArtistBiographyMatchRules(rules: List<ArtistBiographyMatchRule>) {
+        context.dataStore.edit { it[KEY_ARTIST_BIO_MATCH_RULES] = encodeArtistBiographyMatchRules(rules) }
+    }
+
+    val customMetadataCategories: Flow<List<CustomMetadataCategory>> = context.dataStore.data
+        .map { decodeCustomCategories(it[KEY_CUSTOM_METADATA_CATEGORIES].orEmpty()) }
+
+    suspend fun setCustomMetadataCategories(items: List<CustomMetadataCategory>) {
+        val normalized = normalizeCustomCategories(items)
+        val currentFeatures = homeFeatureItems.first()
+        context.dataStore.edit { prefs ->
+            val oldIds = decodeCustomCategories(prefs[KEY_CUSTOM_METADATA_CATEGORIES].orEmpty()).map { it.type }.toSet()
+            val newIds = normalized.map { it.type }.toSet()
+            val removed = oldIds - newIds
+            val added = newIds - oldIds
+            prefs[KEY_CUSTOM_METADATA_CATEGORIES] = encodeCustomCategories(normalized)
+            fun updateCsv(key: Preferences.Key<String>, fallback: String, append: Collection<String> = emptyList()) {
+                prefs[key] = ((prefs[key] ?: fallback).split(',').filter { it.isNotBlank() && it !in removed } + append).distinct().joinToString(",")
+            }
+            updateCsv(KEY_HOME_FEATURE_ITEMS, currentFeatures, added)
+            updateCsv(KEY_HOME_LIBRARY_TILE_ORDER, DEFAULT_HOME_LIBRARY_TILE_ORDER, added)
+            if (prefs[KEY_HOME_SHORTCUT_ITEMS] != null) updateCsv(KEY_HOME_SHORTCUT_ITEMS, "")
+        }
+    }
+
     suspend fun exportSettingsJson(includeDeviceLocalAssets: Boolean = false): JSONObject {
         val prefs = context.dataStore.data.first()
         val payload = JSONObject()
@@ -1585,8 +1626,22 @@ class SettingsManager(private val context: Context) :
         payload: JSONObject,
         restoreDeviceLocalAssets: Boolean = false
     ) {
-        context.dataStore.edit { prefs ->
+        val existingFeatures = homeFeatureItems.first()
+        val restoredPreferences = context.dataStore.edit { prefs ->
             applySettingsRestore(prefs, payload, restoreDeviceLocalAssets, onKey = null)
+            if (SettingsBackupValueType.STRING.accepts(payload.opt(KEY_CUSTOM_METADATA_CATEGORIES.name))) {
+                val categories = decodeCustomCategories(prefs[KEY_CUSTOM_METADATA_CATEGORIES].orEmpty())
+                prefs[KEY_CUSTOM_METADATA_CATEGORIES] = encodeCustomCategories(categories)
+                val ids = categories.map { it.type }.toSet()
+                fun repairCsv(key: Preferences.Key<String>, fallback: String, append: Boolean) {
+                    if (payload.has(key.name)) return
+                    prefs[key] = ((prefs[key] ?: fallback).split(',').filter { it.isNotBlank() &&
+                        (!it.startsWith("tag_") || it in ids) } + if (append) ids else emptySet()).distinct().joinToString(",")
+                }
+                repairCsv(KEY_HOME_FEATURE_ITEMS, existingFeatures, true)
+                repairCsv(KEY_HOME_LIBRARY_TILE_ORDER, DEFAULT_HOME_LIBRARY_TILE_ORDER, true)
+                if (prefs[KEY_HOME_SHORTCUT_ITEMS] != null) repairCsv(KEY_HOME_SHORTCUT_ITEMS, "", false)
+            }
         }
         com.ella.music.data.netease.NeteaseLinks.restoreBackup(context, payload)
         AuxiliarySettingsBackup.restore(context, payload)
@@ -1792,6 +1847,7 @@ class SettingsManager(private val context: Context) :
             setInt(KEY_ARTIST_BIO_DOWNLOAD)
             setString(KEY_ARTIST_BIO_LASTFM_LANG)
             setString(KEY_ARTIST_BIO_SOURCE)
+            setString(KEY_ARTIST_BIO_MATCH_RULES)
             setInt(KEY_ARTIST_IMAGE_DOWNLOAD)
             setString(KEY_ARTIST_IMAGE_SOURCES)
             setString(KEY_ARTIST_IMAGE_REGION)
@@ -2015,6 +2071,8 @@ class SettingsManager(private val context: Context) :
                 }
             }
 
+            setString(KEY_FTP_CONFIG)
+            setString(KEY_SFTP_CONFIG)
             setString(KEY_WEBDAV_URL)
             setString(KEY_WEBDAV_USERNAME)
             setString(KEY_WEBDAV_PASSWORD)
@@ -2116,6 +2174,7 @@ class SettingsManager(private val context: Context) :
             setString(KEY_HOME_HIDDEN_TOP_BAR_ACTIONS)
             setString(KEY_HOME_LIBRARY_TILE_ORDER)
             setString(KEY_HOME_SHORTCUT_ITEMS)
+            setString(KEY_CUSTOM_METADATA_CATEGORIES)
             setString(KEY_HOME_FEATURE_ITEMS)
             setBoolean(KEY_HOME_POSTER_WALL_CONFIGURED)
             setBoolean(KEY_POSTER_WALL_INFINITE_SCROLL)
@@ -2139,6 +2198,10 @@ class SettingsManager(private val context: Context) :
             setString(KEY_ARTIST_COVER_DOWNLOAD_FOLDER_URI)
             setString(KEY_COVER_EXPORT_FOLDER_URI)
             setString(KEY_SEARCH_ALL_CATEGORY_TYPES)
+            setInt(KEY_SEARCH_ALL_CATEGORY_TYPES_VERSION)
+            if (payload.has(KEY_SEARCH_ALL_CATEGORY_TYPES.name) && !payload.has(KEY_SEARCH_ALL_CATEGORY_TYPES_VERSION.name)) {
+                prefs.remove(KEY_SEARCH_ALL_CATEGORY_TYPES_VERSION)
+            }
             setString(KEY_SEARCH_ALL_SONG_MATCH_TYPES)
             setString(KEY_SPECTRUM_VIEWER_ID)
 

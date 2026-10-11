@@ -434,7 +434,7 @@
     <string name="settings_artist_cover_folder_remove_summary">清除当前艺术家封面目录设置，艺术家页将回退到现有专辑封面</string>
     <string name="settings_artist_cover_folder_saved">艺术家封面目录已保存</string>
     <string name="settings_artist_cover_folder_cleared">艺术家封面目录已清除</string>
-    <string name="settings_artist_cover_download_folder">艺术家封面下载路径</string>
+    <string name="settings_artist_cover_download_folder">艺术家图片缓存路径</string>
     <string name="settings_artist_cover_download_folder_summary">选择自动下载艺术家封面时保存的目录；留空则优先使用“艺术家封面目录”或应用内部存储</string>
     <string name="settings_artist_cover_download_folder_selected">已选择艺术家封面下载路径</string>
     <string name="settings_artist_cover_download_folder_remove">清除艺术家封面下载路径</string>
@@ -516,7 +516,7 @@
     <string name="aspect_pro_open_failed">未能打开 Aspect Pro，请确认已安装</string>
     <string name="kaspek_open_failed">未能打开 Kaspek，请确认已安装</string>
     <string name="media_info_open_failed">未能打开 MediaInfo，请确认已安装</string>
-    <string name="spectrum_open_external">使用 Aspect Pro / Kaspek 打开</string>
+    <string name="spectrum_open_external">调用其他应用</string>
     <string name="spectrum_open_aspect_pro">使用 Aspect Pro 打开</string>
     <string name="spectrum_open_kaspek">使用 Kaspek 打开</string>
     <string name="spectrum_scanning">正在扫描音频并生成声谱图…</string>

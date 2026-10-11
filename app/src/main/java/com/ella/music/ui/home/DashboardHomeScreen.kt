@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ella.music.R
+import com.ella.music.ui.components.rememberBackgroundBrowseCalculation
 import com.ella.music.data.CategoryResumeKeys
 import com.ella.music.data.SettingsManager
 import com.ella.music.data.model.Song
@@ -159,6 +160,10 @@ fun HomeScreen(
         mainViewModel.getMetadataCategoryCounts(listOf("folder", "genre", "year", "composer", "arranger", "lyricist"))
     }
     val folderCount = metadataCategoryCounts["folder"] ?: 0
+    val customCategories by settingsManager.customMetadataCategories.collectAsState(initial = emptyList())
+    val customCategoryCounts by rememberBackgroundBrowseCalculation(emptyMap<String, Int>(), songs, customCategories, nameSplitRevision) {
+        mainViewModel.getMetadataCategoryCounts(customCategories.map { it.type })
+    }
     val genreCount = metadataCategoryCounts["genre"] ?: 0
     val yearCount = metadataCategoryCounts["year"] ?: 0
     val composerCount = metadataCategoryCounts["composer"] ?: 0
@@ -287,11 +292,11 @@ fun HomeScreen(
                 homeSectionOrder.csvIds(SettingsManager.DEFAULT_HOME_SECTION_ORDER)
             }
             val hiddenTiles = remember(homeHiddenLibraryTiles) { homeHiddenLibraryTiles.csvIdSet() }
-            val tileOrder = remember(homeLibraryTileOrder) {
+            val tileOrder = remember(homeLibraryTileOrder, customCategories) {
                 val defaults = SettingsManager.DEFAULT_HOME_LIBRARY_TILE_ORDER.csvIds(
                     SettingsManager.DEFAULT_HOME_LIBRARY_TILE_ORDER
                 )
-                val configured = homeLibraryTileOrder.csvIds(
+                val configured = (homeLibraryTileOrder.csvIds(
                     SettingsManager.DEFAULT_HOME_LIBRARY_TILE_ORDER
                 )
                 val withRecent = if ("recent_playback" in configured) {
@@ -326,7 +331,9 @@ fun HomeScreen(
                 composerCount,
                 arrangerCount,
                 lyricistCount,
-                playbackHistory.size
+                playbackHistory.size,
+                customCategories,
+                customCategoryCounts
             ) {
                 val all = mapOf(
                     "poster_wall" to HomeTileSpec(
@@ -410,13 +417,18 @@ fun HomeScreen(
                         { onNavigateToMetadataCategory("lyricist") }
                     )
                 )
-                tileOrder.mapNotNull { all[it] }
+                val customTiles = customCategories.associate { category ->
+                    category.type to HomeTileSpec(category.type, category.name,
+                        context.getString(R.string.category_count_general, customCategoryCounts[category.type] ?: 0),
+                        Screen.MetadataCategory.createRoute(category.type),
+                        { onNavigateToMetadataCategory(category.type) }, icon = MiuixIcons.Regular.Music)
+                }
+                tileOrder.mapNotNull { all[it] ?: customTiles[it] }
             }
             val onlineTiles = remember(context, onlineTileOrder, hiddenOnlineTiles) {
                 val all = mapOf(
                     "musicfree" to HomeTileSpec("musicfree", "MusicFree", context.getString(R.string.home_import_api_source), Screen.MusicFreeOnline.route, onNavigateToMusicFreeOnline),
-                    "lx" to HomeTileSpec("lx", "LX Music", context.getString(R.string.home_import_api_source), Screen.LxOnline.route, onNavigateToLxOnline),
-                    "webdav" to HomeTileSpec("webdav", "WebDAV", context.getString(R.string.home_connect_cloud_music), Screen.WebDav.route, onNavigateToWebDav)
+                    "lx" to HomeTileSpec("lx", "LX Music", context.getString(R.string.home_import_api_source), Screen.LxOnline.route, onNavigateToLxOnline)
                 )
                 onlineTileOrder.mapNotNull { all[it] }.filterNot { it.id in hiddenOnlineTiles }
             }

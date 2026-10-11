@@ -11,6 +11,54 @@ import org.junit.Test
 
 class ActionMenuLayoutTest {
     private val defaults = listOf("a", "b", "c")
+    @Test fun songWikiMigratesBesideSongInfoAndCanBeReorderedAndHidden() {
+        for (defaults in listOf(ActionMenuIds.listDefaults, ActionMenuIds.playerActionMenuDefaults)) {
+            val previous = defaults.filterNot { it == ActionMenuIds.SONG_WIKI }.reversed()
+            val layout = ActionMenuLayout.parse(previous.joinToString(",") + ";", defaults)
+            assertEquals(previous, layout.order.filterNot { it == ActionMenuIds.SONG_WIKI })
+            assertEquals(layout.order.indexOf(ActionMenuIds.INFO) + 1, layout.order.indexOf(ActionMenuIds.SONG_WIKI))
+            val custom = ActionMenuLayout(listOf(ActionMenuIds.SONG_WIKI) + previous, setOf(ActionMenuIds.SONG_WIKI))
+            val restored = ActionMenuLayout.parse(custom.serialize(), defaults)
+            assertEquals(ActionMenuIds.SONG_WIKI, restored.order.first())
+            assertFalse(ActionMenuIds.SONG_WIKI in restored.visibleIds(defaults))
+        }
+    }
+
+    @Test
+    fun `comment rows stay configurable for both player and song list menus`() {
+        listOf(ActionMenuIds.playerActionMenuDefaults, ActionMenuIds.listDefaults).forEach { defaults ->
+            val comments = setOf(ActionMenuIds.SONG_COMMENTS, ActionMenuIds.MV_COMMENTS)
+            assertTrue(defaults.containsAll(comments))
+            assertTrue(ActionMenuIds.VIEW_MV in defaults)
+            val saved = defaults.filterNot { it in comments }.reversed()
+            val layout = ActionMenuLayout.parse(saved.joinToString(",") + ";" + comments.joinToString(","), defaults)
+            assertEquals(saved, layout.order.filterNot { it in comments })
+            assertTrue(layout.visibleIds(defaults).none { it in comments })
+            assertEquals(layout, ActionMenuLayout.parse(layout.serialize(), defaults))
+        }
+    }
+
+    @Test
+    fun `lyric sharing is configurable and stays hidden after editing player menu`() {
+        val defaults = ActionMenuIds.playerActionMenuDefaults
+        assertTrue(ActionMenuIds.LYRIC_SHARE in defaults)
+        assertTrue(ActionMenuIds.LYRIC_SHARE in ActionMenuIds.playerShortcutCatalog)
+        val saved = listOf(ActionMenuIds.LYRIC_SHARE) + defaults.filterNot { it == ActionMenuIds.LYRIC_SHARE }
+        val layout = ActionMenuLayout.parse(saved.joinToString(",") + ";" + ActionMenuIds.LYRIC_SHARE, defaults)
+        val edited = ActionMenuLayout.parse(layout.serialize(), defaults)
+        assertEquals(saved, edited.order)
+        assertFalse(ActionMenuIds.LYRIC_SHARE in edited.visibleIds(defaults))
+    }
+
+    @Test
+    fun `older player menus acquire lyric sharing without changing saved order or visibility`() {
+        val defaults = ActionMenuIds.playerActionMenuDefaults
+        val saved = defaults.filterNot { it == ActionMenuIds.LYRIC_SHARE }.reversed()
+        val layout = ActionMenuLayout.parse(saved.joinToString(",") + ";" + ActionMenuIds.SHARE, defaults)
+        assertEquals(saved, layout.order.filterNot { it == ActionMenuIds.LYRIC_SHARE })
+        assertTrue(ActionMenuIds.LYRIC_SHARE in layout.visibleIds(defaults))
+        assertFalse(ActionMenuIds.SHARE in layout.visibleIds(defaults))
+    }
 
     @Test
     fun `comment rows stay configurable for both player and song list menus`() {

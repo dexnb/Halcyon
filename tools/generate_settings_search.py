@@ -16,6 +16,7 @@ OWNERS = {
  'CoverMediaSettingsScreen': 'CoverMedia("")', 'SpotifyCanvasSettings': 'CoverMedia("")',
  'SettingsHomeDisplay': 'HomeDisplay("")',
  'SettingsPreferenceSections': 'Library("")',
+ 'ArtistBiographyRuleSettings': 'Library("")',
  'EqualizerScreen': 'Equalizer("")',
  'LyricFontScreen': 'LyricFont', 'LyricFontComponents': 'LyricFont',
  'LyricPluginSourceSettingsScreen': 'LyricPlugins',

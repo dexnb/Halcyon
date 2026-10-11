@@ -114,6 +114,9 @@ internal object ChineseMusicMetadata {
         null
     }
 
+    private suspend fun artistExactScript(name: String, source: AlbumInfoSource, networkClient: OkHttpClient): ChineseArtistBiography? =
+        artist(name, source, networkClient, allowAlternateScript = false)
+
     suspend fun album(source: AlbumInfoSource, album: Album?, songs: List<Song>, neteaseUrl: String?): String? = withContext(Dispatchers.IO) {
         if (source == AlbumInfoSource.Netease) return@withContext NeteaseAlbumDescriptionFetcher.fetchDescription(album, songs, neteaseUrl)
         val name = album?.name.orEmpty().ifBlank { songs.firstOrNull()?.album.orEmpty() }.trim()

@@ -384,7 +384,7 @@
     <string name="aspect_pro_open_failed">Не удалось открыть Aspect Pro. Убедитесь, что он установлен</string>
     <string name="kaspek_open_failed">Не удалось открыть Kaspek. Убедитесь, что он установлен</string>
     <string name="media_info_open_failed">Не удалось открыть MediaInfo. Убедитесь, что он установлен</string>
-    <string name="spectrum_open_external">Открыть в Aspect Pro / Kaspek</string>
+    <string name="spectrum_open_external">Открыть в другом приложении</string>
     <string name="spectrum_open_aspect_pro">Открыть в Aspect Pro</string>
     <string name="spectrum_open_kaspek">Открыть в Kaspek</string>
     <string name="spectrum_scanning">Анализ аудио и построение спектрограммы…</string>
@@ -1990,7 +1990,7 @@
     <string name="settings_artist_cover_folder_remove_summary">Очищает текущую папку обложек исполнителей; страница исполнителя вернётся к существующим обложкам альбомов</string>
     <string name="settings_artist_cover_folder_saved">Папка обложек исполнителей сохранена</string>
     <string name="settings_artist_cover_folder_cleared">Папка обложек исполнителей очищена</string>
-    <string name="settings_artist_cover_download_folder">Путь загрузки обложек исполнителей</string>
+    <string name="settings_artist_cover_download_folder">Путь кэша изображений исполнителей</string>
     <string name="settings_artist_cover_download_folder_summary">Выберите папку для сохранения автоматически загруженных обложек исполнителей; оставьте пустым для использования существующей папки или внутреннего хранилища</string>
     <string name="settings_artist_cover_download_folder_selected">Путь загрузки обложек исполнителей выбран</string>
     <string name="settings_artist_cover_download_folder_remove">Очистить путь загрузки обложек исполнителей</string>

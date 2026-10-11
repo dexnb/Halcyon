@@ -499,25 +499,36 @@ internal suspend fun fetchLastFmArtistWiki(
         hasApiKey = !apiKey.isNullOrBlank(),
         preferred = preferredSource
     )) {
-        val result = runCatching {
-            when (source) {
-                ArtistWikiSource.LastFmApi ->
-                    fetchLastFmArtistWikiFromApi(artistName, region, apiKey.orEmpty(), client)
-                ArtistWikiSource.QQ, ArtistWikiSource.Kugou, ArtistWikiSource.Kuwo -> {
-                    val provider = when (source) {
-                        ArtistWikiSource.QQ -> com.ella.music.data.AlbumInfoSource.QQ
-                        ArtistWikiSource.Kugou -> com.ella.music.data.AlbumInfoSource.Kugou
-                        else -> com.ella.music.data.AlbumInfoSource.Kuwo
+        val provider = when (source) {
+            ArtistWikiSource.QQ -> "qq"
+            ArtistWikiSource.Kugou -> "kugou"
+            ArtistWikiSource.Kuwo -> "kuwo"
+            ArtistWikiSource.Netease -> "netease"
+            ArtistWikiSource.LastFmApi, ArtistWikiSource.LastFmHtml -> "lastfm"
+            ArtistWikiSource.WikipediaSelected, ArtistWikiSource.WikipediaEnglish -> "wikipedia"
+        }
+        for (query in com.ella.music.data.artistBiographyMatchCandidates(artistName, provider, matchRules)) {
+            val result = runCatching {
+                when (source) {
+                    ArtistWikiSource.LastFmApi -> fetchLastFmArtistWikiFromApi(query, region, apiKey.orEmpty(), client)
+                    ArtistWikiSource.LastFmHtml -> fetchLastFmArtistWikiFromHtml(query, region, client)
+                    ArtistWikiSource.QQ, ArtistWikiSource.Kugou, ArtistWikiSource.Kuwo -> {
+                        val infoSource = when (source) {
+                            ArtistWikiSource.QQ -> com.ella.music.data.AlbumInfoSource.QQ
+                            ArtistWikiSource.Kugou -> com.ella.music.data.AlbumInfoSource.Kugou
+                            else -> com.ella.music.data.AlbumInfoSource.Kuwo
+                        }
+                        com.ella.music.data.ChineseMusicMetadata.artist(query, infoSource, client, allowAlternateScript = false)?.let {
+                            LastFmArtistWiki(it.text, it.url, it.url, source)
+                        }
                     }
-                    com.ella.music.data.ChineseMusicMetadata.artist(artistName, provider)?.let {
-                        LastFmArtistWiki(it.text, it.url, it.url, source)
-                    }
+                    ArtistWikiSource.Netease -> fetchNeteaseArtistWiki(query, client)
+                    ArtistWikiSource.WikipediaSelected -> fetchWikipediaArtistWiki(query, region, client)
+                    ArtistWikiSource.WikipediaEnglish -> fetchWikipediaArtistWiki(query, DEFAULT_LAST_FM_WIKI_REGION, client)
                 }
-                ArtistWikiSource.Netease -> fetchNeteaseArtistWiki(artistName, client)
-                ArtistWikiSource.LastFmHtml -> fetchLastFmArtistWikiFromHtml(artistName, region, client)
-                ArtistWikiSource.WikipediaSelected -> fetchWikipediaArtistWiki(artistName, region, client)
-                ArtistWikiSource.WikipediaEnglish ->
-                    fetchWikipediaArtistWiki(artistName, DEFAULT_LAST_FM_WIKI_REGION, client)
+            }.onFailure { error ->
+                if (error is CancellationException) throw error
+                errors.add(error)
             }
         }.onFailure { error ->
             if (error is CancellationException) throw error

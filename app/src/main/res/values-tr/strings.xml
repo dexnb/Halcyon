@@ -422,7 +422,7 @@
     <string name="settings_artist_cover_folder_remove_summary">Mevcut sanatçı kapağı klasörünü temizler; sanatçı sayfası mevcut albüm kapaklarına geri döner</string>
     <string name="settings_artist_cover_folder_saved">Sanatçı kapağı klasörü kaydedildi</string>
     <string name="settings_artist_cover_folder_cleared">Sanatçı kapağı klasörü temizlendi</string>
-    <string name="settings_artist_cover_download_folder">Sanatçı kapağı indirme yolu</string>
+    <string name="settings_artist_cover_download_folder">Sanatçı görseli önbellek konumu</string>
     <string name="settings_artist_cover_download_folder_summary">Otomatik indirilen sanatçı kapaklarının kaydedileceği dizini seçin; sanatçı kapağı klasörüne veya uygulamanın dahili depolamasına geri dönmek için boş bırakın</string>
     <string name="settings_artist_cover_download_folder_selected">Sanatçı kapağı indirme yolu seçildi</string>
     <string name="settings_artist_cover_download_folder_remove">Sanatçı kapağı indirme yolunu temizle</string>
@@ -503,7 +503,7 @@
     <string name="aspect_pro_open_failed">Aspect Pro açılamadı. Yüklü olduğundan emin olun</string>
     <string name="kaspek_open_failed">Kaspek açılamadı. Yüklü olduğundan emin olun</string>
     <string name="media_info_open_failed">MediaInfo açılamadı. Yüklü olduğundan emin olun</string>
-    <string name="spectrum_open_external">Aspect Pro / Kaspek ile aç</string>
+    <string name="spectrum_open_external">Başka bir uygulamada aç</string>
     <string name="spectrum_open_aspect_pro">Aspect Pro ile aç</string>
     <string name="spectrum_open_kaspek">Kaspek ile aç</string>
     <string name="spectrum_scanning">Ses taranıyor ve spektrogram oluşturuluyor…</string>

@@ -1,5 +1,8 @@
 package com.ella.music.ui.playlist
 
+import com.ella.music.ui.components.dragSelectList
+import com.ella.music.ui.components.dragSelectGrid
+
 import com.ella.music.ui.components.EllaMiuixBottomSheet
 
 import android.widget.Toast
@@ -730,6 +733,7 @@ fun PlaylistDetailScreen(
                 allSelected = displayedSongs.isNotEmpty() && selectedVisibleSongCount == displayedSongs.size,
                 onRangeSelect = { selection.applyRangeSelection(displayedSongs.map { it.playlistIdentityKey() }, displayedSongIndexByKey) },
                 onSelectAll = { selection.toggleSelectAll(displayedSongs.map { it.playlistIdentityKey() }) },
+                onInvertSelection = { selection.invertSelection(displayedSongs.map { it.playlistIdentityKey() }) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = LibraryFloatingControlsEndPadding, bottom = LibraryFloatingControlsBottomPadding)

@@ -82,6 +82,7 @@ internal fun ArtistIntroductionScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val store = remember(context) { ArtistDescriptionStore.getInstance(context) }
+    val biographyRules by com.ella.music.data.SettingsManager.getInstance(context).artistBiographyMatchRules.collectAsState(initial = emptyList())
     val displayName = artistName.ifBlank { stringResource(R.string.player_unknown_artist) }
     val contentKey = remember(artistName, songs) {
         buildString {
@@ -328,7 +329,8 @@ internal fun ArtistIntroductionScreen(
                         artistName = artistName,
                         regionCode = option.regionCode,
                         apiKey = lastFmCredentials.apiKey,
-                        preferredSource = option.source
+                        preferredSource = option.source,
+                        matchRules = biographyRules
                     )
                 }
             }

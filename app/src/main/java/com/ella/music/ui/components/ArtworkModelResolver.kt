@@ -145,18 +145,8 @@ fun rememberSongArtworkState(
                     }
                 }.getOrNull()
             }
-            val resolved: Any? = coverUrl ?: embeddedCover ?: albumArtUri
-            // Bitmap models are cached too: keeping them alive lets a layout switch (list /
-            // two-column / grid) display instantly instead of flashing placeholders and
-            // re-running the async cover load.
-            if (resolved != null && cacheKey != null) {
-                ArtworkModelMemoryCache.put(cacheKey, resolved)
-            }
-            SongArtworkState(
-                model = resolved,
-                showDefaultCover = showDefaultWhenMissing && resolved == null
-            )
         }
+        resolvedState
     }
     return state
 }

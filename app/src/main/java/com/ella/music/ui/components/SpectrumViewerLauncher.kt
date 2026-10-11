@@ -11,6 +11,7 @@ import org.json.JSONObject
 /** Small intent bridge for the standalone spectrum activity. */
 internal object SpectrumViewerLauncher {
     const val BUILTIN = "builtin"
+    const val ASK_EACH_TIME = "ask_each_time"
     const val ASPECT_PRO = "aspect_pro"
     const val KASPEK = "kaspek"
     const val HEARUSY = "hearusy"
@@ -29,8 +30,19 @@ internal object SpectrumViewerLauncher {
         intent.getStringExtra(EXTRA_SONG)?.let(::JSONObject)?.toSpectrumSong()
     }.getOrNull() ?: context.songFromExternalAudioToolIntent(intent)
 
-    suspend fun openSelected(context: Context, song: Song) {
-        when (SettingsManager.getInstance(context).spectrumViewerId.first()) {
+    val viewerIds = listOf(BUILTIN, ASPECT_PRO, KASPEK, HEARUSY)
+
+    suspend fun openSelected(context: Context, song: Song, onAskEachTime: (Song) -> Unit) {
+        val selected = SettingsManager.getInstance(context).spectrumViewerId.first()
+        if (selected == ASK_EACH_TIME || selected !in viewerIds) {
+            onAskEachTime(song)
+        } else {
+            open(context, song, selected)
+        }
+    }
+
+    fun open(context: Context, song: Song, viewerId: String) {
+        when (viewerId) {
             ASPECT_PRO -> openSongSpectrumWithAspectPro(context, song)
             KASPEK -> openSongSpectrumWithKaspek(context, song)
             HEARUSY -> openSongSpectrumWithHearusy(context, song)

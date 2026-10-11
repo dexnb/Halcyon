@@ -155,11 +155,22 @@ class NeteaseDownloadService : Service() {
                 }
             }
             val label = "${song.title} - ${song.artist} [$stem]".replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), "_").take(60)
-            publish(file, "$label.$extension", mime, song, isVideo, job.getString("key"))
+            val displayName = if (isVideo) com.ella.music.data.musicVideoExportName(
+                job.optString("mvTemplate", "{artist} - {title}"), song.artist, song.title, song.album,
+                job.optInt("resolution", 720).toString(), mvId) else "$label.$extension"
+            publish(file, displayName, mime, song, isVideo, job.getString("key"), job.optString("mvFolder"))
         } finally { stage?.delete() }
     }
 
-    private fun publish(file: File, name: String, mime: String, song: Song, video: Boolean, key: String) {
+    private fun publish(file: File, name: String, mime: String, song: Song, video: Boolean, key: String, folder: String = "") {
+        if (video) {
+            com.ella.music.data.MediaExportStorage.write(this, name, mime, "Movies/Halcyon/NcmOfflineMvs/", folder, onPending = { uri ->
+                prefs.edit().putString("publishingUri", uri.toString()).putString("publishingKey", key).commit()
+            }) { out ->
+                file.inputStream().use { it.copyTo(out) }
+            }
+            return
+        }
         val relative = if (video) "Movies/Halcyon/NcmOfflineMvs/" else NeteaseOfflineDownloads.RELATIVE_PATH
         if (Build.VERSION.SDK_INT < 29) {
             val target = File(Environment.getExternalStorageDirectory(), relative + name)
@@ -207,7 +218,15 @@ class NeteaseDownloadService : Service() {
                     val settings = SettingsManager.getInstance(app)
                     val quality = settings.neteaseDownloadQuality.first()
                     val resolution = settings.neteaseMvDownloadResolution.first()
+                    val location = settings.musicVideoDownloadLocation.first()
+                    val mvFolder = when (location) {
+                        "default" -> ""
+                        "folder" -> settings.musicVideoCustomFolders.first().firstOrNull(String::isNotBlank)
+                            ?: if (mvId.isNotBlank()) error("MV folder is not configured") else ""
+                        else -> location
+                    }
                     val job = JSONObject().put("song", song.toPlaylistSong().toJson())
+                        .put("mvFolder", mvFolder).put("mvTemplate", settings.musicVideoDownloadTemplate.first())
                         .put("mv", mvId).put("quality", quality).put("resolution", resolution)
                         .put("key", if (mvId.isBlank()) "song:${song.onlineId}:$quality" else "mv:$mvId:$resolution")
                     ContextCompat.startForegroundService(app, Intent(app, NeteaseDownloadService::class.java).putExtra("job", job.toString()))

@@ -69,6 +69,8 @@ fun SettingsDetailScreen(
     onNavigateToOpenSubsonicConfig: (() -> Unit)? = null,
     onNavigateToEmbyConfig: (() -> Unit)? = null,
     onNavigateToWebDavConfig: (() -> Unit)? = null,
+    onNavigateToSmbConfig: (() -> Unit)? = null,
+    onNavigateToTransferConfig: ((String) -> Unit)? = null,
     onNavigateToLyricPluginSources: () -> Unit = {},
     onNavigateToLastFmSettings: () -> Unit = {},
     onNavigateToBottomNavigationSettings: () -> Unit = {},
@@ -139,8 +141,7 @@ fun SettingsDetailScreen(
     )
     val homeOnlineTileItems = listOf(
         HomePreferenceItem("musicfree", "MusicFree", stringResource(R.string.home_import_api_source)),
-        HomePreferenceItem("lx", "LX Music", stringResource(R.string.home_import_api_source)),
-        HomePreferenceItem("webdav", "WebDAV", stringResource(R.string.home_connect_cloud_music))
+        HomePreferenceItem("lx", "LX Music", stringResource(R.string.home_import_api_source))
     )
     val effectiveMode = if (showOnlyLyrics) SettingsDetailMode.Lyrics else mode
     var showHomeDisplayPage by remember(initialHomeDisplay) { mutableStateOf(initialHomeDisplay) }
@@ -273,6 +274,8 @@ fun SettingsDetailScreen(
                         onOpenOpenSubsonicConfig = onNavigateToOpenSubsonicConfig,
                         onOpenEmbyConfig = onNavigateToEmbyConfig,
                         onOpenWebDavConfig = onNavigateToWebDavConfig,
+                        onOpenSmbConfig = onNavigateToSmbConfig,
+                        onOpenTransferConfig = onNavigateToTransferConfig,
                         mainViewModel = mainViewModel
                     )
                     SettingsScanSection(highlightKey = highlightKey)

@@ -411,7 +411,7 @@
     <string name="aspect_pro_open_failed">未能開啟 Aspect Pro，請確認已安裝</string>
     <string name="kaspek_open_failed">未能開啟 Kaspek，請確認已安裝</string>
     <string name="media_info_open_failed">未能開啟 MediaInfo，請確認已安裝</string>
-    <string name="spectrum_open_external">使用 Aspect Pro / Kaspek 開啟</string>
+    <string name="spectrum_open_external">呼叫其他應用程式</string>
     <string name="spectrum_open_aspect_pro">使用 Aspect Pro 開啟</string>
     <string name="spectrum_open_kaspek">使用 Kaspek 開啟</string>
     <string name="spectrum_scanning">正在掃描音訊並產生聲譜圖…</string>
@@ -2063,7 +2063,7 @@
     <string name="settings_artist_cover_folder_remove_summary">清除目前的藝人封面目錄設定，藝人頁將回復為現有的專輯封面</string>
     <string name="settings_artist_cover_folder_saved">藝人封面目錄已儲存</string>
     <string name="settings_artist_cover_folder_cleared">藝人封面目錄已清除</string>
-    <string name="settings_artist_cover_download_folder">藝人封面下載路徑</string>
+    <string name="settings_artist_cover_download_folder">藝術家圖片快取路徑</string>
     <string name="settings_artist_cover_download_folder_summary">選擇自動下載藝人封面時儲存的目錄；留空則優先使用「藝人封面目錄」或應用程式內部儲存空間</string>
     <string name="settings_artist_cover_download_folder_selected">已選擇藝人封面下載路徑</string>
     <string name="settings_artist_cover_download_folder_remove">清除藝人封面下載路徑</string>

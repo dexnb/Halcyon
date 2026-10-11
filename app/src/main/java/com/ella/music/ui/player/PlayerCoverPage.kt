@@ -1102,6 +1102,8 @@ internal fun CoverPlayerPage(
                         primaryTextSizeSp = primaryTextSizeSp,
                         secondaryTextSizeSp = secondaryTextSizeSp,
                         lyricTextAlign = lyricTextAlign,
+                        perspectiveEffectEnabled = lyricPerspectiveEffect,
+                        perspectiveYAngle = lyricPerspectiveYAngle,
                         contentColor = pagePalette.onBackground,
                         wordLiftEnabled = appleMusicWordLiftEnabled,
                         onLineClick = { line ->
@@ -1549,6 +1551,8 @@ internal fun CoverPlayerPage(
                         primaryTextSizeSp = primaryTextSizeSp,
                         secondaryTextSizeSp = secondaryTextSizeSp,
                         lyricTextAlign = lyricTextAlign,
+                        perspectiveEffectEnabled = lyricPerspectiveEffect,
+                        perspectiveYAngle = lyricPerspectiveYAngle,
                         contentColor = pagePalette.onBackground,
                         wordLiftEnabled = appleMusicWordLiftEnabled,
                         onLineClick = onLyricLineClick,
@@ -1797,6 +1801,8 @@ internal fun CoverPlayerPage(
                                 primaryTextSizeSp = primaryTextSizeSp,
                                 secondaryTextSizeSp = secondaryTextSizeSp,
                                 lyricTextAlign = lyricTextAlign,
+                                perspectiveEffectEnabled = lyricPerspectiveEffect,
+                                perspectiveYAngle = lyricPerspectiveYAngle,
                                 contentColor = pagePalette.onBackground,
                                 wordLiftEnabled = appleMusicWordLiftEnabled,
                                 onLineClick = { line ->

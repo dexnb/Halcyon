@@ -123,11 +123,14 @@ internal fun ArtistTagEditorMenu(
 internal fun ArtistSongInfoMenu(
     song: Song,
     mainViewModel: MainViewModel,
+    onPickerTitleChange: (String?) -> Unit = {},
     onAiInterpret: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     SongInfoSheet(
+        mainViewModel = mainViewModel,
+        onPickerTitleChange = onPickerTitleChange,
         song = song,
         audioInfoLoader = mainViewModel::getAudioInfo,
         tagInfoLoader = mainViewModel::getSongTagInfo,

@@ -176,6 +176,7 @@ internal fun ArtistBiographyPanel(
     val lastFmApiKey by LastFmSecureStore.getInstance(context).credentials.collectAsState()
     val regionCode by settingsManager.artistBioLastFmLang.collectAsState(initial = DEFAULT_LAST_FM_WIKI_REGION)
     val bioSourceId by settingsManager.artistBioSource.collectAsState(initial = ArtistBioMenuSource.Wikipedia.id)
+    val biographyRules by settingsManager.artistBiographyMatchRules.collectAsState(initial = emptyList())
     val selectedRegion = normalizeLastFmWikiRegion(regionCode)
     val selectedLanguage = ARTIST_BIO_LANGUAGES.firstOrNull { it.code == selectedRegion }
         ?: ARTIST_BIO_LANGUAGES.first()
@@ -203,7 +204,7 @@ internal fun ArtistBiographyPanel(
     var showVerificationSheet by remember { mutableStateOf(false) }
     var retryTrigger by remember { mutableIntStateOf(0) }
     var saving by remember(artistName, selectedRegion, selectedSource) { mutableStateOf(false) }
-    LaunchedEffect(artistName, allowed, selectedRegion, selectedSource, lastFmApiKey.apiKey, retryTrigger) {
+    LaunchedEffect(artistName, allowed, selectedRegion, selectedSource, lastFmApiKey.apiKey, retryTrigger, biographyRules) {
         if (!allowed) {
             loading = false
             failed = false
@@ -221,7 +222,8 @@ internal fun ArtistBiographyPanel(
                 artistName = artistName,
                 regionCode = selectedRegion,
                 apiKey = lastFmApiKey.apiKey,
-                preferredSource = selectedSource
+                preferredSource = selectedSource,
+                matchRules = biographyRules
             )
         }
         result.onSuccess {

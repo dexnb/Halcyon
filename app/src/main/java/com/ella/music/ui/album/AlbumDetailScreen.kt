@@ -1,5 +1,8 @@
 package com.ella.music.ui.album
 
+import com.ella.music.ui.components.dragSelectList
+import com.ella.music.ui.components.dragSelectGrid
+
 import android.graphics.Bitmap
 import android.widget.Toast
 import com.ella.music.ui.components.EllaMiuixBottomSheet
@@ -746,7 +749,7 @@ fun AlbumDetailScreen(
                     }
                 }
             } else {
-                itemsIndexed(sortedAlbumSongs) { index, song ->
+                itemsIndexed(sortedAlbumSongs, key = { _, song -> song.id }) { index, song ->
                     AlbumSongRow(
                         song = song,
                         index = index,
@@ -1083,6 +1086,7 @@ fun AlbumDetailScreen(
             allSelected = sortedAlbumSongs.isNotEmpty() && selectedVisibleCount == sortedAlbumSongs.size,
             onRangeSelect = { selection.applyRangeSelection(sortedAlbumSongs.map { it.id }, sortedAlbumSongIndexById) },
             onSelectAll = { selection.toggleSelectAll(sortedAlbumSongs.map { it.id }) },
+            onInvertSelection = { selection.invertSelection(sortedAlbumSongs.map { it.id }) },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = LibraryFloatingControlsEndPadding, bottom = LibraryFloatingControlsBottomPadding)
@@ -1174,6 +1178,7 @@ fun AlbumDetailScreen(
         if (coverPreviewVisible && albumPreviewModel != null) {
             CoverPreviewDialog(
                 model = albumPreviewModel!!,
+                imageKind = com.ella.music.data.ExportImageKind.Album,
                 title = album?.name
                     ?.takeUnless(com.ella.music.data.LibraryNormalizer::isGeneratedUnknownAlbumPlaceholder)
                     ?: stringResource(R.string.player_unknown_album),

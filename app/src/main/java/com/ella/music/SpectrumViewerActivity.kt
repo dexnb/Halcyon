@@ -67,8 +67,7 @@ import com.ella.music.data.model.Song
 import com.ella.music.ui.components.EllaMiuixChip
 import com.ella.music.ui.components.EllaSmallTopAppBar
 import com.ella.music.ui.components.SpectrumViewerLauncher
-import com.ella.music.ui.components.openSongSpectrumWithAspectPro
-import com.ella.music.ui.components.openSongSpectrumWithKaspek
+import com.ella.music.ui.components.SpectrumViewerChoiceSheet
 import com.ella.music.ui.theme.EllaTheme
 import com.ella.music.ui.theme.THEME_FOLLOW_SYSTEM
 import java.io.File
@@ -109,6 +108,7 @@ private fun SpectrumViewerScreen(song: Song, onBack: () -> Unit) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val activity = context as? ComponentActivity
+    var showExternalApps by remember { mutableStateOf(false) }
     var scanToken by remember { mutableIntStateOf(0) }
     var scanState by remember { mutableStateOf<SpectrumScanState>(SpectrumScanState.Loading) }
 
@@ -205,14 +205,9 @@ private fun SpectrumViewerScreen(song: Song, onBack: () -> Unit) {
                     Spacer(Modifier.width(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         EllaMiuixChip(
-                            stringResource(R.string.spectrum_open_aspect_pro),
+                            stringResource(R.string.spectrum_open_external),
                             selected = false,
-                            onClick = { openSongSpectrumWithAspectPro(context, song) }
-                        )
-                        EllaMiuixChip(
-                            stringResource(R.string.spectrum_open_kaspek),
-                            selected = false,
-                            onClick = { openSongSpectrumWithKaspek(context, song) }
+                            onClick = { showExternalApps = true }
                         )
                     }
                 }
@@ -280,20 +275,24 @@ private fun SpectrumViewerScreen(song: Song, onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
                 ) {
                     EllaMiuixChip(
-                        stringResource(R.string.spectrum_open_aspect_pro),
-                        selected = false,
-                        onClick = { openSongSpectrumWithAspectPro(context, song) }
-                    )
-                    EllaMiuixChip(
-                        stringResource(R.string.spectrum_open_kaspek),
-                        selected = false,
-                        onClick = { openSongSpectrumWithKaspek(context, song) }
-                    )
+                            stringResource(R.string.spectrum_open_external),
+                            selected = false,
+                            onClick = { showExternalApps = true }
+                        )
                 }
             }
             Spacer(Modifier.height(if (isLandscape) 8.dp else 18.dp))
         }
     }
+    SpectrumViewerChoiceSheet(
+        show = showExternalApps,
+        externalOnly = true,
+        onDismiss = { showExternalApps = false },
+        onSelect = { viewerId ->
+            showExternalApps = false
+            SpectrumViewerLauncher.open(context, song, viewerId)
+        }
+    )
 }
 
 private sealed interface SpectrumScanState {

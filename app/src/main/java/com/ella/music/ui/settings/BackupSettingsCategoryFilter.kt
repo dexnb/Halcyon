@@ -86,7 +86,7 @@ private fun String.isEqualizerSettingKey(): Boolean =
         startsWith("audio_reverb_")
 
 private fun String.isOnlineSourceSettingKey(): Boolean =
-    startsWith("webdav_") ||
+    startsWith("webdav_") || startsWith("smb_") || startsWith("ftp_") || startsWith("sftp_") ||
         startsWith("lx_") || startsWith("musicfree_") || startsWith("netease_") ||
     startsWith("navidrome_") ||
     startsWith("opensubsonic_") ||
@@ -116,6 +116,7 @@ private fun String.isLibraryAndScanSettingKey(): Boolean =
         this == "full_tag_search_enabled" ||
         this == "initial_scan_prompt_handled" ||
         this == "local_playlist_scan_prompt_handled" ||
+        this == "custom_metadata_categories" ||
         this == "artist_separators" ||
         this == "artist_protected_names" ||
         this == "genre_separators" ||

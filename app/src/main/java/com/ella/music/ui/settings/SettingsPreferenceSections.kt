@@ -157,6 +157,8 @@ internal fun SettingsLibrarySourceSection(
     onOpenOpenSubsonicConfig: (() -> Unit)? = null,
     onOpenEmbyConfig: (() -> Unit)? = null,
     onOpenWebDavConfig: (() -> Unit)? = null,
+    onOpenSmbConfig: (() -> Unit)? = null,
+    onOpenTransferConfig: ((String) -> Unit)? = null,
     mainViewModel: com.ella.music.viewmodel.MainViewModel? = null
 ) {
     val context = LocalContext.current
@@ -182,7 +184,10 @@ internal fun SettingsLibrarySourceSection(
         SettingsManager.LIBRARY_SOURCE_NAVIDROME to stringResource(R.string.remote_source_navidrome),
         SettingsManager.LIBRARY_SOURCE_OPENSUBSONIC to stringResource(R.string.remote_source_opensubsonic),
         SettingsManager.LIBRARY_SOURCE_EMBY to stringResource(R.string.remote_source_emby),
-        SettingsManager.LIBRARY_SOURCE_WEBDAV to stringResource(R.string.webdav_library_title)
+        SettingsManager.LIBRARY_SOURCE_WEBDAV to stringResource(R.string.webdav_library_title),
+        SettingsManager.LIBRARY_SOURCE_SMB to stringResource(R.string.smb_title),
+        SettingsManager.LIBRARY_SOURCE_FTP to stringResource(R.string.ftp_library_title),
+        SettingsManager.LIBRARY_SOURCE_SFTP to stringResource(R.string.sftp_library_title)
     )
     val librarySourceEntries = librarySourceOptions.map { DropdownItem(title = it.second) }
     val selectedLibrarySourceIndex = librarySourceOptions
@@ -675,6 +680,7 @@ internal fun SettingsTagScrapingSection(
         TagEditorOptionIds.LUNABEAT_LYRIC_TIMING to editorLunaBeatLyricTiming
     )
     val spectrumViewerOptions = listOf(
+        SpectrumViewerLauncher.ASK_EACH_TIME to stringResource(R.string.settings_editor_ask_every_time),
         SpectrumViewerLauncher.BUILTIN to stringResource(R.string.settings_spectrum_builtin),
         SpectrumViewerLauncher.ASPECT_PRO to stringResource(R.string.settings_spectrum_aspect_pro),
         SpectrumViewerLauncher.KASPEK to stringResource(R.string.settings_spectrum_kaspek),
@@ -962,6 +968,7 @@ internal fun SettingsScanSection(
                 } // search-anchor:end
 
             }
+            ArtistBiographyRuleSettings(settingsManager)
             SettingsFocusAnchor(active = highlightKey == "song_rating_display_stars") {
                 // search-anchor:start
                 SettingsSearchAnchor(R.string.settings_song_rating_display_stars) {
@@ -1035,67 +1042,17 @@ internal fun SettingsScanSection(
         }
     }
 
-    EllaMiuixBottomSheet(
+    NameSplitSettingsSheet(
         show = activeSheet == ScanAdvancedSheet.SplitRules,
-        title = stringResource(R.string.settings_artist_separators),
-        onDismissRequest = { activeSheet = null }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 560.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            SettingsFocusAnchor(active = highlightKey == "artist_separators") {
-                // search-anchor:start
-                SettingsSearchAnchor(R.string.settings_artist_separators) {
-                SplitSettingTextField(
-                    label = stringResource(R.string.settings_artist_separators),
-                    value = artistSeparators,
-                    summary = stringResource(R.string.settings_artist_separators_summary),
-                    onValueChange = { value -> scope.launch { settingsManager.setArtistSeparators(value) } }
-                )
-                } // search-anchor:end
-
-            }
-            SettingsFocusAnchor(active = highlightKey == "artist_protected_names") {
-                // search-anchor:start
-                SettingsSearchAnchor(R.string.settings_artist_protected_names) {
-                SplitSettingTextField(
-                    label = stringResource(R.string.settings_artist_protected_names),
-                    value = artistProtectedNames,
-                    summary = stringResource(R.string.settings_artist_protected_names_summary),
-                    onValueChange = { value -> scope.launch { settingsManager.setArtistProtectedNames(value) } }
-                )
-                } // search-anchor:end
-
-            }
-            SettingsFocusAnchor(active = highlightKey == "genre_separators") {
-                // search-anchor:start
-                SettingsSearchAnchor(R.string.settings_genre_separators) {
-                SplitSettingTextField(
-                    label = stringResource(R.string.settings_genre_separators),
-                    value = genreSeparators,
-                    summary = stringResource(R.string.settings_genre_separators_summary),
-                    onValueChange = { value -> scope.launch { settingsManager.setGenreSeparators(value) } }
-                )
-                } // search-anchor:end
-
-            }
-            SettingsFocusAnchor(active = highlightKey == "genre_protected_names") {
-                // search-anchor:start
-                SettingsSearchAnchor(R.string.settings_genre_protected_names) {
-                SplitSettingTextField(
-                    label = stringResource(R.string.settings_genre_protected_names),
-                    value = genreProtectedNames,
-                    summary = stringResource(R.string.settings_genre_protected_names_summary),
-                    onValueChange = { value -> scope.launch { settingsManager.setGenreProtectedNames(value) } }
-                )
-                } // search-anchor:end
-
-            }
-        }
-    }
+        values = listOf(artistSeparators, artistProtectedNames, genreSeparators, genreProtectedNames),
+        onDismissRequest = { activeSheet = null },
+        onSave = { values -> scope.launch {
+            settingsManager.setArtistSeparators(values[0])
+            settingsManager.setArtistProtectedNames(values[1])
+            settingsManager.setGenreSeparators(values[2])
+            settingsManager.setGenreProtectedNames(values[3])
+        } }
+    )
 
     EllaMiuixBottomSheet(
         show = activeSheet == ScanAdvancedSheet.SearchScope,
@@ -1139,6 +1096,7 @@ private fun SearchAllCategoryTypesPreference(
 ) {
     val options = listOf(
         "folder" to R.string.library_search_folders,
+        "folder_playlist" to R.string.folder_playlist_title,
         "composer" to R.string.library_search_composers,
         "arranger" to R.string.library_search_arrangers,
         "lyricist" to R.string.library_search_lyricists,
