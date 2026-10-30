@@ -1,0 +1,14 @@
+name: RelTest
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hi > note.txt
+      - name: create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create reltest-probe note.txt --title "RelTest" --notes "probe"
