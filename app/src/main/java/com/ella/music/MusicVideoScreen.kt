@@ -245,11 +245,6 @@ internal fun DetailMusicVideoScreen(
         }
         ExoPlayer.Builder(context, renderersFactory)
             .setTrackSelector(trackSelector)
-            .apply {
-                if (source.scheme == "halcyon-bilibili-mv") {
-                    setMediaSourceFactory(bilibiliMvMediaSourceFactory(context))
-                }
-            }
             .build().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -2081,35 +2076,4 @@ private fun openArtistFromVideo(context: Context, artist: String) {
         action = Intent.ACTION_VIEW
         data = Uri.parse("halcyon://artist/${Uri.encode(artist)}")
     })
-}
-
-
-/** 哔哩哔哩 CDN 需要 Referer，MV 播放器单独挂一个带该头的数据源。 */
-internal fun bilibiliMvMediaSourceFactory(context: android.content.Context): androidx.media3.exoplayer.source.MediaSource.Factory {
-    val client = okhttp3.OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val host = chain.request().url.host.orEmpty()
-            if (host.endsWith("bilivideo.com") || host.endsWith("hdslb.com") ||
-                host.endsWith(".bilibili.com") || host == "bilibili.com"
-            ) {
-                chain.proceed(
-                    chain.request().newBuilder()
-                        .header("Referer", "https://www.bilibili.com/")
-                        .header(
-                            "User-Agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-                        )
-                        .build()
-                )
-            } else {
-                chain.proceed(chain.request())
-            }
-        }
-        .build()
-    return androidx.media3.exoplayer.source.DefaultMediaSourceFactory(
-        androidx.media3.datasource.DefaultDataSource.Factory(
-            context,
-            androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(client)
-        )
-    )
 }

@@ -136,25 +136,6 @@ internal fun rememberPlayerDynamicCoverSource(
     val source by produceState<DynamicCoverSource?>(null, songKey, localEnabled, customFolders, failedPath, spotifyEnabled, cookie) {
         value = null
         if (song == null) return@produceState
-        if (song.onlineSource == com.ella.music.data.bilibili.BILIBILI_SOURCE && song.onlineId.isNotBlank()) {
-            val store = com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context)
-            val url = withContext(Dispatchers.IO) {
-                runCatching {
-                    com.ella.music.data.bilibili.BilibiliApiClient(context)
-                        .videoUrl(song.onlineId, store.videoQuality())
-                }.getOrNull()
-            }
-            if (url != null) {
-                value = DynamicCoverSource(
-                    uri = Uri.parse(url),
-                    failureKey = "bilibili-mv:" + song.onlineId,
-                    aspectRatio = 16f / 9f,
-                    playbackOwnerKey = songKey.orEmpty(),
-                    role = PlayerVideoRole.MusicVideo
-                ).takeUnless { it.failureKey == failedPath }
-                return@produceState
-            }
-        }
         val local = withContext(Dispatchers.IO) {
             song.dynamicCoverSource(context, localEnabled, customFolders)?.takeUnless { it.failureKey == failedPath }
         }
@@ -269,11 +250,6 @@ internal fun DynamicCoverVideo(
         }
         ExoPlayer.Builder(context, renderersFactory)
             .setTrackSelector(trackSelector)
-            .apply {
-                if (isBilibiliCdnUri(source.uri)) {
-                    setMediaSourceFactory(com.ella.music.bilibiliMvMediaSourceFactory(context))
-                }
-            }
             .build()
             .apply {
             repeatMode = if (followsAudioClock) Media3Player.REPEAT_MODE_OFF else Media3Player.REPEAT_MODE_ALL
@@ -1547,13 +1523,3 @@ internal fun String.toDynamicCoverMatchToken(): String =
     lowercase()
         .replace(Regex("""[\s_\-–—]+"""), "")
         .replace(Regex("""[\\/:*?"<>|.,，。'’`~!！()\[\]{}]+"""), "")
-
-
-private fun isBilibiliCdnUri(uri: Uri): Boolean {
-    if (uri.scheme.equals("file", ignoreCase = true)) {
-        return uri.lastPathSegment?.startsWith("halcyon-bilibili-mv-") == true
-    }
-    val host = uri.host.orEmpty()
-    return host.endsWith("bilivideo.com") || host.endsWith("hdslb.com") ||
-        host.endsWith(".bilibili.com") || host == "bilibili.com"
-}
