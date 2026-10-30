@@ -142,6 +142,10 @@ class ExoPlayerManager(private val context: Context) {
     private var playNextForwardCount = 0
     private var resumePlaybackPositionEnabled = false
     private val perSongResumePositions = LinkedHashMap<String, Long>()
+    private val resumePositionsPrefs by lazy {
+        context.getSharedPreferences("playback_resume_positions", Context.MODE_PRIVATE)
+    }
+    private var resumePositionsLoaded = false
     private var externalSnapshotGuard: ExternalSnapshotGuard? = null
 
     private val persistenceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
@@ -481,6 +485,7 @@ class ExoPlayerManager(private val context: Context) {
                 if (!isCurrentController()) return
                 publishTransportState(isPlaying, controller.playWhenReady)
                 applyDeferredCurrentItemMetadataIfSafe(controller)
+                if (!isPlaying) rememberCurrentSongResumePosition()
                 savePlaybackState(force = true)
             }
 
@@ -1352,6 +1357,7 @@ class ExoPlayerManager(private val context: Context) {
 
     fun pause() {
         flushPendingSeekCommand()
+        rememberCurrentSongResumePosition()
         requestTransportState(target = false, controller = activeController())
     }
 
@@ -1605,11 +1611,38 @@ class ExoPlayerManager(private val context: Context) {
 
     fun setResumePlaybackPositionEnabled(enabled: Boolean) {
         resumePlaybackPositionEnabled = enabled
-        if (!enabled) perSongResumePositions.clear()
+        if (!enabled) {
+            perSongResumePositions.clear()
+            persistResumePositions()
+        } else {
+            ensureResumePositionsLoaded()
+        }
+    }
+
+    private fun ensureResumePositionsLoaded() {
+        if (resumePositionsLoaded) return
+        resumePositionsLoaded = true
+        val raw = resumePositionsPrefs.getString("positions", null) ?: return
+        runCatching {
+            val obj = org.json.JSONObject(raw)
+            obj.keys().forEach { key ->
+                val value = obj.optLong(key, 0L)
+                if (value > 0L) perSongResumePositions[key] = value
+            }
+        }
+    }
+
+    private fun persistResumePositions() {
+        runCatching {
+            val obj = org.json.JSONObject()
+            perSongResumePositions.forEach { (key, value) -> obj.put(key, value) }
+            resumePositionsPrefs.edit().putString("positions", obj.toString()).apply()
+        }
     }
 
     private fun rememberCurrentSongResumePosition() {
         if (!resumePlaybackPositionEnabled) return
+        ensureResumePositionsLoaded()
         val controller = mediaController ?: return
         val song = _currentSong.value ?: resolveCurrentPlaybackSong(controller) ?: return
         val position = controller.currentPosition.coerceAtLeast(0L)
@@ -1619,14 +1652,17 @@ class ExoPlayerManager(private val context: Context) {
             (duration > 0L && duration - position < RESUME_POSITION_END_GUARD_MS)
         ) {
             perSongResumePositions.remove(key)
+            persistResumePositions()
             return
         }
         perSongResumePositions[key] = position
         trimResumePositions()
+        persistResumePositions()
     }
 
     private fun resumePositionFor(song: Song): Long {
         if (!resumePlaybackPositionEnabled) return 0L
+        ensureResumePositionsLoaded()
         val position = perSongResumePositions[song.playbackStackKey()] ?: return 0L
         val duration = song.duration
         return if (duration > 0L) {

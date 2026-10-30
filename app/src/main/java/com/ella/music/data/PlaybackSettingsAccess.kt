@@ -182,7 +182,7 @@ internal class PlaybackSettingsAccessImpl(private val context: Context) : Playba
             ?: if (preferences[KEY_REPLAYGAIN_ENABLED] == true) REPLAY_GAIN_AUTO else REPLAY_GAIN_OFF
     }.map { it.coerceIn(REPLAY_GAIN_OFF, REPLAY_GAIN_AUTO) }
     override val resumePlaybackPosition: Flow<Boolean> =
-        context.dataStore.data.map { it[KEY_RESUME_PLAYBACK_POSITION] ?: false }
+        context.dataStore.data.map { it[KEY_RESUME_PLAYBACK_POSITION] ?: true }
     override val audioFocusDisabled: Flow<Boolean> = context.dataStore.data.map { it[KEY_AUDIO_FOCUS_DISABLED] ?: false }
     override val audioOutputBackend: Flow<Int> =
         context.dataStore.data.map { normalizeAudioOutputBackend(it[KEY_AUDIO_OUTPUT_BACKEND]) }
