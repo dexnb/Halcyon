@@ -303,8 +303,6 @@ class SettingsManager(private val context: Context) :
         val KEY_XIAOMI_SUPER_ISLAND_LYRIC_ENABLED = booleanPreferencesKey("xiaomi_super_island_lyric_enabled")
         val KEY_XIAOMI_SUPER_ISLAND_SETTINGS = stringPreferencesKey("xiaomi_super_island_settings")
         val KEY_VIVO_ATOM_WALKMAN_WHITELIST_ENABLED = booleanPreferencesKey("vivo_atom_walkman_whitelist_enabled")
-        val KEY_VIVO_MEDIA_ISLAND_ENABLED = booleanPreferencesKey("vivo_media_island_enabled")
-        val KEY_VIVO_MEDIA_ISLAND_ONLY = booleanPreferencesKey("vivo_media_island_only")
         val KEY_SAMSUNG_FLOATING_LYRIC_TRANSLATION = booleanPreferencesKey("samsung_floating_lyric_translation")
         val KEY_STATUS_BAR_ALLOW_PHONETIC = booleanPreferencesKey("status_bar_allow_phonetic")
         val KEY_DESKTOP_LYRIC_ENABLED = booleanPreferencesKey("desktop_lyric_enabled")
@@ -1163,6 +1161,7 @@ class SettingsManager(private val context: Context) :
         const val LIBRARY_SOURCE_LOCAL = "local"
         const val LIBRARY_SOURCE_NAVIDROME = "navidrome"
         const val LIBRARY_SOURCE_NETEASE = "netease"
+        const val LIBRARY_SOURCE_BILIBILI = "bilibili"
         const val LIBRARY_SOURCE_OPENSUBSONIC = "opensubsonic"
         const val LIBRARY_SOURCE_EMBY = "emby"
         const val LIBRARY_SOURCE_WEBDAV = "webdav"
@@ -1172,6 +1171,7 @@ class SettingsManager(private val context: Context) :
 
         fun normalizeLibrarySource(source: String): String = when (source) {
             LIBRARY_SOURCE_NETEASE -> LIBRARY_SOURCE_NETEASE
+            LIBRARY_SOURCE_BILIBILI -> LIBRARY_SOURCE_BILIBILI
             LIBRARY_SOURCE_NAVIDROME -> LIBRARY_SOURCE_NAVIDROME
             LIBRARY_SOURCE_OPENSUBSONIC -> LIBRARY_SOURCE_OPENSUBSONIC
             LIBRARY_SOURCE_EMBY -> LIBRARY_SOURCE_EMBY
@@ -1768,8 +1768,6 @@ class SettingsManager(private val context: Context) :
             setBoolean(KEY_XIAOMI_SUPER_ISLAND_LYRIC_ENABLED)
             setString(KEY_XIAOMI_SUPER_ISLAND_SETTINGS)
             setBoolean(KEY_VIVO_ATOM_WALKMAN_WHITELIST_ENABLED)
-            setBoolean(KEY_VIVO_MEDIA_ISLAND_ENABLED)
-            setBoolean(KEY_VIVO_MEDIA_ISLAND_ONLY)
             setBoolean(KEY_SAMSUNG_FLOATING_LYRIC_TRANSLATION)
             setBoolean(KEY_STATUS_BAR_ALLOW_PHONETIC)
             setBoolean(KEY_DESKTOP_LYRIC_ENABLED)

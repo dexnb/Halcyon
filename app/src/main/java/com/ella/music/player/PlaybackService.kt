@@ -156,7 +156,6 @@ class PlaybackService : MediaLibraryService() {
     private var crossfadePresentationSettlementJob: kotlinx.coroutines.Job? = null
     private var castMediaServer: LocalCastMediaServer? = null
     private lateinit var notificationProvider: NoArtworkMediaNotificationProvider
-    private var originOsMediaIslandController: OriginOsMediaIslandController? = null
     private lateinit var settingsManager: SettingsManager
     private lateinit var musicRepository: MusicRepository
     private lateinit var desktopLyricBridge: DesktopLyricBridge
@@ -252,6 +251,16 @@ class PlaybackService : MediaLibraryService() {
             settingsManager.bluetoothAutoPlay.first()
         }
         val playbackHttpClient = WebDavClient.newAuthenticatedOkHttpClient { webDavConfig }
+            .newBuilder()
+            .addInterceptor { chain ->
+                val host = chain.request().url.host.orEmpty()
+                if (host.endsWith("bilivideo.com") || host.endsWith("hdslb.com") ||
+                    host.endsWith(".bilibili.com") || host == "bilibili.com") {
+                    chain.proceed(chain.request().newBuilder()
+                        .header("Referer", "https://www.bilibili.com/").build())
+                } else chain.proceed(chain.request())
+            }
+            .build()
         val httpDataSourceFactory = OkHttpDataSource.Factory(playbackHttpClient)
         serviceScope.launch {
             settingsManager.previousButtonAction.collect { action ->
@@ -368,6 +377,12 @@ class PlaybackService : MediaLibraryService() {
                 val id = dataSpec.uri.lastPathSegment.orEmpty()
                 val url = runBlocking(Dispatchers.IO) {
                     com.ella.music.data.netease.NeteaseLibraryStore.getInstance(this@PlaybackService).streamUrl(id)
+                }
+                dataSpec.withUri(android.net.Uri.parse(url))
+            } else if (dataSpec.uri.scheme == "halcyon-bilibili") {
+                val id = dataSpec.uri.lastPathSegment.orEmpty()
+                val url = runBlocking(Dispatchers.IO) {
+                    com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(this@PlaybackService).streamUrl(id)
                 }
                 dataSpec.withUri(android.net.Uri.parse(url))
             } else dataSpec
@@ -837,12 +852,6 @@ class PlaybackService : MediaLibraryService() {
         )
             .setSessionActivity(pendingIntent)
             .build()
-        if (OriginOsMediaIslandAccess.isSupportedDevice()) {
-            originOsMediaIslandController = OriginOsMediaIslandController(
-                this, presentationPlayer, settingsManager.vivoMediaIslandEnabled,
-                settingsManager.vivoMediaIslandOnly, serviceScope
-            )
-        }
         scheduleLegacyArtworkCompat(presentationPlayer.mediaMetadata)
 
         updateMediaButtonPreferences()
@@ -927,11 +936,6 @@ class PlaybackService : MediaLibraryService() {
         return mediaSession
     }
 
-    internal fun updateOriginOsMediaIslandArtwork(session: MediaSession, artwork: android.graphics.Bitmap?) {
-        if (session !== mediaSession) return
-        originOsMediaIslandController?.updateArtwork(session.player.currentMediaItem?.mediaId, artwork)
-    }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         mediaSession?.player?.let { player ->
@@ -981,8 +985,6 @@ class PlaybackService : MediaLibraryService() {
         AudioEffectState.publish(null)
         crossfadePresentationSettlementJob?.cancel()
         crossfadePresentationSettlementJob = null
-        originOsMediaIslandController?.close()
-        originOsMediaIslandController = null
         crossfadePlaybackCoordinator?.release()
         crossfadePlaybackCoordinator = null
         mediaSession?.run {

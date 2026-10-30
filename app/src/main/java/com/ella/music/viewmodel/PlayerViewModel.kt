@@ -37,7 +37,6 @@ import com.ella.music.player.buildLiveLyricSecondaryText
 import com.ella.music.player.buildLiveLyricNotificationText
 import com.ella.music.player.LyriconBridge
 import com.ella.music.player.MediaNotificationLyricPatchPolicy
-import com.ella.music.player.OriginOsMediaIslandLyrics
 import com.ella.music.player.PlaybackService
 import com.ella.music.player.PlaybackWidgetUpdater
 import com.ella.music.player.SuperLyricBridge
@@ -1181,7 +1180,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             // The backing list may still contain the previous song while the replacement is being
             // fetched. Never advance/send that list against the new song's position.
             if (_currentLyricIndex.value != -1) _currentLyricIndex.value = -1
-            OriginOsMediaIslandLyrics.clear()
             liveLyricNotificationBridge.clear()
             lastLiveUpdateLyricPayload = null
             lastLyricPositionSongKey = songKey
@@ -1190,7 +1188,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
         val currentLyrics = _lyrics.value
         if (currentLyrics.isEmpty()) {
-            OriginOsMediaIslandLyrics.clear()
             liveLyricNotificationBridge.clear()
             lastLiveUpdateLyricPayload = null
             lastLyricPositionSongKey = songKey
@@ -1243,9 +1240,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             sendLiveUpdateLyric(index, currentLyrics, effectivePosition)
             sendXiaomiSuperIslandLyric(index, currentLyrics, effectivePosition)
         }
-        // Whole-line island text is independent of notification/translation lyric settings.
-        // StateFlow suppresses the unchanged line during the existing position ticker.
-        OriginOsMediaIslandLyrics.update(currentSong.value, currentLyrics.getOrNull(index))
         lastLyricPositionSongKey = songKey
         lastLyricPositionMs = effectivePosition
     }
@@ -1472,7 +1466,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         // again only after the display-time offset/blacklist pipeline has completed.
         _lyricsSongKey.value = null
         _currentLyricIndex.value = -1
-        OriginOsMediaIslandLyrics.clear()
         _rawLyrics.value = rawLyrics
         applyCurrentLyricOffset(song = song, notifyExternal = notifyExternal)
         _lyricsSongKey.value = song.lyricIdentityKey()
@@ -1754,7 +1747,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             suppressLeadingZero = positionMs in 0L until LEADING_ZERO_LYRIC_SUPPRESSION_MS
         ).index
         _currentLyricIndex.value = index
-        OriginOsMediaIslandLyrics.update(currentSong.value, lyrics.getOrNull(index))
         scheduleSeekExternalLyricSync(positionMs)
     }
 
@@ -2510,7 +2502,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         super.onCleared()
         externalLyricResendJob?.cancel()
         positionUpdateJob?.cancel()
-        OriginOsMediaIslandLyrics.clear()
         seekExternalLyricSyncJob?.cancel()
         sleepTimerController.dispose()
         tickerBridge.clearLyric()

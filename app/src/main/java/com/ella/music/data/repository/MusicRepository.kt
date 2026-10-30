@@ -655,7 +655,7 @@ class MusicRepository(private val context: Context) {
             return publishLibrarySnapshot(generation, cached)
         }
 
-        if (source != SettingsManager.LIBRARY_SOURCE_NETEASE && !forceRefresh && applyCache()) {
+        if (source != SettingsManager.LIBRARY_SOURCE_NETEASE && source != SettingsManager.LIBRARY_SOURCE_BILIBILI && !forceRefresh && applyCache()) {
             return@withContext MusicScanSummary(total = _songs.value.size)
         }
         if (!isCurrentLibrarySnapshotLoad(generation)) {
@@ -666,6 +666,9 @@ class MusicRepository(private val context: Context) {
             when (source) {
                 SettingsManager.LIBRARY_SOURCE_NETEASE -> {
                     com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).refresh(forceRefresh)
+                }
+                SettingsManager.LIBRARY_SOURCE_BILIBILI -> {
+                    com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context).refresh(forceRefresh)
                 }
                 SettingsManager.LIBRARY_SOURCE_NAVIDROME -> {
                     val config = settingsManager.navidromeConfig.first()
@@ -801,17 +804,20 @@ class MusicRepository(private val context: Context) {
         return if (value == Long.MIN_VALUE) 1L else kotlin.math.abs(value).takeIf { it != 0L } ?: 1L
     }
 
-    private suspend fun neteaseLyricsSong(song: Song): Song =
-        if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE)
+    private suspend fun onlineLyricsSong(song: Song): Song = when {
+        song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE ->
             com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).lyrics(song)
-        else song
+        song.onlineSource == SettingsManager.LIBRARY_SOURCE_BILIBILI ->
+            com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context).lyrics(song)
+        else -> song
+    }
 
     suspend fun getLyrics(
         song: Song,
         sourceMode: Int = SettingsManager.LYRIC_SOURCE_AUTO
-    ): List<LyricLine> = lyricsManager.getLyrics(neteaseLyricsSong(song), sourceMode)
+    ): List<LyricLine> = lyricsManager.getLyrics(onlineLyricsSong(song), sourceMode)
 
-    suspend fun reloadLyrics(song: Song, sourceMode: Int): List<LyricLine> = lyricsManager.reloadLyrics(neteaseLyricsSong(song), sourceMode)
+    suspend fun reloadLyrics(song: Song, sourceMode: Int): List<LyricLine> = lyricsManager.reloadLyrics(onlineLyricsSong(song), sourceMode)
 
     suspend fun getLyricFormatAvailability(song: Song): LyricFormatAvailability = lyricsManager.getLyricFormatAvailability(song)
 
@@ -1317,7 +1323,8 @@ class MusicRepository(private val context: Context) {
 
     suspend fun resolveSongForPlayback(song: Song): Song = withContext(Dispatchers.IO) {
         // Media3 resolves this stable URI at each open, including queue advance and seek.
-        if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE) return@withContext song
+        if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE ||
+            song.onlineSource == SettingsManager.LIBRARY_SOURCE_BILIBILI) return@withContext song
         try {
             val fileSource = when {
                 song.path.startsWith("smb://", true) -> SettingsManager.LIBRARY_SOURCE_SMB

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -27,9 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.ella.music.LocalMainPageActive
 import com.ella.music.R
 import com.ella.music.ui.folder.songsForFolderPlaylist
 import com.ella.music.data.BottomBarStyle
@@ -77,9 +73,6 @@ fun LibrarySearchScreen(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val settingsManager = mainViewModel.settingsManager
-    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
-    val searchActive = LocalMainPageActive.current && lifecycleState == Lifecycle.State.RESUMED
-    val autoShowSearchKeyboard by settingsManager.autoShowSearchKeyboard.collectAsState(initial = false)
     val currentSongs by mainViewModel.songs.collectAsState()
     val currentAlbums by mainViewModel.albums.collectAsState()
     val currentPlaylists by mainViewModel.playlists.collectAsState()
@@ -622,19 +615,16 @@ fun LibrarySearchScreen(
     val resolvedSearchAutoFocus = when {
         autoFocusSearch -> true
         !initialQuery.isNullOrBlank() -> false
-        else -> autoShowSearchKeyboard
+        else -> null
     }
 
-    var queryInitialized by remember(initialQuery) { mutableStateOf(false) }
-    LaunchedEffect(searchActive, initialQuery) {
-        if (!searchActive || queryInitialized) return@LaunchedEffect
+    LaunchedEffect(initialQuery) {
         val incoming = initialQuery?.trim()?.takeIf { it.isNotBlank() }
         if (incoming != null) {
             updateQuery(incoming)
             history = saveSearchHistory(context, incoming)
             searchDock?.selectAll = false
             searchDock?.let { it.selectionRequestKey++ }
-            queryInitialized = true
             return@LaunchedEffect
         }
         val behavior = settingsManager.searchReopenBehavior.first()
@@ -642,17 +632,12 @@ fun LibrarySearchScreen(
         updateQuery(next)
         searchDock?.selectAll = searchReopenSelectsQuery(behavior, next)
         searchDock?.let { it.selectionRequestKey++ }
-        queryInitialized = true
     }
 
-    val searchOwner = remember { Any() }
-    DisposableEffect(searchDock, searchOwner) {
-        onDispose { searchDock?.unbind(searchOwner) }
-    }
     SideEffect {
         searchDock?.let { dock ->
-            if (searchActive) dock.bind(searchOwner, resolvedSearchAutoFocus) { commitSearch() }
-            else dock.unbind(searchOwner)
+            dock.onSearch = { commitSearch() }
+            dock.autoFocus = if (dock.selectAll) true else resolvedSearchAutoFocus
         }
     }
 
@@ -677,8 +662,7 @@ fun LibrarySearchScreen(
         if (useTopSearchBar) {
             LibrarySearchTopBar(
                 query = query,
-                autoFocus = resolvedSearchAutoFocus,
-                active = searchActive,
+                autoFocus = if (useDockSearchBar) searchDock?.autoFocus else resolvedSearchAutoFocus,
                 autoSelectAll = searchDock?.selectAll == true,
                 selectionRequestKey = searchDock?.selectionRequestKey ?: 0,
                 onAutoSelectAllConsumed = { searchDock?.selectAll = false },

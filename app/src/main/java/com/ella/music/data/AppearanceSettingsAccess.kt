@@ -879,5 +879,8 @@ internal fun migratedHomeItems(order: String, hidden: String, shortcuts: Boolean
 internal fun normalizeHomeSearchTarget(value: String): String =
     value.takeIf { it in setOf("local", "lx", "musicfree") } ?: "local"
 
-internal fun resolveHomeSearchTarget(librarySource: String, preference: String): String =
-    if (librarySource == SettingsManager.LIBRARY_SOURCE_NETEASE) "netease" else normalizeHomeSearchTarget(preference)
+internal fun resolveHomeSearchTarget(librarySource: String, preference: String): String = when {
+    librarySource == SettingsManager.LIBRARY_SOURCE_NETEASE -> "netease"
+    librarySource == SettingsManager.LIBRARY_SOURCE_BILIBILI -> "bilibili"
+    else -> normalizeHomeSearchTarget(preference)
+}

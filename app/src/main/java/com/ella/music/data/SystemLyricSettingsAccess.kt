@@ -17,8 +17,6 @@ import com.ella.music.data.SettingsManager.Companion.KEY_LIVE_UPDATE_LYRIC_SECON
 import com.ella.music.data.SettingsManager.Companion.KEY_XIAOMI_SUPER_ISLAND_LYRIC_ENABLED
 import com.ella.music.data.SettingsManager.Companion.KEY_XIAOMI_SUPER_ISLAND_SETTINGS
 import com.ella.music.data.SettingsManager.Companion.KEY_VIVO_ATOM_WALKMAN_WHITELIST_ENABLED
-import com.ella.music.data.SettingsManager.Companion.KEY_VIVO_MEDIA_ISLAND_ENABLED
-import com.ella.music.data.SettingsManager.Companion.KEY_VIVO_MEDIA_ISLAND_ONLY
 import com.ella.music.data.SettingsManager.Companion.KEY_LYRICON_ENABLED
 import com.ella.music.data.SettingsManager.Companion.KEY_LYRICON_PRONUNCIATION
 import com.ella.music.data.SettingsManager.Companion.KEY_LYRICON_TRANSLATION
@@ -66,8 +64,6 @@ interface SystemLyricSettingsAccess {
     val xiaomiSuperIslandLyricEnabled: Flow<Boolean>
     val xiaomiSuperIslandSettings: Flow<XiaomiSuperIslandSettings>
     val vivoAtomWalkmanWhitelistEnabled: Flow<Boolean>
-    val vivoMediaIslandEnabled: Flow<Boolean>
-    val vivoMediaIslandOnly: Flow<Boolean>
     val samsungFloatingLyricTranslation: Flow<Boolean>
     val statusBarAllowPhonetic: Flow<Boolean>
     val superLyricEnabled: Flow<Boolean>
@@ -93,8 +89,6 @@ interface SystemLyricSettingsAccess {
     suspend fun setXiaomiSuperIslandLyricEnabled(enabled: Boolean)
     suspend fun setXiaomiSuperIslandSettings(settings: XiaomiSuperIslandSettings)
     suspend fun setVivoAtomWalkmanWhitelistEnabled(enabled: Boolean)
-    suspend fun setVivoMediaIslandEnabled(enabled: Boolean)
-    suspend fun setVivoMediaIslandOnly(enabled: Boolean)
     suspend fun setSamsungFloatingLyricTranslation(enabled: Boolean)
     suspend fun setStatusBarAllowPhonetic(enabled: Boolean)
     suspend fun setSuperLyricEnabled(enabled: Boolean)
@@ -147,10 +141,6 @@ internal class SystemLyricSettingsAccessImpl(private val context: Context) : Sys
         context.dataStore.data.map { XiaomiSuperIslandSettings.decode(it[KEY_XIAOMI_SUPER_ISLAND_SETTINGS]) }
     override val vivoAtomWalkmanWhitelistEnabled: Flow<Boolean> =
         context.dataStore.data.map { it[KEY_VIVO_ATOM_WALKMAN_WHITELIST_ENABLED] ?: false }
-    override val vivoMediaIslandEnabled: Flow<Boolean> =
-        context.dataStore.data.map { it[KEY_VIVO_MEDIA_ISLAND_ENABLED] ?: false }
-    override val vivoMediaIslandOnly: Flow<Boolean> =
-        context.dataStore.data.map { it[KEY_VIVO_MEDIA_ISLAND_ONLY] ?: false }
     override val samsungFloatingLyricTranslation: Flow<Boolean> =
         context.dataStore.data.map { it[KEY_SAMSUNG_FLOATING_LYRIC_TRANSLATION] ?: false }
     override val statusBarAllowPhonetic: Flow<Boolean> =
@@ -243,14 +233,6 @@ internal class SystemLyricSettingsAccessImpl(private val context: Context) : Sys
 
     override suspend fun setVivoAtomWalkmanWhitelistEnabled(enabled: Boolean) {
         context.dataStore.edit { it[KEY_VIVO_ATOM_WALKMAN_WHITELIST_ENABLED] = enabled }
-    }
-
-    override suspend fun setVivoMediaIslandEnabled(enabled: Boolean) {
-        context.dataStore.edit { it[KEY_VIVO_MEDIA_ISLAND_ENABLED] = enabled }
-    }
-
-    override suspend fun setVivoMediaIslandOnly(enabled: Boolean) {
-        context.dataStore.edit { it[KEY_VIVO_MEDIA_ISLAND_ONLY] = enabled }
     }
 
     override suspend fun setSamsungFloatingLyricTranslation(enabled: Boolean) {

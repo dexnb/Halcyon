@@ -1,13 +1,9 @@
 package com.ella.music.ui.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
@@ -21,7 +17,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.ella.music.data.SettingsManager
 import com.ella.music.data.remote.RemoteMusicProvider
@@ -229,6 +225,7 @@ sealed class Screen(val route: String) {
     data object MusicFreeOnline : Screen("musicfree_online")
     data object MusicFreePlugins : Screen("musicfree_plugins")
     data object NeteaseSearch : Screen("netease_search")
+    data object BilibiliSearch : Screen("bilibili_search")
     data object LxOnline : Screen("lx_online")
     data object LxSourceSettings : Screen("lx_source_settings")
     data object NavidromeServerSettings : Screen("navidrome_server_settings")
@@ -268,20 +265,6 @@ internal fun AppNavigation(
     posterWallBottomPadding: Dp = 0.dp,
     onPosterWallFullscreenChanged: (Boolean) -> Unit = {}
 ) {
-    val currentEntry by navController.currentBackStackEntryAsState()
-    val backSourceEntry = currentEntry
-    val backTargetEntry = navController.previousBackStackEntry
-    fun requestAlbumListRestore(entry: androidx.navigation.NavBackStackEntry) {
-        if (entry.destination.route == Screen.Album.route) {
-            entry.savedStateHandle[AlbumListRestoreScrollRequestKey] =
-                (entry.savedStateHandle.get<Int>(AlbumListRestoreScrollRequestKey) ?: 0) + 1
-        }
-    }
-    fun prepareNavigationBack() {
-        if (navController.currentDestination?.route != Screen.AlbumDetail.route) return
-        val previousEntry = navController.previousBackStackEntry ?: return
-        requestAlbumListRestore(previousEntry)
-    }
     val bottomDockItems by mainViewModel.settingsManager.bottomDockItems.collectAsState(
         initial = initialBottomDockItems
     )
@@ -625,25 +608,16 @@ internal fun AppNavigation(
         }
     }
 
-    NavigationBackScope(
-        modifier = modifier,
-        swipeEnabled = navController.previousBackStackEntry != null,
-        gestureKey = currentEntry?.id,
-        canStartSwipe = { currentEntry?.lifecycle?.currentState == androidx.lifecycle.Lifecycle.State.RESUMED },
-        onBackCompleted = {
-            // Update the list anchor only after an actual pop, before the next layout frame.
-            if (backSourceEntry?.destination?.route == Screen.AlbumDetail.route && backTargetEntry != null &&
-                navController.currentBackStackEntry?.id == backTargetEntry.id) {
-                requestAlbumListRestore(backTargetEntry)
-            }
-        }
-    ) {
+    // Navigation 2.10 has separate predictive transitions and a NavigationEvent handler.
+    // Keep the existing pop animations, but dispatch Back only when the gesture completes so
+    // transparent pages never shrink and reveal the preceding page while the finger is down.
+    NavigationBackScope {
     NavHost(
         navController = navController,
         startDestination = if (mainPageState != null && mainPageRoutes.any {
             com.ella.music.mainPageIdentity(it) == com.ella.music.mainPageIdentity(initialStartDestination)
         }) com.ella.music.MAIN_PAGES_ROUTE else initialStartDestination,
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
             enterTransition = {
                 fadeIn(animationSpec = tween(300)) + slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Start, tween(300)
@@ -655,18 +629,11 @@ internal fun AppNavigation(
                 fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.End, tween(300)
                 )
-            },
-            predictivePopEnterTransition = {
-                // The previous sheet stays still while the opaque top sheet slides away.
-                EnterTransition.None
-            },
-            predictivePopExitTransition = {
-                slideOutHorizontally(tween(300, easing = LinearEasing)) { it }
             }
         ) {
 
 
-        navigationPage(com.ella.music.MAIN_PAGES_ROUTE) { backStackEntry ->
+        composable(com.ella.music.MAIN_PAGES_ROUTE) { backStackEntry ->
             mainPageState?.let { state ->
                 com.ella.music.MainPagePager(state, mainPageRoutes, mainPageSwipeEnabled,
                     onBackToHome = {
@@ -694,11 +661,11 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.Home.route) { backStackEntry ->
+        composable(Screen.Home.route) { backStackEntry ->
             mainDestination(Screen.Home.route, backStackEntry)
         }
 
-        navigationPage(Screen.PosterWall.route) {
+        composable(Screen.PosterWall.route) {
             com.ella.music.ui.poster.PosterWallScreen(
                 mainViewModel, playerViewModel,
                 onBack = { navController.popBackStack() }, onOpenPlayer = onNavigateToPlayer,
@@ -709,11 +676,11 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.Library.route) { backStackEntry ->
+        composable(Screen.Library.route) { backStackEntry ->
             mainDestination(Screen.Library.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.LibrarySearch.route,
             arguments = listOf(
                 navArgument("localOnly") { type = NavType.BoolType; defaultValue = false },
@@ -736,21 +703,21 @@ internal fun AppNavigation(
             mainDestination(Screen.LibrarySearch.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.Album.route,
             arguments = listOf(navArgument("fromDock") { type = NavType.BoolType; defaultValue = false })
         ) { backStackEntry ->
             mainDestination(Screen.Album.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.Artist.route,
             arguments = listOf(navArgument("fromDock") { type = NavType.BoolType; defaultValue = false })
         ) { backStackEntry ->
             mainDestination(Screen.Artist.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.AlbumDetail.route,
             arguments = listOf(navArgument("albumId") { type = NavType.LongType })
         ) { backStackEntry ->
@@ -760,7 +727,12 @@ internal fun AppNavigation(
                 mainViewModel = mainViewModel,
                 playerViewModel = playerViewModel,
                 onBack = {
-                    prepareNavigationBack()
+                    val previousEntry = navController.previousBackStackEntry
+                    if (previousEntry?.destination?.route == Screen.Album.route) {
+                        val nextRequest = (previousEntry.savedStateHandle
+                            .get<Int>(AlbumListRestoreScrollRequestKey) ?: 0) + 1
+                        previousEntry.savedStateHandle[AlbumListRestoreScrollRequestKey] = nextRequest
+                    }
                     navController.popBackStack()
                 },
                 onNavigateToAlbum = { targetAlbumId ->
@@ -776,14 +748,14 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.Folder.route,
             arguments = listOf(navArgument("fromDock") { type = NavType.BoolType; defaultValue = false })
         ) { backStackEntry ->
             mainDestination(Screen.Folder.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.ScanSettings.route,
             arguments = listOf(
                 navArgument("highlight") { defaultValue = "" },
@@ -793,11 +765,11 @@ internal fun AppNavigation(
             mainDestination(Screen.ScanSettings.route, backStackEntry)
         }
 
-        navigationPage(Screen.FolderPlaylists.route) { backStackEntry ->
+        composable(Screen.FolderPlaylists.route) { backStackEntry ->
             mainDestination(Screen.FolderPlaylists.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.FolderPlaylistDetail.route,
             arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
         ) { backStackEntry ->
@@ -819,7 +791,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.MetadataCategory.route,
             arguments = listOf(
                 navArgument("type") { type = NavType.StringType },
@@ -829,7 +801,7 @@ internal fun AppNavigation(
             mainDestination(Screen.MetadataCategory.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.MetadataCategoryDetail.route,
             arguments = listOf(
                 navArgument("type") { type = NavType.StringType },
@@ -863,14 +835,14 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.Playlists.route,
             arguments = listOf(navArgument("fromDock") { type = NavType.BoolType; defaultValue = false })
         ) { backStackEntry ->
             mainDestination(Screen.Playlists.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.PlaylistDetail.route,
             arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
         ) { backStackEntry ->
@@ -893,7 +865,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.WebDav.route) {
+        composable(Screen.WebDav.route) {
             WebDavScreen(
                 mainViewModel = mainViewModel,
                 playerViewModel = playerViewModel,
@@ -902,25 +874,25 @@ internal fun AppNavigation(
                 onNavigateToSmb = { navController.navigate(Screen.Smb.route) }
             )
         }
-        navigationPage(Screen.Smb.route) {
+        composable(Screen.Smb.route) {
             com.ella.music.ui.folder.SmbScreen(mainViewModel, playerViewModel,
                 onBack = { navController.popBackStack() }, onNavigateToPlayer = onNavigateToPlayer)
         }
-        navigationPage(Screen.WebDavLibrary.route) {
+        composable(Screen.WebDavLibrary.route) {
             com.ella.music.ui.settings.FileLibrarySettingsScreen(SettingsManager.LIBRARY_SOURCE_WEBDAV, mainViewModel,
                 onBack = { navController.popBackStack() }, onBrowse = { navController.navigate(Screen.WebDav.route) })
         }
-        navigationPage(Screen.TransferLibrary.route,
+        composable(Screen.TransferLibrary.route,
             arguments = listOf(navArgument("source") { type = NavType.StringType })) { entry ->
             com.ella.music.ui.settings.TransferLibrarySettingsScreen(entry.arguments?.getString("source").orEmpty(), mainViewModel,
                 onBack = { navController.popBackStack() })
         }
-        navigationPage(Screen.SmbLibrary.route) {
+        composable(Screen.SmbLibrary.route) {
             com.ella.music.ui.settings.FileLibrarySettingsScreen(SettingsManager.LIBRARY_SOURCE_SMB, mainViewModel,
                 onBack = { navController.popBackStack() }, onBrowse = { navController.navigate(Screen.Smb.route) })
         }
 
-        navigationPage(
+        composable(
             route = Screen.ArtistDetail.route,
             arguments = listOf(navArgument("artistName") { type = NavType.StringType })
         ) { backStackEntry ->
@@ -943,7 +915,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.FolderDetail.route,
             arguments = listOf(navArgument("folderPath") { type = NavType.StringType })
         ) { backStackEntry ->
@@ -969,23 +941,23 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.Settings.route,
             arguments = listOf(navArgument("fromDock") { type = NavType.BoolType; defaultValue = false })
         ) { backStackEntry ->
             mainDestination(Screen.Settings.route, backStackEntry)
         }
 
-        navigationPage(Screen.OtherSettings.route) {
+        composable(Screen.OtherSettings.route) {
             com.ella.music.ui.settings.OtherSettingsScreen(
                 onBack = { navController.popBackStack() },
                 onVideo = { navController.navigate(Screen.VideoPlayer.route) })
         }
-        navigationPage(Screen.VideoPlayer.route) {
+        composable(Screen.VideoPlayer.route) {
             com.ella.music.ui.video.VideoToolsScreen(onBack = { navController.popBackStack() })
         }
 
-        navigationPage(
+        composable(
             route = Screen.AudioSettings.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -997,7 +969,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.Equalizer.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -1009,7 +981,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(
+        composable(
             route = Screen.BackupSettings.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -1020,7 +992,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.CoverMediaSettings.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -1032,7 +1004,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.SettingsWizard.route) {
+        composable(Screen.SettingsWizard.route) {
             SettingsWizardScreen(
                 onBack = { navController.popBackStack() },
                 onOpenScanFolders = { navController.navigate(Screen.ScanSettings.createRoute()) },
@@ -1042,7 +1014,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.SettingsMaintenance.route) {
+        composable(Screen.SettingsMaintenance.route) {
             SettingsMaintenanceScreen(
                 onBack = { navController.popBackStack() },
                 onNavigateToSetupWizard = { navController.navigate(Screen.SettingsWizard.route) },
@@ -1052,11 +1024,11 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.PerformanceDiagnostics.route) {
+        composable(Screen.PerformanceDiagnostics.route) {
             PerformanceDiagnosticsScreen(onBack = { navController.popBackStack() })
         }
 
-        navigationPage(
+        composable(
             route = Screen.SettingsDetail.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -1078,7 +1050,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.AppearanceSubpage.route,
             arguments = listOf(
                 navArgument("page") { defaultValue = "theme" },
@@ -1107,7 +1079,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.BottomNavigationSettings.route) {
+        composable(Screen.BottomNavigationSettings.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 BottomNavigationSettingsScreen(
                     onBack = { navController.popBackStack() }
@@ -1115,7 +1087,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(
+        composable(
             route = Screen.PlayerShortcutSettings.route,
             arguments = listOf(
                 navArgument("mode") { defaultValue = "horizontal" }
@@ -1135,7 +1107,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(
+        composable(
             route = Screen.LibrarySettings.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -1156,7 +1128,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.NavidromeServerSettings.route) {
+        composable(Screen.NavidromeServerSettings.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 RemoteServerSettingsScreen(
                     provider = RemoteMusicProvider.Navidrome,
@@ -1168,7 +1140,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.OpenSubsonicServerSettings.route) {
+        composable(Screen.OpenSubsonicServerSettings.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 RemoteServerSettingsScreen(
                     provider = RemoteMusicProvider.OpenSubsonic,
@@ -1180,7 +1152,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.EmbyServerSettings.route) {
+        composable(Screen.EmbyServerSettings.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 RemoteServerSettingsScreen(
                     provider = RemoteMusicProvider.Emby,
@@ -1192,7 +1164,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(
+        composable(
             route = Screen.RemoteServerEditor.route,
             arguments = listOf(
                 navArgument("provider") { type = NavType.StringType },
@@ -1216,7 +1188,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(
+        composable(
             route = Screen.IntegrationSettings.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -1230,13 +1202,13 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.LastFmSettings.route) {
+        composable(Screen.LastFmSettings.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 LastFmSettingsScreen(onBack = { navController.popBackStack() })
             }
         }
 
-        navigationPage(
+        composable(
             route = Screen.LyricSettings.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -1251,7 +1223,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.HomeDisplaySettings.route,
             arguments = listOf(navArgument("highlight") { defaultValue = "" })
         ) { backStackEntry ->
@@ -1270,7 +1242,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.LyricPluginSources.route) {
+        composable(Screen.LyricPluginSources.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 LyricPluginSourceSettingsScreen(
                     onBack = { navController.popBackStack() }
@@ -1278,7 +1250,7 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.LyricFont.route) {
+        composable(Screen.LyricFont.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 LyricFontScreen(
                     onBack = { navController.popBackStack() }
@@ -1286,13 +1258,13 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.Logs.route) {
+        composable(Screen.Logs.route) {
             LogScreen(
                 onBack = { navController.popBackStack() }
             )
         }
 
-        navigationPage(Screen.MusicFreeOnline.route) {
+        composable(Screen.MusicFreeOnline.route) {
             MusicFreeOnlineScreen(
                 mainViewModel = mainViewModel,
                 playerViewModel = playerViewModel,
@@ -1303,13 +1275,13 @@ internal fun AppNavigation(
                 onNavigateToArtist = { navController.navigate(Screen.ArtistDetail.createRoute(it)) }
             )
         }
-        navigationPage(Screen.MusicFreePlugins.route) {
+        composable(Screen.MusicFreePlugins.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 MusicFreePluginSettingsScreen(onBack = { navController.popBackStack() })
             }
         }
 
-        navigationPage(Screen.NeteaseSearch.route) {
+        composable(Screen.NeteaseSearch.route) {
             com.ella.music.ui.online.NeteaseSearchScreen(
                 mainViewModel, playerViewModel,
                 onBack = { navController.popBackStack() },
@@ -1318,7 +1290,16 @@ internal fun AppNavigation(
                 onNavigateToPlayer = onNavigateToPlayer
             )
         }
-        navigationPage(Screen.LxOnline.route) {
+        composable(Screen.BilibiliSearch.route) {
+            com.ella.music.ui.online.BilibiliSearchScreen(
+                mainViewModel, playerViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToAlbum = { navController.navigate(Screen.AlbumDetail.createRoute(it)) },
+                onNavigateToArtist = { navController.navigate(Screen.ArtistDetail.createRoute(it)) },
+                onNavigateToPlayer = onNavigateToPlayer
+            )
+        }
+        composable(Screen.LxOnline.route) {
             LxOnlineScreen(
                 mainViewModel = mainViewModel,
                 playerViewModel = playerViewModel,
@@ -1332,7 +1313,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.LxSourceSettings.route) {
+        composable(Screen.LxSourceSettings.route) {
             SettingsLevel3Or4Scope(closeSettings) {
                 LxSourceSettingsScreen(
                     onBack = { navController.popBackStack() }
@@ -1340,11 +1321,11 @@ internal fun AppNavigation(
             }
         }
 
-        navigationPage(Screen.Analytics.route) { backStackEntry ->
+        composable(Screen.Analytics.route) { backStackEntry ->
             mainDestination(Screen.Analytics.route, backStackEntry)
         }
 
-        navigationPage(Screen.AiChat.route) {
+        composable(Screen.AiChat.route) {
             AiChatScreen(
                 mainViewModel = mainViewModel,
                 playerViewModel = playerViewModel,
@@ -1353,7 +1334,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.PlaybackHistory.route) {
+        composable(Screen.PlaybackHistory.route) {
             PlaybackHistoryScreen(
                 mainViewModel = mainViewModel,
                 playerViewModel = playerViewModel,
@@ -1367,7 +1348,7 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(
+        composable(
             route = Screen.RecentPlayback.route,
             arguments = listOf(
                 navArgument("type") {
@@ -1388,11 +1369,11 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.LibraryAnalysis.route) { backStackEntry ->
+        composable(Screen.LibraryAnalysis.route) { backStackEntry ->
             mainDestination(Screen.LibraryAnalysis.route, backStackEntry)
         }
 
-        navigationPage(
+        composable(
             route = Screen.LibraryAnalysisBucket.route,
             arguments = listOf(
                 navArgument("kind") { type = NavType.StringType },
@@ -1421,14 +1402,14 @@ internal fun AppNavigation(
             )
         }
 
-        navigationPage(Screen.About.route) {
+        composable(Screen.About.route) {
             AboutScreen(
                 onBack = { navController.popBackStack() },
                 onNavigateToUpdate = { navController.navigate(Screen.Update.route) }
             )
         }
 
-        navigationPage(Screen.Update.route) {
+        composable(Screen.Update.route) {
             UpdateScreen(
                 onBack = { navController.popBackStack() }
             )
