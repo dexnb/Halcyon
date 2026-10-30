@@ -1603,6 +1603,22 @@ class ExoPlayerManager(private val context: Context) {
         resetPlayNextForwardStack()
     }
 
+    /**
+     * 强制重载当前媒体项：重新走一遍 ResolvingDataSource（重新解析流地址），
+     * 用于切歌后「元数据更新了但音频没起来」的情况。
+     */
+    fun reloadCurrentStream() {
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            val controller = mediaController ?: return@post
+            val index = controller.currentMediaItemIndex
+            if (index < 0 || index >= controller.mediaItemCount) return@post
+            runCatching {
+                controller.replaceMediaItem(index, controller.getMediaItemAt(index))
+                controller.prepare()
+            }
+        }
+    }
+
     fun setResumePlaybackPositionEnabled(enabled: Boolean) {
         resumePlaybackPositionEnabled = enabled
         if (!enabled) perSongResumePositions.clear()

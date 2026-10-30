@@ -998,6 +998,15 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     launch(kotlinx.coroutines.Dispatchers.IO) {
                         // 当前曲先预热，紧接着预取下一首，切歌时才能秒开。
                         runCatching { store.prefetchStream(song.onlineId) }
+                        // 元数据刷新后若音频还没起来，强制重载当前曲目（重新解析地址）。
+                        kotlinx.coroutines.delay(1_200L)
+                        val current = playerManager.currentSong.value
+                        if (current != null &&
+                            current.onlineId == song.onlineId &&
+                            !playerManager.isPlaying.value
+                        ) {
+                            playerManager.reloadCurrentStream()
+                        }
                         if (next != null &&
                             next.onlineSource == com.ella.music.data.SettingsManager.LIBRARY_SOURCE_NETEASE &&
                             next.onlineId.isNotBlank()
