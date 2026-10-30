@@ -346,14 +346,22 @@ internal fun DynamicCoverVideo(
 
     val latestSyncPositionMs by rememberUpdatedState(effectiveSyncPositionMs)
     val latestSyncDurationMs by rememberUpdatedState(effectiveSyncDurationMs)
-    LaunchedEffect(exoPlayer, followsAudioClock, effectiveSyncPositionMs, effectiveSyncDurationMs, isPlaying) {
-        if (!followsAudioClock || latestSyncPositionMs == null) return@LaunchedEffect
-        MusicVideoPlaybackBridge.syncToAudio(
-            source = source,
-            positionMs = latestSyncPositionMs!!,
-            audioDurationMs = latestSyncDurationMs,
-            playing = isPlaying
-        )
+    val latestIsPlaying by rememberUpdatedState(isPlaying)
+    // 固定节拍同步：不再依赖 UI 位置更新频率，拖动后最多 200ms 内视频就会跟上。
+    LaunchedEffect(exoPlayer, followsAudioClock) {
+        if (!followsAudioClock) return@LaunchedEffect
+        while (isActive) {
+            val position = latestSyncPositionMs
+            if (position != null) {
+                MusicVideoPlaybackBridge.syncToAudio(
+                    source = source,
+                    positionMs = position,
+                    audioDurationMs = latestSyncDurationMs,
+                    playing = latestIsPlaying
+                )
+            }
+            delay(200L)
+        }
         // MusicVideoPlaybackBridge is the single owner of the silent decoder's transport state.
         // Do not write the raw audio `isPlaying` value here: a late callback from the old audio
         // command would otherwise undo a just-issued MV pause and restart the video.
