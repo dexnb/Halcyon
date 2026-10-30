@@ -3280,4 +3280,8 @@
     <string name="bilibili_dolby_summary">优先使用杜比音频流，设备不支持时自动回退</string>
     <string name="bilibili_hires">Hi-Res 音频</string>
     <string name="bilibili_hires_summary">优先使用 Hi-Res 无损音频流</string>
+
+    <string name="bilibili_select_all">全选</string>
+    <string name="bilibili_video_count">%1$d 个视频</string>
+    <string name="bilibili_selected_count">已选择 %1$d 个歌单</string>
 </resources>

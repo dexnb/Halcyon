@@ -12,14 +12,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -31,11 +35,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -44,14 +50,20 @@ import com.ella.music.data.SettingsManager
 import com.ella.music.data.bilibili.BilibiliAccountStore
 import com.ella.music.data.bilibili.BilibiliFavoriteFolder
 import com.ella.music.data.bilibili.BilibiliLibraryStore
+import com.ella.music.ui.components.EllaMiuixBottomSheet
+import com.ella.music.ui.components.EllaMiuixSheetActions
+import com.ella.music.ui.components.EllaSheetCardGroup
 import com.ella.music.ui.folder.WebDavTextField
 import com.ella.music.viewmodel.MainViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.Checkbox
 import top.yukonga.miuix.kmp.basic.DropdownItem
+import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Ok
+import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.preference.WindowSpinnerPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -72,7 +84,6 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
     var advanced by remember { mutableStateOf(false) }
     var showPlaylists by remember { mutableStateOf(false) }
     var showCreate by remember { mutableStateOf(false) }
-    var newFolderName by remember { mutableStateOf("") }
 
     var mainLang by remember { mutableStateOf(store.subtitleMainLang()) }
     var secondaryLang by remember { mutableStateOf(store.subtitleSecondaryLang()) }
@@ -113,7 +124,7 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
         "en" to "\u82f1\u6587", "ko" to "\u97e9\u6587", "auto" to "\u81ea\u52a8"
     )
 
-    com.ella.music.ui.components.EllaMiuixBottomSheet(
+    EllaMiuixBottomSheet(
         show = true,
         title = stringResource(R.string.bilibili_title),
         onDismissRequest = onDismiss
@@ -124,87 +135,121 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
                 .verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(stringResource(R.string.bilibili_summary))
+            Text(
+                text = stringResource(R.string.bilibili_summary),
+                fontSize = 13.sp,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+            )
 
             if (account.loggedIn) {
-                Text(account.name + " \u00b7 " + account.mid)
-                Button(enabled = !busy, onClick = {
-                    scope.launch {
-                        busy = true
-                        try {
-                            store.refresh(true)
-                            mainViewModel?.setLibrarySource(SettingsManager.LIBRARY_SOURCE_BILIBILI)
-                            message = context.getString(R.string.bilibili_connected)
-                        } catch (cancel: CancellationException) { throw cancel }
-                        catch (_: Exception) { message = context.getString(R.string.bilibili_sync_failed) }
-                        finally { busy = false }
-                    }
-                }) { Text(stringResource(R.string.bilibili_sync)) }
-                Button(enabled = !busy, onClick = {
-                    scope.launch {
-                        store.logout()
-                        clearBilibiliWebSession()
-                        mainViewModel?.setLibrarySource(SettingsManager.LIBRARY_SOURCE_LOCAL)
-                        if (mainViewModel == null) SettingsManager.getInstance(context).setLibrarySource(SettingsManager.LIBRARY_SOURCE_LOCAL)
-                        message = ""
-                    }
-                }) { Text(stringResource(R.string.bilibili_logout)) }
-            } else {
-                Button(enabled = !busy, onClick = { browser = true }) {
-                    Text(stringResource(R.string.bilibili_web_login))
-                }
-            }
-
-            Button(enabled = !busy, onClick = { advanced = !advanced }) {
-                Text(stringResource(R.string.bilibili_cookie_login))
-            }
-            if (advanced) {
-                WebDavTextField(
-                    stringResource(R.string.bilibili_cookie_hint),
-                    cookie,
-                    visualTransformation = PasswordVisualTransformation(),
-                    onValueChange = { cookie = it }
+                Text(
+                    text = account.name + " \u00b7 " + account.mid,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MiuixTheme.colorScheme.onSurface
                 )
-                Button(enabled = !busy && cookie.isNotBlank(), onClick = { connect(cookie) }) {
-                    Text(stringResource(R.string.bilibili_connect))
-                }
-            }
-
-            if (account.loggedIn) {
-                com.ella.music.ui.components.EllaSheetCardGroup {
-                    com.ella.music.ui.settings.SettingsSearchAnchor(R.string.bilibili_sync_playlists) {
-                        Button(enabled = !busy, onClick = {
-                            scope.launch {
-                                store.refreshFolders()
-                                showPlaylists = true
+                EllaSheetCardGroup {
+                    Column {
+                        ArrowPreference(
+                            title = stringResource(R.string.bilibili_sync_playlists),
+                            summary = if (selectedFolders.isEmpty())
+                                stringResource(R.string.bilibili_no_favorite_selected)
+                            else stringResource(R.string.bilibili_selected_count, selectedFolders.size),
+                            onClick = {
+                                scope.launch {
+                                    store.refreshFolders()
+                                    showPlaylists = true
+                                }
                             }
-                        }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.bilibili_sync_playlists) + " (" + selectedFolders.size + ")")
-                        }
+                        )
+                        ArrowPreference(
+                            title = stringResource(R.string.bilibili_create_favorite),
+                            summary = stringResource(R.string.bilibili_favorite_name),
+                            onClick = { showCreate = true }
+                        )
+                        ArrowPreference(
+                            title = stringResource(R.string.bilibili_sync),
+                            summary = stringResource(R.string.bilibili_connected),
+                            onClick = {
+                                scope.launch {
+                                    busy = true
+                                    try {
+                                        store.refresh(true)
+                                        mainViewModel?.setLibrarySource(SettingsManager.LIBRARY_SOURCE_BILIBILI)
+                                        message = context.getString(R.string.bilibili_connected)
+                                    } catch (cancel: CancellationException) { throw cancel }
+                                    catch (_: Exception) { message = context.getString(R.string.bilibili_sync_failed) }
+                                    finally { busy = false }
+                                }
+                            }
+                        )
+                        ArrowPreference(
+                            title = stringResource(R.string.bilibili_logout),
+                            summary = stringResource(R.string.bilibili_session_expired),
+                            onClick = {
+                                scope.launch {
+                                    store.logout()
+                                    clearBilibiliWebSession()
+                                    selectedFolders = emptySet()
+                                    mainViewModel?.setLibrarySource(SettingsManager.LIBRARY_SOURCE_LOCAL)
+                                    if (mainViewModel == null) SettingsManager.getInstance(context).setLibrarySource(SettingsManager.LIBRARY_SOURCE_LOCAL)
+                                    message = ""
+                                }
+                            }
+                        )
                     }
                 }
-                if (selectedFolders.isEmpty()) {
-                    Text(stringResource(R.string.bilibili_no_favorite_selected))
+            } else {
+                Button(
+                    enabled = !busy,
+                    onClick = { browser = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.bilibili_web_login)) }
+            }
+
+            Button(
+                enabled = !busy,
+                onClick = { advanced = !advanced },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text(stringResource(R.string.bilibili_cookie_login)) }
+
+            if (advanced) {
+                EllaSheetCardGroup {
+                    Column {
+                        WebDavTextField(
+                            stringResource(R.string.bilibili_cookie_hint),
+                            cookie,
+                            visualTransformation = PasswordVisualTransformation(),
+                            onValueChange = { cookie = it }
+                        )
+                        Button(
+                            enabled = !busy && cookie.isNotBlank(),
+                            onClick = { connect(cookie) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(stringResource(R.string.bilibili_connect)) }
+                    }
                 }
             }
 
-            com.ella.music.ui.components.EllaSheetCardGroup {
-                SwitchPreference(
-                    title = stringResource(R.string.bilibili_dolby),
-                    summary = stringResource(R.string.bilibili_dolby_summary),
-                    checked = dolby,
-                    onCheckedChange = { value -> dolby = value; scope.launch { store.setDolbyEnabled(value) } }
-                )
-                SwitchPreference(
-                    title = stringResource(R.string.bilibili_hires),
-                    summary = stringResource(R.string.bilibili_hires_summary),
-                    checked = hiRes,
-                    onCheckedChange = { value -> hiRes = value; scope.launch { store.setHiResEnabled(value) } }
-                )
+            EllaSheetCardGroup {
+                Column {
+                    SwitchPreference(
+                        title = stringResource(R.string.bilibili_dolby),
+                        summary = stringResource(R.string.bilibili_dolby_summary),
+                        checked = dolby,
+                        onCheckedChange = { value -> dolby = value; scope.launch { store.setDolbyEnabled(value) } }
+                    )
+                    SwitchPreference(
+                        title = stringResource(R.string.bilibili_hires),
+                        summary = stringResource(R.string.bilibili_hires_summary),
+                        checked = hiRes,
+                        onCheckedChange = { value -> hiRes = value; scope.launch { store.setHiResEnabled(value) } }
+                    )
+                }
             }
 
-            com.ella.music.ui.components.EllaSheetCardGroup {
-                com.ella.music.ui.settings.SettingsSearchAnchor(R.string.bilibili_config) {
+            EllaSheetCardGroup {
+                Column {
                     WindowSpinnerPreference(
                         title = stringResource(R.string.bilibili_subtitle_main),
                         summary = stringResource(R.string.bilibili_subtitle_main_summary),
@@ -250,10 +295,48 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
                 }
             }
 
-            Text(if (busy) stringResource(R.string.bilibili_loading) else status.ifBlank { message })
-            Text(stringResource(R.string.bilibili_playback_note))
+            Text(
+                text = if (busy) stringResource(R.string.bilibili_loading) else status.ifBlank { message },
+                fontSize = 12.sp,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+            )
+            Text(
+                text = stringResource(R.string.bilibili_playback_note),
+                fontSize = 12.sp,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+            )
         }
     }
+
+    BilibiliPlaylistSelectionSheet(
+        show = showPlaylists,
+        folders = folders,
+        initialSelected = selectedFolders,
+        onDismiss = { showPlaylists = false },
+        onConfirm = { ids ->
+            selectedFolders = ids
+            store.selectFolders(ids)
+            scope.launch {
+                busy = true
+                try { store.refresh(true) } catch (cancel: CancellationException) { throw cancel }
+                catch (_: Exception) { message = context.getString(R.string.bilibili_sync_failed) }
+                finally { busy = false }
+            }
+        }
+    )
+
+    BilibiliCreateFolderSheet(
+        show = showCreate,
+        onDismiss = { showCreate = false },
+        onConfirm = { name ->
+            scope.launch {
+                busy = true
+                try { store.createFolder(name) } catch (cancel: CancellationException) { throw cancel }
+                catch (_: Exception) { message = context.getString(R.string.bilibili_sync_failed) }
+                finally { busy = false }
+            }
+        }
+    )
 
     if (browser) {
         BilibiliBrowserLogin(
@@ -265,88 +348,152 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
             }
         )
     }
+}
 
-    if (showPlaylists) {
-        PlaylistPickerDialog(
-            folders = folders,
-            selected = selectedFolders,
-            onDismiss = { showPlaylists = false },
-            onConfirm = { ids ->
-                selectedFolders = ids
-                store.selectFolders(ids)
-                showPlaylists = false
-                scope.launch {
-                    busy = true
-                    try { store.refresh(true) } catch (cancel: CancellationException) { throw cancel }
-                    catch (_: Exception) { message = context.getString(R.string.bilibili_sync_failed) }
-                    finally { busy = false }
+@Composable
+private fun BilibiliPlaylistSelectionSheet(
+    show: Boolean,
+    folders: List<BilibiliFavoriteFolder>,
+    initialSelected: Set<Long>,
+    onDismiss: () -> Unit,
+    onConfirm: (Set<Long>) -> Unit
+) {
+    var selected by remember(show, initialSelected) { mutableStateOf(initialSelected) }
+    val allSelected = folders.isNotEmpty() && folders.all { it.id in selected }
+    EllaMiuixBottomSheet(
+        show = show,
+        title = stringResource(R.string.bilibili_sync_playlists),
+        onDismissRequest = onDismiss
+    ) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                item {
+                    PlaylistSelectionRow(
+                        title = stringResource(R.string.bilibili_select_all),
+                        summary = null,
+                        checked = allSelected,
+                        onClick = {
+                            selected = if (allSelected) emptySet() else folders.map { it.id }.toSet()
+                        }
+                    )
+                    Box(
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp).height(0.5.dp)
+                            .background(MiuixTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    )
+                }
+                items(folders, key = { it.id }) { folder ->
+                    PlaylistSelectionRow(
+                        title = folder.title,
+                        summary = stringResource(R.string.bilibili_video_count, folder.mediaCount),
+                        checked = folder.id in selected,
+                        onClick = {
+                            selected = if (folder.id in selected) selected - folder.id else selected + folder.id
+                        }
+                    )
                 }
             }
-        )
+            Spacer(Modifier.height(14.dp))
+            EllaMiuixSheetActions(
+                cancelText = stringResource(R.string.common_cancel),
+                confirmText = stringResource(R.string.bilibili_connect),
+                onCancel = onDismiss,
+                onConfirm = {
+                    onConfirm(selected)
+                    onDismiss()
+                }
+            )
+        }
     }
+}
 
-    if (showCreate) {
-        Dialog(onDismissRequest = { showCreate = false }) {
-            Column(Modifier.padding(20.dp).background(MiuixTheme.colorScheme.background), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.bilibili_create_favorite))
-                WebDavTextField(
-                    stringResource(R.string.bilibili_favorite_name),
-                    newFolderName,
-                    onValueChange = { newFolderName = it }
+@Composable
+private fun PlaylistSelectionRow(
+    title: String,
+    summary: String?,
+    checked: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        SelectionCheckbox(checked)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = MiuixTheme.colorScheme.onSurface
+            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    fontSize = 12.sp,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                 )
-                Button(enabled = !busy && newFolderName.isNotBlank(), onClick = {
-                    scope.launch {
-                        busy = true
-                        try {
-                            store.createFolder(newFolderName.trim())
-                            newFolderName = ""
-                            showCreate = false
-                        } catch (cancel: CancellationException) { throw cancel }
-                        catch (_: Exception) { message = context.getString(R.string.bilibili_sync_failed) }
-                        finally { busy = false }
-                    }
-                }) { Text(stringResource(R.string.bilibili_connect)) }
             }
         }
     }
 }
 
 @Composable
-private fun PlaylistPickerDialog(
-    folders: List<BilibiliFavoriteFolder>,
-    selected: Set<Long>,
+private fun SelectionCheckbox(checked: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(
+                if (checked) MiuixTheme.colorScheme.primary
+                else MiuixTheme.colorScheme.surfaceContainer
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        if (checked) {
+            Icon(
+                imageVector = MiuixIcons.Regular.Ok,
+                contentDescription = null,
+                tint = MiuixTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BilibiliCreateFolderSheet(
+    show: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (Set<Long>) -> Unit
+    onConfirm: (String) -> Unit
 ) {
-    var current by remember { mutableStateOf(selected) }
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(
-            Modifier.fillMaxWidth()
-                .heightIn(max = androidx.compose.ui.platform.LocalWindowInfo.current.containerDpSize.height * .7f)
-                .padding(20.dp)
-                .background(MiuixTheme.colorScheme.background)
-        ) {
-            Text(stringResource(R.string.bilibili_sync_playlists))
-            LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
-                items(folders) { folder ->
-                    val checked = current.contains(folder.id)
-                    Row(
-                        Modifier.fillMaxWidth().clickable {
-                            current = if (checked) current - folder.id else current + folder.id
-                        }.padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(state = ToggleableState(checked), onClick = {
-                            current = if (checked) current - folder.id else current + folder.id
-                        })
-                        Text(folder.title + "\u00a0\u00b7\u00a0" + folder.mediaCount)
-                    }
+    var name by remember(show) { mutableStateOf("") }
+    EllaMiuixBottomSheet(
+        show = show,
+        title = stringResource(R.string.bilibili_create_favorite),
+        onDismissRequest = onDismiss
+    ) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            WebDavTextField(
+                stringResource(R.string.bilibili_favorite_name),
+                name,
+                onValueChange = { name = it }
+            )
+            EllaMiuixSheetActions(
+                cancelText = stringResource(R.string.common_cancel),
+                confirmText = stringResource(R.string.bilibili_connect),
+                onCancel = onDismiss,
+                onConfirm = {
+                    if (name.isNotBlank()) onConfirm(name.trim())
+                    onDismiss()
                 }
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
-                Button(onClick = { onConfirm(current) }) { Text(stringResource(R.string.bilibili_connect)) }
-            }
+            )
         }
     }
 }
@@ -377,7 +524,10 @@ private fun BilibiliBrowserLogin(onDismiss: () -> Unit, onSession: (String) -> U
             web.destroy()
         }
     }
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    ) {
         BackHandler(onBack = onDismiss)
         Column(Modifier.fillMaxSize().background(MiuixTheme.colorScheme.background).systemBarsPadding()) {
             Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.SpaceBetween) {

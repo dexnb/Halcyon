@@ -3278,4 +3278,8 @@
     <string name="bilibili_dolby_summary">Prefer the Dolby audio stream, falling back when the device cannot decode it</string>
     <string name="bilibili_hires">Hi-Res audio</string>
     <string name="bilibili_hires_summary">Prefer the Hi-Res lossless audio stream</string>
+
+    <string name="bilibili_select_all">Select all</string>
+    <string name="bilibili_video_count">%1$d videos</string>
+    <string name="bilibili_selected_count">%1$d playlists selected</string>
 </resources>
