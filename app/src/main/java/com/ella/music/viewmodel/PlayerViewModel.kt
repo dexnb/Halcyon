@@ -995,7 +995,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     val playlist = playerManager.playlistFlow.value
                     val index = playlist.indexOfFirst { it.path == song.path && it.id == song.id }
                     val next = playlist.getOrNull(index + 1)
-                    kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.IO) {
+                    launch(kotlinx.coroutines.Dispatchers.IO) {
                         // 当前曲先预热，紧接着预取下一首，切歌时才能秒开。
                         runCatching { store.prefetchStream(song.onlineId) }
                         if (next != null &&
