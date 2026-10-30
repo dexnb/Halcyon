@@ -7,6 +7,8 @@ import java.io.IOException
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
@@ -94,7 +96,7 @@ internal class BilibiliApiClient(context: Context) {
         check(account.loggedIn) { "Bilibili login required" }
         val data = get("/x/v3/fav/folder/created/list-all", mapOf("up_mid" to account.mid.toString()), account.cookie)
         val list = data.optJSONArray("list") ?: JSONArray()
-        (0 until list.length()).mapNotNull { i ->
+        val folders = (0 until list.length()).mapNotNull { i ->
             val row = list.optJSONObject(i) ?: return@mapNotNull null
             BilibiliFavoriteFolder(
                 id = row.optLong("id"),
@@ -103,6 +105,26 @@ internal class BilibiliApiClient(context: Context) {
                 cover = normalizeImage(row.optString("cover").takeUnless { it == "null" || it == "undefined" }.orEmpty())
             )
         }.filter { it.id > 0 }
+        // 收藏夹本身没有封面字段，用该收藏夹最新一个视频的封面代替。
+        kotlinx.coroutines.coroutineScope {
+            folders.map { folder ->
+                async {
+                    if (folder.cover.isNotBlank()) folder
+                    else folder.copy(cover = runCatching { firstVideoCover(folder.id) }.getOrDefault(""))
+                }
+            }.awaitAll()
+        }
+    }
+
+    private suspend fun firstVideoCover(folderId: Long): String {
+        val account = accounts.account.value
+        val data = get(
+            "/x/v3/fav/resource/list",
+            mapOf("media_id" to folderId.toString(), "pn" to "1", "ps" to "1"),
+            account.cookie
+        )
+        val media = data.optJSONArray("medias")?.optJSONObject(0) ?: return ""
+        return normalizeImage(media.optString("cover").takeUnless { it == "null" || it == "undefined" }.orEmpty())
     }
 
     suspend fun createFolder(title: String): Long = withContext(Dispatchers.IO) {

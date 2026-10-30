@@ -202,9 +202,29 @@ class MusicRepository(private val context: Context) {
         metadataPathResolver = { song -> song.effectiveLocalPathForMetadata() },
         qualityCacheFile = File(context.filesDir, "audio_quality_cache.json"),
         onlineStreamInfo = { song ->
-            if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE && song.onlineId.isNotBlank())
-                com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).audioInfoFor(song.onlineId)
-            else null
+            when {
+                song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE && song.onlineId.isNotBlank() ->
+                    com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).audioInfoFor(song.onlineId)
+                song.onlineSource == SettingsManager.LIBRARY_SOURCE_BILIBILI && song.onlineId.isNotBlank() -> {
+                    val quality = com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context).audioQuality()
+                    com.ella.music.data.model.AudioInfo(
+                        format = when (quality) {
+                            30250 -> "EC3"
+                            30251 -> "FLAC"
+                            else -> "AAC"
+                        },
+                        bitRate = when (quality) {
+                            30280 -> 192_000
+                            30232 -> 132_000
+                            30216 -> 64_000
+                            else -> 0
+                        },
+                        sampleRate = 44_100,
+                        channels = 2
+                    )
+                }
+                else -> null
+            }
         }
     )
     private val tagWriter = MusicTagWriter(

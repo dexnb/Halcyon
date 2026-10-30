@@ -470,14 +470,17 @@ internal fun CoverPlayerPage(
     // especially important for the resident player, where the composable stays alive across
     // queue changes.
     val displayedMusicVideo = resolvedMusicVideo?.takeIf { it.playbackOwnerKey == dynamicCoverSongKey }
+    // 哔哩哔哩歌曲的 MV 走动态封面通道（role=MusicVideo）；开启「同步静音 MV」时也要渲染它。
+    val activeMusicVideo = displayedMusicVideo
+        ?: displayedDynamicCover?.takeIf { it.role == PlayerVideoRole.MusicVideo }
     val onMusicVideoInfoLongPress: (() -> Unit)? = if (
-        musicVideoVisible && displayedMusicVideo != null && musicVideoLongPressInfoEnabled
+        musicVideoVisible && activeMusicVideo != null && musicVideoLongPressInfoEnabled
     ) {
         { showMusicVideoInfo = true }
     } else {
         null
     }
-    val portraitDynamicCover = (if (musicVideoVisible) displayedMusicVideo else displayedDynamicCover)
+    val portraitDynamicCover = (if (musicVideoVisible) activeMusicVideo else displayedDynamicCover)
         ?.aspectRatio?.let { it < 0.92f } == true
     val skipCoverSwipeModifier = rememberCoverSwipeModifier(
         swipeEnabled = coverSwipeEnabled,
@@ -632,7 +635,7 @@ internal fun CoverPlayerPage(
                             // In silent MV mode the video owns the long press. Keeping the
                             // album-cover preview gesture here used to make the suggested MV
                             // immersive-lyrics shortcut impossible to reach.
-                            musicVideoVisible && displayedMusicVideo != null &&
+                            musicVideoVisible && activeMusicVideo != null &&
                                 musicVideoLongPressImmersiveLyricsEnabled -> {
                                 Modifier.combinedClickable(
                                     onClick = {},
@@ -657,7 +660,7 @@ internal fun CoverPlayerPage(
                     .then(swipeModifier),
                 contentAlignment = Alignment.Center
             ) {
-                val musicVideoSource = displayedMusicVideo
+                val musicVideoSource = activeMusicVideo
                 val dynamicCoverSource = displayedDynamicCover
                 val hasDynamicSource = (musicVideoVisible && musicVideoSource != null) || (!musicVideoVisible && dynamicCoverSource != null)
                 val hideArtworkBehindDynamic = hasDynamicSource
@@ -870,13 +873,13 @@ internal fun CoverPlayerPage(
             coverScale: Float = 1f,
             forceNonImmersive: Boolean = false
         ) {
-            val hasDynamicCover = (musicVideoVisible && displayedMusicVideo != null) ||
+            val hasDynamicCover = (musicVideoVisible && activeMusicVideo != null) ||
                 (!musicVideoVisible && displayedDynamicCover != null)
             // Keep immersive chrome for dynamic covers too 鈥?previously !hasDynamicCover forced
             // the card layout and produced a hard horizontal edge on 1:1 video covers.
             val isAppleMusicImmersive = immersiveAlbumCover && !forceNonImmersive
             val activeDynamicAspect = when {
-                musicVideoVisible -> displayedMusicVideo?.aspectRatio
+                musicVideoVisible -> activeMusicVideo?.aspectRatio
                 else -> displayedDynamicCover?.aspectRatio
             }
             // Tall/portrait matched covers (aspect < ~0.95) use a taller soft-melt column like
@@ -2058,7 +2061,7 @@ internal fun CoverPlayerPage(
                             )
                             .then(
                                 when {
-                                    musicVideoVisible && displayedMusicVideo != null &&
+                                    musicVideoVisible && activeMusicVideo != null &&
                                         musicVideoLongPressImmersiveLyricsEnabled -> {
                                         Modifier.combinedClickable(
                                             onClick = {},
@@ -2084,7 +2087,7 @@ internal fun CoverPlayerPage(
                         contentAlignment = Alignment.Center
                     ) {
                         // Keep MV silent and on the audio clock while its surface is hidden.
-                        if (musicVideoVisible) displayedMusicVideo?.let { source ->
+                        if (musicVideoVisible) activeMusicVideo?.let { source ->
                             DynamicCoverVideo(
                                 source = source,
                                 isPlaying = isPlaying && videoPlaybackActive,
@@ -2108,7 +2111,7 @@ internal fun CoverPlayerPage(
                                 resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                             )
                         }
-                        val hideStaticArtworkBehindDynamic = (musicVideoVisible && displayedMusicVideo != null) ||
+                        val hideStaticArtworkBehindDynamic = (musicVideoVisible && activeMusicVideo != null) ||
                             (!musicVideoVisible && displayedDynamicCover != null)
                         if (!hideStaticArtworkBehindDynamic) {
                             FullBleedCover(
@@ -2327,7 +2330,7 @@ internal fun CoverPlayerPage(
                         // album radius of 0 would silently cap a separately configured MV radius
                         // (and vice versa) before DynamicCoverVideo gets a chance to clip itself.
                         val coverShape = RoundedCornerShape(
-                            if (musicVideoVisible && displayedMusicVideo != null) {
+                            if (musicVideoVisible && activeMusicVideo != null) {
                                 musicVideoCornerRadius
                             } else {
                                 albumCoverCornerRadius
@@ -2344,7 +2347,7 @@ internal fun CoverPlayerPage(
                                 .clip(coverShape)
                                 .then(
                                     when {
-                                        musicVideoVisible && displayedMusicVideo != null &&
+                                        musicVideoVisible && activeMusicVideo != null &&
                                             musicVideoLongPressImmersiveLyricsEnabled -> {
                                             Modifier.combinedClickable(
                                                 onClick = {},
@@ -2370,7 +2373,7 @@ internal fun CoverPlayerPage(
                             contentAlignment = Alignment.Center
                         ) {
                             // Keep MV silent and synchronized behind the current cover.
-                            if (musicVideoVisible) displayedMusicVideo?.let { source ->
+                            if (musicVideoVisible) activeMusicVideo?.let { source ->
                                 DynamicCoverVideo(
                                     source = source,
                                     isPlaying = isPlaying && videoPlaybackActive,
@@ -2401,7 +2404,7 @@ internal fun CoverPlayerPage(
                                             .padding(10.dp)
                                     )
                                 }
-                            } else if (!musicVideoVisible || displayedMusicVideo == null) {
+                            } else if (!musicVideoVisible || activeMusicVideo == null) {
                                 AlbumArtView(
                                     song = song,
                                     embeddedCover = embeddedCover,
@@ -2420,7 +2423,7 @@ internal fun CoverPlayerPage(
                                 )
                             }
                             PlayerCoverVisualizerSlot()
-                            if (displayedMusicVideo != null) {
+                            if (activeMusicVideo != null) {
                                 if (musicVideoVisible && musicVideoFullscreenButtonEnabled) {
                                     Box(
                                         modifier = Modifier
@@ -2710,9 +2713,9 @@ internal fun CoverPlayerPage(
             },
             initialPage = localActionMenuPage ?: actionMenuInitialPage
         )
-        if (showMusicVideoInfo && displayedMusicVideo != null) {
+        if (showMusicVideoInfo && activeMusicVideo != null) {
             MusicVideoInfoDialog(
-                source = displayedMusicVideo,
+                source = activeMusicVideo,
                 title = song?.title.orEmpty(),
                 onDismiss = { showMusicVideoInfo = false }
             )
