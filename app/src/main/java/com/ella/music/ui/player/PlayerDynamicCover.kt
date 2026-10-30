@@ -135,10 +135,13 @@ internal fun rememberPlayerDynamicCoverSource(
     val credentials = remember(context) { com.ella.music.data.spotify.SpotifyCanvasCredentialsStore.getInstance(context) }
     val cookie by credentials.cookie.collectAsState()
     val songKey = song?.dynamicCoverResolutionKey()
-    val source by produceState<DynamicCoverSource?>(null, songKey, localEnabled, customFolders, failedPath, spotifyEnabled, cookie) {
+    val bilibiliStore = remember(context) { com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context) }
+    val bilibiliPlayerVideo by bilibiliStore.playerVideoEnabled.collectAsState()
+    val source by produceState<DynamicCoverSource?>(null, songKey, localEnabled, customFolders, failedPath, spotifyEnabled, cookie, bilibiliPlayerVideo) {
         value = null
         if (song == null) return@produceState
-        if (song.onlineSource == com.ella.music.data.bilibili.BILIBILI_SOURCE && song.onlineId.isNotBlank()) {
+        if (bilibiliPlayerVideo &&
+            song.onlineSource == com.ella.music.data.bilibili.BILIBILI_SOURCE && song.onlineId.isNotBlank()) {
             val store = com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context)
             val url = withContext(Dispatchers.IO) {
                 runCatching {
@@ -153,8 +156,7 @@ internal fun rememberPlayerDynamicCoverSource(
                     failureKey = "bilibili-mv:" + song.onlineId,
                     aspectRatio = 16f / 9f,
                     playbackOwnerKey = songKey.orEmpty(),
-                    role = PlayerVideoRole.MusicVideo,
-                    syncWithAudio = false
+                    role = PlayerVideoRole.MusicVideo
                 ).takeUnless { it.failureKey == failedPath }
                 return@produceState
             }

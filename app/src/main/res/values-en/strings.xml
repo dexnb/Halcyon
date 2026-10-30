@@ -3299,4 +3299,7 @@
     <string name="bilibili_comments_deleted">Comment deleted</string>
     <string name="bilibili_comments_delete_failed">Delete failed. Try again later.</string>
     <string name="bilibili_music_video">Watch MV</string>
+
+    <string name="bilibili_player_video">Player video</string>
+    <string name="bilibili_player_video_summary">Use the MV picture instead of the cover on the player page, following playback progress</string>
 </resources>

@@ -3301,4 +3301,7 @@
     <string name="bilibili_comments_deleted">评论已删除</string>
     <string name="bilibili_comments_delete_failed">删除失败，请稍后重试</string>
     <string name="bilibili_music_video">观看 MV</string>
+
+    <string name="bilibili_player_video">播放页视频</string>
+    <string name="bilibili_player_video_summary">在播放页用 MV 画面顶替封面，并跟随进度拖动</string>
 </resources>

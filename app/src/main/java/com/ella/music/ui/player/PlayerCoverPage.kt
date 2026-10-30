@@ -695,9 +695,12 @@ internal fun CoverPlayerPage(
                         )
                     }
                     !musicVideoVisible && dynamicCoverSource != null -> {
+                        val syncAsMusicVideo = dynamicCoverSource.role == PlayerVideoRole.MusicVideo
                         DynamicCoverVideo(
                             source = dynamicCoverSource,
                             isPlaying = isPlaying && videoPlaybackActive,
+                            syncPositionMs = currentPosition.takeIf { syncAsMusicVideo },
+                            syncDurationMs = duration.takeIf { syncAsMusicVideo },
                             onPlaybackError = { onDynamicCoverFailed(dynamicCoverSource.failureKey) },
                             modifier = Modifier.fillMaxSize(),
                             cornerRadiusDp = cornerRadius.value,

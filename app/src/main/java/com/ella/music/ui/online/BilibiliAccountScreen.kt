@@ -99,6 +99,7 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
     var preferNonAi by remember { mutableStateOf(store.subtitlePreferNonAi()) }
     var audioQuality by remember { mutableStateOf(store.audioQuality()) }
     var videoQuality by remember { mutableStateOf(store.videoQuality()) }
+    var playerVideo by remember { mutableStateOf(store.playerVideoEnabledNow()) }
     var selectedFolders by remember { mutableStateOf(store.selectedFolderIds()) }
 
     fun connect(session: String) {
@@ -353,6 +354,15 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
                             val value = videoQualityOptions.getOrNull(index)?.first ?: 80
                             videoQuality = value
                             scope.launch { store.setVideoQuality(value) }
+                        }
+                    )
+                    SwitchPreference(
+                        title = stringResource(R.string.bilibili_player_video),
+                        summary = stringResource(R.string.bilibili_player_video_summary),
+                        checked = playerVideo,
+                        onCheckedChange = { value ->
+                            playerVideo = value
+                            scope.launch { store.setPlayerVideoEnabled(value) }
                         }
                     )
                 }

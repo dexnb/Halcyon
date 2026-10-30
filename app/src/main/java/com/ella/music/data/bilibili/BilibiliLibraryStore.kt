@@ -36,6 +36,14 @@ class BilibiliLibraryStore private constructor(private val context: Context) {
     val status = mutableStatus.asStateFlow()
 
     private val prefs = context.getSharedPreferences("bilibili_library", Context.MODE_PRIVATE)
+    private val mutablePlayerVideo = MutableStateFlow(context.getSharedPreferences("bilibili_library", Context.MODE_PRIVATE).getBoolean("player_video", true))
+    /** 播放页是否用 MV 顶替封面。 */
+    val playerVideoEnabled = mutablePlayerVideo.asStateFlow()
+    fun setPlayerVideoEnabled(value: Boolean) {
+        prefs.edit().putBoolean("player_video", value).apply()
+        mutablePlayerVideo.value = value
+    }
+    fun playerVideoEnabledNow(): Boolean = mutablePlayerVideo.value
     private var snapshotUserId = 0L
     private var loaded = false
 
