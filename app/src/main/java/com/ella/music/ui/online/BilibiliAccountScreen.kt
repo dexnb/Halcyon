@@ -1,32 +1,27 @@
 package com.ella.music.ui.online
 
-import android.annotation.SuppressLint
-import android.webkit.CookieManager
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.activity.compose.BackHandler
+import android.graphics.Bitmap
+import android.graphics.Color
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,33 +31,41 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.ella.music.R
 import com.ella.music.data.SettingsManager
 import com.ella.music.data.bilibili.BilibiliAccountStore
+import com.ella.music.data.bilibili.BilibiliApiClient
 import com.ella.music.data.bilibili.BilibiliFavoriteFolder
 import com.ella.music.data.bilibili.BilibiliLibraryStore
+import com.ella.music.data.bilibili.BilibiliQrCode
+import com.ella.music.ui.components.DefaultAlbumCover
 import com.ella.music.ui.components.EllaMiuixBottomSheet
 import com.ella.music.ui.components.EllaMiuixSheetActions
 import com.ella.music.ui.components.EllaSheetCardGroup
+import com.ella.music.ui.components.SafeCoverImage
 import com.ella.music.ui.folder.WebDavTextField
 import com.ella.music.viewmodel.MainViewModel
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Ok
+import top.yukonga.miuix.kmp.icon.basic.Check
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.preference.WindowSpinnerPreference
@@ -73,6 +76,7 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val store = remember { BilibiliLibraryStore.getInstance(context) }
+    val client = remember { BilibiliApiClient(context) }
     val accounts = remember { BilibiliAccountStore.getInstance(context) }
     val account by accounts.account.collectAsState()
     val status by store.status.collectAsState()
@@ -80,10 +84,14 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
     var cookie by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
-    var browser by remember { mutableStateOf(false) }
     var advanced by remember { mutableStateOf(false) }
     var showPlaylists by remember { mutableStateOf(false) }
     var showCreate by remember { mutableStateOf(false) }
+
+    var qrUrl by remember { mutableStateOf("") }
+    var qrKey by remember { mutableStateOf("") }
+    var qrStatus by remember { mutableStateOf("") }
+    var qrBusy by remember { mutableStateOf(false) }
 
     var mainLang by remember { mutableStateOf(store.subtitleMainLang()) }
     var secondaryLang by remember { mutableStateOf(store.subtitleSecondaryLang()) }
@@ -102,12 +110,67 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
                 cookie = ""
                 store.refreshFolders()
                 store.refresh(true)
+                qrUrl = ""
+                qrKey = ""
                 if (mainViewModel != null) mainViewModel.setLibrarySource(SettingsManager.LIBRARY_SOURCE_BILIBILI)
                 else SettingsManager.getInstance(context).setLibrarySource(SettingsManager.LIBRARY_SOURCE_BILIBILI)
                 message = context.getString(R.string.bilibili_connected)
             } catch (cancel: CancellationException) { throw cancel }
             catch (_: Exception) { message = context.getString(R.string.bilibili_login_failed) }
             finally { busy = false }
+        }
+    }
+
+    fun refreshQr() {
+        if (qrBusy) return
+        qrBusy = true
+        qrStatus = context.getString(R.string.bilibili_qr_generating)
+        scope.launch {
+            try {
+                val qr = client.generateLoginQr()
+                qrUrl = qr.url
+                qrKey = qr.qrcodeKey
+                qrStatus = context.getString(R.string.bilibili_qr_waiting)
+            } catch (cancel: CancellationException) { throw cancel }
+            catch (_: Exception) {
+                qrUrl = ""
+                qrKey = ""
+                qrStatus = context.getString(R.string.bilibili_login_failed)
+            } finally { qrBusy = false }
+        }
+    }
+
+    LaunchedEffect(account.loggedIn) {
+        if (!account.loggedIn && qrUrl.isBlank()) refreshQr()
+    }
+
+    LaunchedEffect(qrKey) {
+        if (qrKey.isBlank()) return@LaunchedEffect
+        while (true) {
+            delay(2000)
+            val poll = runCatching { client.pollLoginQr(qrKey) }.getOrNull()
+            if (poll == null) continue
+            when (poll.code) {
+                BilibiliQrCode.SUCCESS -> {
+                    qrStatus = context.getString(R.string.bilibili_qr_success)
+                    if (poll.cookies.isNotBlank()) connect(poll.cookies)
+                    qrKey = ""
+                    qrUrl = ""
+                    break
+                }
+                BilibiliQrCode.EXPIRED -> {
+                    qrStatus = context.getString(R.string.bilibili_qr_expired)
+                    qrUrl = ""
+                    qrKey = ""
+                    break
+                }
+                BilibiliQrCode.SCANNED_NOT_CONFIRMED -> {
+                    qrStatus = context.getString(R.string.bilibili_qr_scanned)
+                }
+                else -> {
+                    qrStatus = context.getString(R.string.bilibili_qr_waiting)
+                }
+            }
         }
     }
 
@@ -131,7 +194,7 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
     ) {
         Column(
             Modifier.fillMaxWidth()
-                .heightIn(max = androidx.compose.ui.platform.LocalWindowInfo.current.containerDpSize.height * .72f)
+                .heightIn(max = androidx.compose.ui.platform.LocalWindowInfo.current.containerDpSize.height * .74f)
                 .verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -185,26 +248,55 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
                         )
                         ArrowPreference(
                             title = stringResource(R.string.bilibili_logout),
-                            summary = stringResource(R.string.bilibili_session_expired),
+                            summary = stringResource(R.string.bilibili_logout_summary),
                             onClick = {
                                 scope.launch {
                                     store.logout()
-                                    clearBilibiliWebSession()
                                     selectedFolders = emptySet()
                                     mainViewModel?.setLibrarySource(SettingsManager.LIBRARY_SOURCE_LOCAL)
                                     if (mainViewModel == null) SettingsManager.getInstance(context).setLibrarySource(SettingsManager.LIBRARY_SOURCE_LOCAL)
                                     message = ""
+                                    refreshQr()
                                 }
                             }
                         )
                     }
                 }
             } else {
-                Button(
-                    enabled = !busy,
-                    onClick = { browser = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.bilibili_web_login)) }
+                EllaSheetCardGroup {
+                    Column(
+                        Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        val bitmap = remember(qrUrl) {
+                            if (qrUrl.isBlank()) null else runCatching { createQrBitmap(qrUrl, 560) }.getOrNull()
+                        }
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier.size(200.dp)
+                            )
+                        } else {
+                            Box(Modifier.size(200.dp), contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = stringResource(R.string.bilibili_qr_generating),
+                                    fontSize = 13.sp,
+                                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                                )
+                            }
+                        }
+                        Text(
+                            text = qrStatus.ifBlank { stringResource(R.string.bilibili_qr_waiting) },
+                            fontSize = 13.sp,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                        )
+                        Button(enabled = !qrBusy, onClick = { refreshQr() }) {
+                            Text(stringResource(R.string.bilibili_qr_refresh))
+                        }
+                    }
+                }
             }
 
             Button(
@@ -215,7 +307,7 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
 
             if (advanced) {
                 EllaSheetCardGroup {
-                    Column {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         WebDavTextField(
                             stringResource(R.string.bilibili_cookie_hint),
                             cookie,
@@ -337,17 +429,6 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
             }
         }
     )
-
-    if (browser) {
-        BilibiliBrowserLogin(
-            onDismiss = { browser = false },
-            onSession = { session ->
-                browser = false
-                if (session.isNotBlank()) connect(session)
-                else message = context.getString(R.string.bilibili_login_failed)
-            }
-        )
-    }
 }
 
 @Composable
@@ -367,28 +448,44 @@ private fun BilibiliPlaylistSelectionSheet(
     ) {
         Column(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(max = 380.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 item {
-                    PlaylistSelectionRow(
-                        title = stringResource(R.string.bilibili_select_all),
-                        summary = null,
-                        checked = allSelected,
+                    BasicComponent(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
                         onClick = {
                             selected = if (allSelected) emptySet() else folders.map { it.id }.toSet()
+                        },
+                        insideMargin = PaddingValues(horizontal = 6.dp, vertical = 10.dp),
+                        endActions = {
+                            if (allSelected) {
+                                Icon(
+                                    imageVector = MiuixIcons.Basic.Check,
+                                    contentDescription = null,
+                                    tint = MiuixTheme.colorScheme.primary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
-                    )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.bilibili_select_all),
+                            style = MiuixTheme.textStyles.body1,
+                            color = MiuixTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     Box(
                         Modifier.fillMaxWidth().padding(horizontal = 12.dp).height(0.5.dp)
                             .background(MiuixTheme.colorScheme.onSurface.copy(alpha = 0.08f))
                     )
                 }
                 items(folders, key = { it.id }) { folder ->
-                    PlaylistSelectionRow(
-                        title = folder.title,
-                        summary = stringResource(R.string.bilibili_video_count, folder.mediaCount),
-                        checked = folder.id in selected,
+                    FolderRow(
+                        folder = folder,
+                        selected = folder.id in selected,
                         onClick = {
                             selected = if (folder.id in selected) selected - folder.id else selected + folder.id
                         }
@@ -410,60 +507,61 @@ private fun BilibiliPlaylistSelectionSheet(
 }
 
 @Composable
-private fun PlaylistSelectionRow(
-    title: String,
-    summary: String?,
-    checked: Boolean,
+private fun FolderRow(
+    folder: BilibiliFavoriteFolder,
+    selected: Boolean,
     onClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        SelectionCheckbox(checked)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = MiuixTheme.colorScheme.onSurface
-            )
-            if (summary != null) {
-                Text(
-                    text = summary,
-                    fontSize = 12.sp,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+    BasicComponent(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
+        onClick = onClick,
+        insideMargin = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+        startAction = {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MiuixTheme.colorScheme.surfaceContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                if (folder.cover.isNotBlank()) {
+                    SafeCoverImage(
+                        model = folder.cover,
+                        contentDescription = null,
+                        modifier = Modifier.size(42.dp),
+                        sizePx = 128,
+                        showDefaultPlaceholder = false
+                    )
+                } else {
+                    DefaultAlbumCover(modifier = Modifier.size(42.dp))
+                }
+            }
+        },
+        endActions = {
+            if (selected) {
+                Icon(
+                    imageVector = MiuixIcons.Basic.Check,
+                    contentDescription = null,
+                    tint = MiuixTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun SelectionCheckbox(checked: Boolean) {
-    Box(
-        modifier = Modifier
-            .size(24.dp)
-            .clip(RoundedCornerShape(6.dp))
-            .background(
-                if (checked) MiuixTheme.colorScheme.primary
-                else MiuixTheme.colorScheme.surfaceContainer
-            ),
-        contentAlignment = Alignment.Center
     ) {
-        if (checked) {
-            Icon(
-                imageVector = MiuixIcons.Regular.Ok,
-                contentDescription = null,
-                tint = MiuixTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(16.dp)
-            )
-        }
+        Text(
+            text = folder.title,
+            style = MiuixTheme.textStyles.body1,
+            color = MiuixTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = stringResource(R.string.bilibili_video_count, folder.mediaCount),
+            style = MiuixTheme.textStyles.body2,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -498,60 +596,17 @@ private fun BilibiliCreateFolderSheet(
     }
 }
 
-@SuppressLint("SetJavaScriptEnabled")
-@Composable
-private fun BilibiliBrowserLogin(onDismiss: () -> Unit, onSession: (String) -> Unit) {
-    val context = LocalContext.current
-    val web = remember {
-        WebView(context).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.allowFileAccess = false
-            settings.allowContentAccess = false
-            webViewClient = object : WebViewClient() {
-                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                    val host = request.url.host.orEmpty()
-                    return request.url.scheme != "https" || !(host == "bilibili.com" || host.endsWith(".bilibili.com"))
-                }
-            }
-            loadUrl("https://passport.bilibili.com/login")
+private fun createQrBitmap(text: String, size: Int): Bitmap {
+    val hints = mapOf(
+        EncodeHintType.CHARACTER_SET to "UTF-8",
+        EncodeHintType.MARGIN to 1
+    )
+    val matrix = QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, size, size, hints)
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    for (x in 0 until size) {
+        for (y in 0 until size) {
+            bitmap.setPixel(x, y, if (matrix[x, y]) Color.BLACK else Color.WHITE)
         }
     }
-    DisposableEffect(web) {
-        onDispose {
-            web.stopLoading()
-            clearBilibiliWebSession()
-            web.destroy()
-        }
-    }
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
-    ) {
-        BackHandler(onBack = onDismiss)
-        Column(Modifier.fillMaxSize().background(MiuixTheme.colorScheme.background).systemBarsPadding()) {
-            Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Button(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
-                Button(onClick = {
-                    val cookieManager = CookieManager.getInstance()
-                    val parts = mutableListOf<String>()
-                    for (url in listOf("https://www.bilibili.com", "https://passport.bilibili.com", "https://api.bilibili.com")) {
-                        cookieManager.getCookie(url)?.takeIf { it.isNotBlank() }?.let { parts += it }
-                    }
-                    onSession(parts.joinToString("; "))
-                }) { Text(stringResource(R.string.bilibili_finish_login)) }
-            }
-            AndroidView(factory = { web }, modifier = Modifier.fillMaxWidth().weight(1f))
-        }
-    }
-}
-
-private fun clearBilibiliWebSession() {
-    val manager = CookieManager.getInstance()
-    for (domain in listOf(".bilibili.com", "passport.bilibili.com", "www.bilibili.com")) {
-        for (name in listOf("SESSDATA", "bili_jct", "DedeUserID", "DedeUserID__ckMd5", "sid")) {
-            manager.setCookie("https://www.bilibili.com", name + "=; Domain=" + domain + "; Path=/; Max-Age=0; Secure")
-        }
-    }
-    manager.flush()
+    return bitmap
 }

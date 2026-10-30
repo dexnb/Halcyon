@@ -3284,4 +3284,12 @@
     <string name="bilibili_select_all">全选</string>
     <string name="bilibili_video_count">%1$d 个视频</string>
     <string name="bilibili_selected_count">已选择 %1$d 个歌单</string>
+
+    <string name="bilibili_qr_generating">正在生成二维码…</string>
+    <string name="bilibili_qr_waiting">请用哔哩哔哩 App 扫描二维码</string>
+    <string name="bilibili_qr_scanned">已扫码，请在手机上确认</string>
+    <string name="bilibili_qr_expired">二维码已过期，请刷新</string>
+    <string name="bilibili_qr_success">登录成功</string>
+    <string name="bilibili_qr_refresh">刷新二维码</string>
+    <string name="bilibili_logout_summary">清除本机保存的登录凭据</string>
 </resources>

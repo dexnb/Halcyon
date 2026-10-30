@@ -3282,4 +3282,12 @@
     <string name="bilibili_select_all">Select all</string>
     <string name="bilibili_video_count">%1$d videos</string>
     <string name="bilibili_selected_count">%1$d playlists selected</string>
+
+    <string name="bilibili_qr_generating">Generating QR code…</string>
+    <string name="bilibili_qr_waiting">Scan the QR code with the Bilibili app</string>
+    <string name="bilibili_qr_scanned">Scanned. Confirm on your phone.</string>
+    <string name="bilibili_qr_expired">QR code expired. Refresh to try again.</string>
+    <string name="bilibili_qr_success">Signed in</string>
+    <string name="bilibili_qr_refresh">Refresh QR code</string>
+    <string name="bilibili_logout_summary">Remove the saved credentials on this device</string>
 </resources>

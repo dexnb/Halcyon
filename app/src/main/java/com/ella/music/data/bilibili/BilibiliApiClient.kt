@@ -18,7 +18,9 @@ internal const val BILIBILI_SOURCE = "bilibili"
 internal const val BILIBILI_SCHEME = "halcyon-bilibili"
 internal const val BILIBILI_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-data class BilibiliFavoriteFolder(val id: Long, val title: String, val mediaCount: Int)
+data class BilibiliFavoriteFolder(val id: Long, val title: String, val mediaCount: Int, val cover: String = "")
+internal data class BilibiliLoginQr(val url: String, val qrcodeKey: String)
+internal data class BilibiliLoginPoll(val code: Int, val cookies: String)
 data class BilibiliSubtitleTrack(val id: Long, val lan: String, val lanDoc: String, val isAi: Boolean, val lrc: String)
 
 /** A resolved, playable audio URL for one video. */
@@ -59,6 +61,31 @@ internal class BilibiliApiClient(context: Context) {
         BilibiliAccount(normalized, mid, name, normalizeImage(data.optString("face")))
     }
 
+    // ---- 扫码登录（PC 二维码，参考 BBPlayer）----
+
+    suspend fun generateLoginQr(): BilibiliLoginQr = withContext(Dispatchers.IO) {
+        val root = executeRoot("https://passport.bilibili.com/x/passport-login/web/qrcode/generate")
+        val data = root.optJSONObject("data") ?: JSONObject()
+        BilibiliLoginQr(url = data.optString("url"), qrcodeKey = data.optString("qrcode_key"))
+    }
+
+    suspend fun pollLoginQr(qrcodeKey: String): BilibiliLoginPoll = withContext(Dispatchers.IO) {
+        val url = "https://passport.bilibili.com/x/passport-login/web/qrcode/poll?qrcode_key=" +
+            URLEncoder.encode(qrcodeKey, "UTF-8")
+        val request = Request.Builder().url(url)
+            .header("Referer", "https://www.bilibili.com/")
+            .header("User-Agent", BILIBILI_USER_AGENT)
+            .build()
+        http.newCall(request).execute().use { response ->
+            val body = response.body?.string().orEmpty()
+            val root = runCatching { JSONObject(body) }.getOrNull() ?: JSONObject()
+            val data = root.optJSONObject("data") ?: JSONObject()
+            val cookies = response.headers.values("Set-Cookie")
+                .joinToString("; ") { it.substringBefore(';') }
+            BilibiliLoginPoll(code = data.optInt("code", -1), cookies = cookies)
+        }
+    }
+
     // ---- 收藏夹（歌单）----
 
     suspend fun favoriteFolders(): List<BilibiliFavoriteFolder> = withContext(Dispatchers.IO) {
@@ -71,7 +98,8 @@ internal class BilibiliApiClient(context: Context) {
             BilibiliFavoriteFolder(
                 id = row.optLong("id"),
                 title = row.optString("title"),
-                mediaCount = row.optInt("media_count")
+                mediaCount = row.optInt("media_count"),
+                cover = normalizeImage(row.optString("cover"))
             )
         }.filter { it.id > 0 }
     }
@@ -301,6 +329,17 @@ internal class BilibiliApiClient(context: Context) {
             .apply { if (cookie.isNotBlank()) header("Cookie", cookie) }
             .build()
         return executeRequest(request)
+    }
+
+    private fun executeRoot(url: String): JSONObject {
+        val request = Request.Builder().url(url)
+            .header("Referer", "https://www.bilibili.com/")
+            .header("User-Agent", BILIBILI_USER_AGENT)
+            .build()
+        return http.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Bilibili HTTP " + response.code)
+            JSONObject(response.body?.string().orEmpty())
+        }
     }
 
     private fun executeRequest(request: Request): JSONObject =
