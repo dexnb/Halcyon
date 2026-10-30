@@ -251,16 +251,6 @@ class PlaybackService : MediaLibraryService() {
             settingsManager.bluetoothAutoPlay.first()
         }
         val playbackHttpClient = WebDavClient.newAuthenticatedOkHttpClient { webDavConfig }
-            .newBuilder()
-            .addInterceptor { chain ->
-                val host = chain.request().url.host.orEmpty()
-                if (host.endsWith("bilivideo.com") || host.endsWith("hdslb.com") ||
-                    host.endsWith(".bilibili.com") || host == "bilibili.com") {
-                    chain.proceed(chain.request().newBuilder()
-                        .header("Referer", "https://www.bilibili.com/").build())
-                } else chain.proceed(chain.request())
-            }
-            .build()
         val httpDataSourceFactory = OkHttpDataSource.Factory(playbackHttpClient)
         serviceScope.launch {
             settingsManager.previousButtonAction.collect { action ->
@@ -380,11 +370,21 @@ class PlaybackService : MediaLibraryService() {
                 }
                 dataSpec.withUri(android.net.Uri.parse(url))
             } else if (dataSpec.uri.scheme == "halcyon-bilibili") {
+                // 仅哔哩哔哩需要附带的请求头，通过在 DataSpec 上挂 header 实现，
+                // 不改动全局播放 HTTP 客户端（网易云等其它来源保持原样）。
                 val id = dataSpec.uri.lastPathSegment.orEmpty()
                 val url = runBlocking(Dispatchers.IO) {
                     com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(this@PlaybackService).streamUrl(id)
                 }
-                dataSpec.withUri(android.net.Uri.parse(url))
+                dataSpec.buildUpon()
+                    .setUri(android.net.Uri.parse(url))
+                    .setHttpRequestHeaders(
+                        mapOf(
+                            "Referer" to "https://www.bilibili.com/",
+                            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                        )
+                    )
+                    .build()
             } else dataSpec
         }
         // NetEase streams go through an on-disk cache keyed by song + quality (replays cost no data).
