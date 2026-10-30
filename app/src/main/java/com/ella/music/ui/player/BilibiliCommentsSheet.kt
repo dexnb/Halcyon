@@ -115,7 +115,7 @@ internal fun BilibiliCommentsSheet(
 }
 
 @Stable
-private class CommentFloorUi {
+private class BilibiliCommentFloorUi {
     val replies = mutableStateListOf<BilibiliComment>()
     var expanded by mutableStateOf(false)
     var loading by mutableStateOf(false)
@@ -138,7 +138,7 @@ private class BilibiliCommentsUi(
     var sort by mutableStateOf(initialSort)
         private set
     val comments = mutableStateListOf<BilibiliComment>()
-    val floors = mutableStateMapOf<Long, CommentFloorUi>()
+    val floors = mutableStateMapOf<Long, BilibiliCommentFloorUi>()
     var totalCount by mutableLongStateOf(0L)
         private set
     /** First page of the current sort: loading, failed, or settled. */
@@ -294,7 +294,7 @@ private class BilibiliCommentsUi(
         }
         val floor = floors.getOrPut(floorId) {
             // A floor that had no replies has nothing else to page in.
-            CommentFloorUi().also { fresh -> fresh.hasMore = (findComment(floorId)?.replyCount ?: 0) > 0 }
+            BilibiliCommentFloorUi().also { fresh -> fresh.hasMore = (findComment(floorId)?.replyCount ?: 0) > 0 }
         }
         floor.expanded = true
         if (floor.replies.none { it.id == created.id }) {
@@ -365,10 +365,10 @@ private class BilibiliCommentsUi(
         }
     }
 
-    fun floor(commentId: Long): CommentFloorUi? = floors[commentId]
+    fun floor(commentId: Long): BilibiliCommentFloorUi? = floors[commentId]
 
     fun toggleFloor(comment: BilibiliComment) {
-        val floor = floors.getOrPut(comment.id) { CommentFloorUi() }
+        val floor = floors.getOrPut(comment.id) { BilibiliCommentFloorUi() }
         if (floor.expanded) {
             floor.expanded = false
             return
@@ -780,7 +780,7 @@ private fun BilibiliCommentAvatar(url: String, size: androidx.compose.ui.unit.Dp
 @Composable
 private fun BilibiliCommentRow(
     comment: BilibiliComment,
-    floor: CommentFloorUi?,
+    floor: BilibiliCommentFloorUi?,
     onToggleFloor: () -> Unit,
     onLoadMoreFloor: () -> Unit,
     onLike: (BilibiliComment) -> Unit,
@@ -903,7 +903,7 @@ private fun BilibiliCommentMeta(comment: BilibiliComment, compact: Boolean, onLi
             val likes = comment.likedCount
             if (likes > 0) {
                 Text(
-                    text = formatLikeCount(context, likes),
+                    text = bilibiliFormatLikeCount(context, likes),
                     fontSize = 12.sp,
                     color = likeColor,
                     maxLines = 1
@@ -939,7 +939,7 @@ private fun BilibiliCommentBody(comment: BilibiliComment, fontSizeSp: Int, showR
 @Composable
 private fun BilibiliCommentFloor(
     replyCount: Int,
-    floor: CommentFloorUi?,
+    floor: BilibiliCommentFloorUi?,
     onToggle: () -> Unit,
     onLoadMore: () -> Unit,
     onLike: (BilibiliComment) -> Unit,
@@ -1015,7 +1015,7 @@ private fun BilibiliFloorLink(text: String, onClick: () -> Unit) {
     )
 }
 
-private fun Context.usesSimplifiedChinese(): Boolean {
+private fun Context.bilibiliUsesSimplifiedChinese(): Boolean {
     val locale = resources.configuration.locales[0] ?: Locale.getDefault()
     if (locale.language != "zh") return false
     if (locale.script.equals("Hant", ignoreCase = true)) return false
@@ -1024,7 +1024,7 @@ private fun Context.usesSimplifiedChinese(): Boolean {
 
 /** Server strings ("12分钟前", "昨天22:12") are Simplified Chinese; other locales format locally. */
 private fun formatCommentTime(context: Context, comment: BilibiliComment): String {
-    if (comment.timeStr.isNotBlank() && context.usesSimplifiedChinese()) return comment.timeStr
+    if (comment.timeStr.isNotBlank() && context.bilibiliUsesSimplifiedChinese()) return comment.timeStr
     val time = comment.timeMs
     if (time <= 0L) return comment.timeStr
     val now = System.currentTimeMillis()
@@ -1041,7 +1041,7 @@ private fun formatCommentTime(context: Context, comment: BilibiliComment): Strin
     return DateUtils.formatDateTime(context, time, flags)
 }
 
-private fun formatLikeCount(context: Context, count: Long): String {
+private fun bilibiliFormatLikeCount(context: Context, count: Long): String {
     if (count < 10_000L) return count.toString()
     val chinese = context.resources.configuration.locales[0]?.language == "zh"
     fun compact(value: Double): String =
@@ -1049,7 +1049,7 @@ private fun formatLikeCount(context: Context, count: Long): String {
         else String.format(Locale.ROOT, "%.1f", value).removeSuffix(".0")
     return when {
         chinese && count >= 100_000_000L -> compact(count / 100_000_000.0) + "亿"
-        chinese -> compact(count / 10_000.0) + if (context.usesSimplifiedChinese()) "万" else "萬"
+        chinese -> compact(count / 10_000.0) + if (context.bilibiliUsesSimplifiedChinese()) "万" else "萬"
         count >= 1_000_000L -> compact(count / 1_000_000.0) + "M"
         else -> compact(count / 1_000.0) + "K"
     }
