@@ -285,25 +285,9 @@ internal fun DetailMusicVideoScreen(
                 val client = com.ella.music.data.bilibili.BilibiliApiClient(context)
                 val bvid = source.lastPathSegment.orEmpty()
                 val resumeAt = player.currentPosition.takeIf { player.mediaItemCount > 0 } ?: 0L
-                // 与 PiliPlus 一致：DASH 的 video / audio 两路分别作为独立源，再用
-                // MergingMediaSource 合成一条时间线播放（不必依赖 MPD）。
-                val tracks = runCatching { client.videoTracks(bvid, qn) }.getOrNull()
-                if (tracks != null) {
-                    val dataSourceFactory = bilibiliMvDataSourceFactory(context)
-                    val videoSource = androidx.media3.exoplayer.source.ProgressiveMediaSource
-                        .Factory(dataSourceFactory)
-                        .createMediaSource(androidx.media3.common.MediaItem.fromUri(tracks.videoUrl))
-                    val audioSource = androidx.media3.exoplayer.source.ProgressiveMediaSource
-                        .Factory(dataSourceFactory)
-                        .createMediaSource(androidx.media3.common.MediaItem.fromUri(tracks.audioUrl))
-                    player.setMediaSource(
-                        androidx.media3.exoplayer.source.MergingMediaSource(videoSource, audioSource),
-                        resumeAt
-                    )
-                } else {
-                    val url = client.videoUrl(bvid, qn)
-                    player.setMediaItem(context.buildMusicVideoMediaItem(Uri.parse(url)), resumeAt)
-                }
+                // 单文件 MP4（含音轨），直接作为一条媒体播放。
+                val url = client.videoUrl(bvid, qn)
+                player.setMediaItem(context.buildMusicVideoMediaItem(Uri.parse(url)), resumeAt)
                 player.prepare()
                 player.playWhenReady = true
             } catch (cancel: kotlinx.coroutines.CancellationException) {

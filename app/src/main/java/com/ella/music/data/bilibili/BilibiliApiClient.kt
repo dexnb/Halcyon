@@ -438,7 +438,26 @@ internal class BilibiliApiClient(context: Context) {
             ?: view.optJSONArray("pages")?.optJSONObject(0)?.optLong("cid")?.takeIf { it > 0 }
             ?: throw IOException("Video cid unavailable")
 
-        // 1) MP4 durl（含音轨，最省事）
+        // 1) html5 通道：稳定返回标准 CDN 的单个 MP4（含音轨，720P 上限）
+        val html5Query = wbi.sign(
+            mapOf(
+                "bvid" to bvid,
+                "cid" to cid.toString(),
+                "qn" to qualityQn.toString(),
+                "fnval" to "1",
+                "fnver" to "0",
+                "fourk" to "1",
+                "platform" to "html5",
+                "high_quality" to "1"
+            )
+        )
+        val html5 = runCatching {
+            val play = getRaw("/x/player/wbi/playurl?$html5Query", account.cookie)
+            play.optJSONArray("durl")?.optJSONObject(0)?.optString("url").orEmpty()
+        }.getOrDefault("")
+        if (html5.isNotBlank() && !html5.contains(".flv", ignoreCase = true)) return@withContext html5
+
+        // 2) 普通 MP4 durl
         val mp4Query = wbi.sign(
             mapOf(
                 "bvid" to bvid,
