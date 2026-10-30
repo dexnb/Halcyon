@@ -37,6 +37,7 @@ internal object BilibiliQrCode {
 internal class BilibiliApiException(val code: Int) : IOException("Bilibili API (" + code + ")")
 
 internal class BilibiliApiClient(context: Context) {
+    private val appContext = context.applicationContext
     private val accounts = BilibiliAccountStore.getInstance(context)
     private val http = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -352,26 +353,140 @@ internal class BilibiliApiClient(context: Context) {
         post("/x/v2/reply/del", body, account.cookie)
     }
 
-    /** 视频（MV）直链：单文件 durl，含音轨，供 MusicVideo 播放器使用。 */
+    /**
+     * 视频（MV）可播放地址。
+     * 优先 MP4 durl（fnval=1）；老接口对多数稿件已不再提供 MP4，回退到把 DASH 组装成本地 MPD
+     * （ExoPlayer 的 DashMediaSource 支持 on-demand 单片 + indexRange）。
+     */
     suspend fun videoUrl(bvid: String, qualityQn: Int = 80): String = withContext(Dispatchers.IO) {
         val account = accounts.account.value
         val view = get("/x/web-interface/view", mapOf("bvid" to bvid), account.cookie)
         val cid = view.optLong("cid").takeIf { it > 0 }
             ?: view.optJSONArray("pages")?.optJSONObject(0)?.optLong("cid")?.takeIf { it > 0 }
             ?: throw IOException("Video cid unavailable")
-        val query = wbi.sign(
+
+        // 1) MP4 durl（含音轨，最省事）
+        val mp4Query = wbi.sign(
             mapOf(
                 "bvid" to bvid,
                 "cid" to cid.toString(),
                 "qn" to qualityQn.toString(),
-                "fnval" to "0",
+                "fnval" to "1",
                 "fnver" to "0",
                 "fourk" to "1"
             )
         )
-        val play = getRaw("/x/player/wbi/playurl?$query", account.cookie)
-        val durl = play.optJSONArray("durl")?.optJSONObject(0)?.optString("url").orEmpty()
-        if (durl.isNotBlank()) durl else throw IOException("Video stream unavailable")
+        val mp4 = runCatching {
+            val play = getRaw("/x/player/wbi/playurl?$mp4Query", account.cookie)
+            play.optJSONArray("durl")?.optJSONObject(0)?.optString("url").orEmpty()
+        }.getOrDefault("")
+        if (mp4.isNotBlank() && !mp4.contains(".flv", ignoreCase = true)) return@withContext mp4
+
+        // 2) DASH 组装 MPD
+        val dashQuery = wbi.sign(
+            mapOf(
+                "bvid" to bvid,
+                "cid" to cid.toString(),
+                "qn" to qualityQn.toString(),
+                "fnval" to "4048",
+                "fnver" to "0",
+                "fourk" to "1"
+            )
+        )
+        val play = getRaw("/x/player/wbi/playurl?$dashQuery", account.cookie)
+        val dash = play.optJSONObject("dash") ?: throw IOException("Video stream unavailable")
+        val mpd = buildDashManifest(bvid, qualityQn, dash)
+        val file = java.io.File(appContext.cacheDir, "halcyon-bilibili-mv-" + bvid + "-" + qualityQn + ".mpd")
+        file.writeText(mpd)
+        android.net.Uri.fromFile(file).toString()
+    }
+
+    private fun buildDashManifest(bvid: String, qualityQn: Int, dash: JSONObject): String {
+        val duration = dash.optInt("duration", 0).coerceAtLeast(1)
+        val videos = dash.optJSONArray("video")?.let { array ->
+            (0 until array.length()).mapNotNull { array.optJSONObject(it) }
+        }.orEmpty()
+        val audios = dash.optJSONArray("audio")?.let { array ->
+            (0 until array.length()).mapNotNull { array.optJSONObject(it) }
+        }.orEmpty()
+        val video = videos.firstOrNull { it.optInt("id") == qualityQn }
+            ?: videos.filter { it.optInt("id") <= qualityQn }.maxByOrNull { it.optInt("id") }
+            ?: videos.maxByOrNull { it.optLong("bandwidth", 0L) }
+            ?: throw IOException("Video stream unavailable")
+        val audio = audios.firstOrNull { it.optInt("id") == 30280 }
+            ?: audios.maxByOrNull { it.optLong("bandwidth", 0L) }
+            ?: throw IOException("Audio stream unavailable")
+
+        fun segment(x: JSONObject): Pair<String, String> {
+            val base = x.optJSONObject("SegmentBase") ?: x.optJSONObject("segmentBase") ?: JSONObject()
+            val init = base.optString("Initialization").ifBlank { base.optString("initialization") }
+            val index = base.optString("indexRange").ifBlank { base.optString("index_range") }
+            return init to index
+        }
+        fun baseUrl(x: JSONObject): String {
+            x.optString("baseUrl").takeIf { it.isNotBlank() }?.let { return it }
+            val backups = x.optJSONArray("backupUrl")
+            if (backups != null) {
+                for (i in 0 until backups.length()) {
+                    val candidate = backups.optString(i)
+                    if (candidate.isNotBlank()) return candidate
+                }
+            }
+            return ""
+        }
+        fun xml(value: String): String = value
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+
+        fun representation(id: String, x: JSONObject, contentType: String, mime: String): String {
+            val (init, index) = segment(x)
+            val url = baseUrl(x)
+            if (url.isBlank()) return ""
+            val width = x.optInt("width", 0)
+            val height = x.optInt("height", 0)
+            val frameRate = x.optString("frameRate")
+            val codecs = x.optString("codecs")
+            val bandwidth = x.optLong("bandwidth", 1L).coerceAtLeast(1L)
+            val sb = StringBuilder()
+            sb.append("      <Representation id=\"").append(id).append("\" bandwidth=\"").append(bandwidth).append("\"")
+            if (codecs.isNotBlank()) sb.append(" codecs=\"").append(xml(codecs)).append("\"")
+            if (width > 0) sb.append(" width=\"").append(width).append("\"")
+            if (height > 0) sb.append(" height=\"").append(height).append("\"")
+            if (frameRate.isNotBlank()) sb.append(" frameRate=\"").append(xml(frameRate)).append("\"")
+            sb.append(">\n")
+            sb.append("        <BaseURL>").append(xml(url)).append("</BaseURL>\n")
+            sb.append("        <SegmentBase")
+            if (index.isNotBlank()) sb.append(" indexRange=\"").append(xml(index)).append("\"")
+            sb.append(">\n")
+            if (init.isNotBlank()) sb.append("          <Initialization range=\"").append(xml(init)).append("\"/>\n")
+            sb.append("        </SegmentBase>\n")
+            sb.append("      </Representation>\n")
+            return sb.toString()
+        }
+
+        val videoRep = representation("v", video, "video", "video/mp4")
+        val audioRep = representation("a", audio, "audio", "audio/mp4")
+        if (videoRep.isBlank() || audioRep.isBlank()) throw IOException("Video stream unavailable")
+
+        return buildString {
+            append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+            append("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\"")
+            append(" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\"")
+            append(" type=\"static\"")
+            append(" mediaPresentationDuration=\"PT").append(duration).append("S\"")
+            append(" minBufferTime=\"PT1.5S\">\n")
+            append("  <Period>\n")
+            append("    <AdaptationSet contentType=\"video\" mimeType=\"video/mp4\" segmentAlignment=\"true\" startWithSAP=\"1\">\n")
+            append(videoRep)
+            append("    </AdaptationSet>\n")
+            append("    <AdaptationSet contentType=\"audio\" mimeType=\"audio/mp4\" segmentAlignment=\"true\" startWithSAP=\"1\">\n")
+            append(audioRep)
+            append("    </AdaptationSet>\n")
+            append("  </Period>\n")
+            append("</MPD>\n")
+        }
     }
 
     // ---- 字幕（CC 字幕）----
