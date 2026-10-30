@@ -139,6 +139,7 @@ private class BilibiliCommentsUi(
         private set
     val comments = mutableStateListOf<BilibiliComment>()
     val floors = mutableStateMapOf<Long, BilibiliCommentFloorUi>()
+    val currentUserId: Long get() = client.signedInAccount()?.mid ?: 0L
     var totalCount by mutableLongStateOf(0L)
         private set
     /** First page of the current sort: loading, failed, or settled. */
@@ -235,6 +236,26 @@ private class BilibiliCommentsUi(
                 showToast(failureText(error, R.string.netease_comments_like_failed))
             } finally {
                 likesInFlight.remove(id)
+            }
+        }
+    }
+
+    fun delete(comment: BilibiliComment) {
+        if (client.signedInAccount() == null) {
+            toast(R.string.bilibili_comments_login_required)
+            return
+        }
+        scope.launch {
+            try {
+                client.deleteComment(songId = songId, resource = resource, commentId = comment.id)
+                comments.removeAll { it.id == comment.id }
+                floors.values.forEach { floor -> floor.replies.removeAll { it.id == comment.id } }
+                totalCount = (totalCount - 1).coerceAtLeast(0)
+                toast(R.string.bilibili_comments_deleted)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                showToast(failureText(error, R.string.bilibili_comments_delete_failed))
             }
         }
     }
@@ -466,7 +487,9 @@ private fun ColumnScope.BilibiliCommentsContent(song: Song, songIdOverride: Stri
                             onToggleFloor = { ui.toggleFloor(comment) },
                             onLoadMoreFloor = { ui.loadFloor(comment.id) },
                             onLike = ui::toggleLike,
-                            onReply = ui::replyTo
+                            onReply = ui::replyTo,
+                            onDelete = ui::delete,
+                            currentUserId = ui.currentUserId
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(start = 52.dp),
@@ -784,7 +807,9 @@ private fun BilibiliCommentRow(
     onToggleFloor: () -> Unit,
     onLoadMoreFloor: () -> Unit,
     onLike: (BilibiliComment) -> Unit,
-    onReply: (BilibiliComment) -> Unit
+    onReply: (BilibiliComment) -> Unit,
+    onDelete: (BilibiliComment) -> Unit,
+    currentUserId: Long
 ) {
     Row(
         modifier = Modifier
@@ -795,7 +820,14 @@ private fun BilibiliCommentRow(
         BilibiliCommentAvatar(url = comment.user.avatarUrl, size = 36.dp)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            BilibiliCommentMeta(comment = comment, compact = false, onLike = { onLike(comment) })
+            BilibiliCommentMeta(
+                comment = comment,
+                compact = false,
+                onLike = { onLike(comment) },
+                onDelete = if (currentUserId > 0L && comment.user.userId == currentUserId) {
+                    { onDelete(comment) }
+                } else null
+            )
             Spacer(modifier = Modifier.height(6.dp))
             BilibiliCommentBody(comment = comment, fontSizeSp = 15, showReplyPrefix = false)
             comment.replyTo?.let { target ->
@@ -834,7 +866,12 @@ private fun BilibiliCommentRow(
 }
 
 @Composable
-private fun BilibiliCommentMeta(comment: BilibiliComment, compact: Boolean, onLike: () -> Unit) {
+private fun BilibiliCommentMeta(
+    comment: BilibiliComment,
+    compact: Boolean,
+    onLike: () -> Unit,
+    onDelete: (() -> Unit)? = null
+) {
     val context = LocalContext.current
     val summary = MiuixTheme.colorScheme.onSurfaceVariantSummary
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -890,6 +927,19 @@ private fun BilibiliCommentMeta(comment: BilibiliComment, compact: Boolean, onLi
                     overflow = TextOverflow.Ellipsis
                 )
             }
+        }
+        if (onDelete != null && !compact) {
+            Text(
+                text = stringResource(R.string.bilibili_comments_delete),
+                fontSize = 12.sp,
+                color = summary,
+                maxLines = 1,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onDelete)
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
         }
         Spacer(modifier = Modifier.width(4.dp))
         val likeColor = if (comment.liked) MiuixTheme.colorScheme.primary else summary

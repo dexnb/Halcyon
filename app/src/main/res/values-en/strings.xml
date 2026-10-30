@@ -3290,4 +3290,13 @@
     <string name="bilibili_qr_success">Signed in</string>
     <string name="bilibili_qr_refresh">Refresh QR code</string>
     <string name="bilibili_logout_summary">Remove the saved credentials on this device</string>
+
+    <string name="bilibili_audio_quality">Audio quality</string>
+    <string name="bilibili_audio_quality_summary">Pick the audio stream quality; falls back when unsupported</string>
+    <string name="bilibili_video_quality">MV quality</string>
+    <string name="bilibili_video_quality_summary">Resolution used when playing a Bilibili MV</string>
+    <string name="bilibili_comments_delete">Delete</string>
+    <string name="bilibili_comments_deleted">Comment deleted</string>
+    <string name="bilibili_comments_delete_failed">Delete failed. Try again later.</string>
+    <string name="bilibili_music_video">Watch MV</string>
 </resources>

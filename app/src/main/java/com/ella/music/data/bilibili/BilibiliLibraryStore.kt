@@ -114,15 +114,16 @@ class BilibiliLibraryStore private constructor(private val context: Context) {
 
     // ---- 音质偏好（参考 BBPlayer 的 dolby / hi-res 开关）----
 
-    fun dolbyEnabled(): Boolean = prefs.getBoolean("audio_dolby", false)
-    fun hiResEnabled(): Boolean = prefs.getBoolean("audio_hires", false)
-    fun setDolbyEnabled(value: Boolean) { prefs.edit().putBoolean("audio_dolby", value).apply() }
-    fun setHiResEnabled(value: Boolean) { prefs.edit().putBoolean("audio_hires", value).apply() }
+    fun audioQuality(): Int = prefs.getInt("audio_quality", 30280)
+    fun setAudioQuality(value: Int) { prefs.edit().putInt("audio_quality", value).apply() }
+
+    fun videoQuality(): Int = prefs.getInt("video_quality", 80)
+    fun setVideoQuality(value: Int) { prefs.edit().putInt("video_quality", value).apply() }
 
     suspend fun streamUrl(bvid: String): String {
         val account = accounts.account.value
         if (!account.loggedIn) throw IOException(context.getString(R.string.bilibili_session_expired))
-        return client.resolveAudio(bvid, dolbyEnabled(), hiResEnabled()).url
+        return client.resolveAudio(bvid, audioQuality()).url
     }
 
     // ---- 字幕歌词配置（主行/副行/注音的语言优先级）----

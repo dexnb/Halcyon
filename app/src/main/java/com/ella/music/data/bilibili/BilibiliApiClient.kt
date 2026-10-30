@@ -178,8 +178,7 @@ internal class BilibiliApiClient(context: Context) {
 
     suspend fun resolveAudio(
         bvid: String,
-        enableDolby: Boolean = false,
-        enableHiRes: Boolean = false
+        qualityId: Int = 30280
     ): BilibiliAudio = withContext(Dispatchers.IO) {
         val account = accounts.account.value
         val view = get("/x/web-interface/view", mapOf("bvid" to bvid), account.cookie)
@@ -193,7 +192,7 @@ internal class BilibiliApiClient(context: Context) {
                 "fnval" to "4048",
                 "fnver" to "0",
                 "fourk" to "1",
-                "qlt" to "30280",
+                "qlt" to (if (qualityId == 30250 || qualityId == 30251) 30280 else qualityId).toString(),
                 "voice_balance" to "1"
             )
         )
@@ -201,23 +200,23 @@ internal class BilibiliApiClient(context: Context) {
         val dash = play.optJSONObject("dash")
 
         if (dash != null) {
-            if (enableDolby) {
+            if (qualityId == 30250) {
                 val dolby = dash.optJSONObject("dolby")?.optJSONArray("audio")?.optJSONObject(0)
                 val url = audioUrl(dolby)
                 if (url.isNotBlank()) return@withContext BilibiliAudio(url, dolby?.optString("mimeType").orEmpty())
             }
-            if (enableHiRes) {
+            if (qualityId == 30251) {
                 val flac = dash.optJSONObject("flac")?.optJSONObject("audio")
                 val url = audioUrl(flac)
                 if (url.isNotBlank()) return@withContext BilibiliAudio(url, flac?.optString("mimeType").orEmpty())
             }
             val audioArray = dash.optJSONArray("audio")
             if (audioArray != null && audioArray.length() > 0) {
-                val best = (0 until audioArray.length())
-                    .mapNotNull { audioArray.optJSONObject(it) }
-                    .maxByOrNull { it.optLong("bandwidth", 0L) }
-                val url = audioUrl(best)
-                if (url.isNotBlank()) return@withContext BilibiliAudio(url, best?.optString("mimeType").orEmpty())
+                val entries = (0 until audioArray.length()).mapNotNull { audioArray.optJSONObject(it) }
+                val chosen = entries.firstOrNull { it.optInt("id") == qualityId }
+                    ?: entries.maxByOrNull { it.optLong("bandwidth", 0L) }
+                val url = audioUrl(chosen)
+                if (url.isNotBlank()) return@withContext BilibiliAudio(url, chosen?.optString("mimeType").orEmpty())
             }
         }
         val durl = play.optJSONArray("durl")?.optJSONObject(0)?.optString("url").orEmpty()
@@ -332,6 +331,47 @@ internal class BilibiliApiClient(context: Context) {
         }
         val data = post("/x/v2/reply/add", builder.build(), account.cookie)
         data.optJSONObject("reply")?.let { parseBilibiliComment(it) }
+    }
+
+    suspend fun deleteComment(
+        songId: String,
+        resource: BilibiliCommentResource,
+        commentId: Long
+    ) = withContext(Dispatchers.IO) {
+        val account = accounts.account.value
+        check(account.loggedIn) { "Bilibili login required" }
+        val csrf = bilibiliCookies(account.cookie)["bili_jct"].orEmpty()
+        require(csrf.isNotBlank()) { "CSRF token (bili_jct) required" }
+        val oid = aidOf(songId)
+        val body = FormBody.Builder()
+            .add("oid", oid.toString())
+            .add("type", "1")
+            .add("rpid", commentId.toString())
+            .add("csrf", csrf)
+            .build()
+        post("/x/v2/reply/del", body, account.cookie)
+    }
+
+    /** 视频（MV）直链：单文件 durl，含音轨，供 MusicVideo 播放器使用。 */
+    suspend fun videoUrl(bvid: String, qualityQn: Int = 80): String = withContext(Dispatchers.IO) {
+        val account = accounts.account.value
+        val view = get("/x/web-interface/view", mapOf("bvid" to bvid), account.cookie)
+        val cid = view.optLong("cid").takeIf { it > 0 }
+            ?: view.optJSONArray("pages")?.optJSONObject(0)?.optLong("cid")?.takeIf { it > 0 }
+            ?: throw IOException("Video cid unavailable")
+        val query = wbi.sign(
+            mapOf(
+                "bvid" to bvid,
+                "cid" to cid.toString(),
+                "qn" to qualityQn.toString(),
+                "fnval" to "0",
+                "fnver" to "0",
+                "fourk" to "1"
+            )
+        )
+        val play = getRaw("/x/player/wbi/playurl?$query", account.cookie)
+        val durl = play.optJSONArray("durl")?.optJSONObject(0)?.optString("url").orEmpty()
+        if (durl.isNotBlank()) durl else throw IOException("Video stream unavailable")
     }
 
     // ---- 字幕（CC 字幕）----

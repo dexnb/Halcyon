@@ -58,6 +58,15 @@ internal object MusicVideoLauncher {
         ))
     }
 
+    fun openBilibili(context: Context, song: Song?, bvid: String) {
+        if (bvid.isBlank()) return
+        open(context, song, DynamicCoverSource(
+            uri = Uri.parse("halcyon-bilibili-mv://mv/" + bvid),
+            failureKey = "bilibili-mv:" + bvid,
+            role = com.ella.music.ui.player.PlayerVideoRole.MusicVideo
+        ))
+    }
+
     fun isMusicVideo(intent: Intent): Boolean = !intent.getBooleanExtra(EXTRA_GENERIC_VIDEO, false)
 
     fun songFrom(intent: Intent): Song? = intent.getStringExtra(EXTRA_SONG)

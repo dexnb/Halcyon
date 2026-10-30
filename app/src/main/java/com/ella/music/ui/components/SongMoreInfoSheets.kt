@@ -286,6 +286,14 @@ fun SongInfoSheet(
                 SongMenuItem(stringResource(R.string.song_more_open_media_info), onOpenMediaInfo)
             }
         }
+        if (song.onlineSource == com.ella.music.data.bilibili.BILIBILI_SOURCE && song.onlineId.isNotBlank()) {
+            EllaMiuixActionMenuGroup {
+                SongMenuItem(
+                    stringResource(R.string.bilibili_music_video),
+                    onClick = { com.ella.music.MusicVideoLauncher.openBilibili(context, song, song.onlineId) }
+                )
+            }
+        }
         EllaMiuixActionMenuGroup {
             leadingContent()
             for (fieldId in visibleInfoFields) {

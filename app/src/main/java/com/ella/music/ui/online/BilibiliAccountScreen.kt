@@ -97,8 +97,8 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
     var secondaryLang by remember { mutableStateOf(store.subtitleSecondaryLang()) }
     var pronunciationLang by remember { mutableStateOf(store.subtitlePronunciationLang()) }
     var preferNonAi by remember { mutableStateOf(store.subtitlePreferNonAi()) }
-    var dolby by remember { mutableStateOf(store.dolbyEnabled()) }
-    var hiRes by remember { mutableStateOf(store.hiResEnabled()) }
+    var audioQuality by remember { mutableStateOf(store.audioQuality()) }
+    var videoQuality by remember { mutableStateOf(store.videoQuality()) }
     var selectedFolders by remember { mutableStateOf(store.selectedFolderIds()) }
 
     fun connect(session: String) {
@@ -323,19 +323,37 @@ fun BilibiliAccountScreen(onDismiss: () -> Unit, mainViewModel: MainViewModel?) 
                 }
             }
 
+            val audioQualityOptions = listOf(
+                0 to "\u81ea\u52a8", 30280 to "192K", 30232 to "132K",
+                30216 to "64K", 30250 to "\u675c\u6bd4\u5168\u666f\u58f0", 30251 to "Hi-Res"
+            )
+            val videoQualityOptions = listOf(
+                120 to "4K", 116 to "1080P60", 80 to "1080P",
+                64 to "720P", 32 to "480P", 16 to "360P"
+            )
             EllaSheetCardGroup {
                 Column {
-                    SwitchPreference(
-                        title = stringResource(R.string.bilibili_dolby),
-                        summary = stringResource(R.string.bilibili_dolby_summary),
-                        checked = dolby,
-                        onCheckedChange = { value -> dolby = value; scope.launch { store.setDolbyEnabled(value) } }
+                    WindowSpinnerPreference(
+                        title = stringResource(R.string.bilibili_audio_quality),
+                        summary = stringResource(R.string.bilibili_audio_quality_summary),
+                        items = audioQualityOptions.map { DropdownItem(title = it.second) },
+                        selectedIndex = audioQualityOptions.indexOfFirst { it.first == audioQuality }.coerceAtLeast(0),
+                        onSelectedIndexChange = { index ->
+                            val value = audioQualityOptions.getOrNull(index)?.first ?: 30280
+                            audioQuality = value
+                            scope.launch { store.setAudioQuality(value) }
+                        }
                     )
-                    SwitchPreference(
-                        title = stringResource(R.string.bilibili_hires),
-                        summary = stringResource(R.string.bilibili_hires_summary),
-                        checked = hiRes,
-                        onCheckedChange = { value -> hiRes = value; scope.launch { store.setHiResEnabled(value) } }
+                    WindowSpinnerPreference(
+                        title = stringResource(R.string.bilibili_video_quality),
+                        summary = stringResource(R.string.bilibili_video_quality_summary),
+                        items = videoQualityOptions.map { DropdownItem(title = it.second) },
+                        selectedIndex = videoQualityOptions.indexOfFirst { it.first == videoQuality }.coerceAtLeast(0),
+                        onSelectedIndexChange = { index ->
+                            val value = videoQualityOptions.getOrNull(index)?.first ?: 80
+                            videoQuality = value
+                            scope.launch { store.setVideoQuality(value) }
+                        }
                     )
                 }
             }

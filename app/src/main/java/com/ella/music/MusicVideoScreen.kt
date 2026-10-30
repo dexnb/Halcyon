@@ -253,7 +253,7 @@ internal fun DetailMusicVideoScreen(
                     .build(),
                 true
             )
-            if (source.scheme != "halcyon-netease-mv") {
+            if (source.scheme != "halcyon-netease-mv" && source.scheme != "halcyon-bilibili-mv") {
                 setMediaItem(context.buildMusicVideoMediaItem(source, song.mimeType.takeIf { source.toString() == song.path && it.isNotBlank() }))
                 prepare()
                 playWhenReady = true
@@ -262,8 +262,33 @@ internal fun DetailMusicVideoScreen(
     }
     // Per-playback MV quality; starts from the saved default and can be switched from the top bar.
     var neteaseMvResolution by remember(source) { mutableStateOf<Int?>(null) }
+    var bilibiliMvQuality by remember(source) { mutableStateOf<Int?>(null) }
     var showMvQualitySheet by remember { mutableStateOf(false) }
-    LaunchedEffect(player, source, neteaseMvResolution) {
+    val mvQualityLabel: String? = when (source.scheme) {
+        "halcyon-bilibili-mv" -> when (bilibiliMvQuality ?: 80) {
+            120 -> "4K"; 116 -> "1080P60"; 80 -> "1080P"; 64 -> "720P"; 32 -> "480P"; 16 -> "360P"
+            else -> null
+        }
+        "halcyon-netease-mv" -> neteaseMvResolution?.let { it.toString() + "P" }
+        else -> null
+    }
+    LaunchedEffect(player, source, neteaseMvResolution, bilibiliMvQuality) {
+        if (source.scheme == "halcyon-bilibili-mv") {
+            try {
+                val store = com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context)
+                val qn = bilibiliMvQuality ?: store.videoQuality().also { bilibiliMvQuality = it }
+                val url = com.ella.music.data.bilibili.BilibiliApiClient(context)
+                    .videoUrl(source.lastPathSegment.orEmpty(), qn)
+                val resumeAt = player.currentPosition.takeIf { player.mediaItemCount > 0 } ?: 0L
+                player.setMediaItem(context.buildMusicVideoMediaItem(Uri.parse(url)), resumeAt)
+                player.prepare()
+                player.playWhenReady = true
+            } catch (cancel: kotlinx.coroutines.CancellationException) {
+                throw cancel
+            } catch (_: Exception) {
+                Toast.makeText(context, R.string.music_video_play_failed, Toast.LENGTH_LONG).show()
+            }
+        }
         if (source.scheme == "halcyon-netease-mv") {
             try {
                 val resolution = neteaseMvResolution ?: settingsManager.neteaseMvResolution.first().also { neteaseMvResolution = it }
@@ -481,7 +506,7 @@ internal fun DetailMusicVideoScreen(
                 onDownload = if (source.scheme == "halcyon-netease-mv") ({
                     com.ella.music.data.netease.NeteaseDownloadService.enqueue(context, song, source.lastPathSegment.orEmpty())
                 }) else null,
-                qualityLabel = neteaseMvResolution?.takeIf { source.scheme == "halcyon-netease-mv" }?.let { "${it}P" },
+                qualityLabel = mvQualityLabel,
                 onQuality = { showMvQualitySheet = true },
                 onControlsVisibleChange = { controlsVisible = it }
             )
@@ -523,7 +548,7 @@ internal fun DetailMusicVideoScreen(
                 onDownload = if (source.scheme == "halcyon-netease-mv") ({
                     com.ella.music.data.netease.NeteaseDownloadService.enqueue(context, song, source.lastPathSegment.orEmpty())
                 }) else null,
-                qualityLabel = neteaseMvResolution?.takeIf { source.scheme == "halcyon-netease-mv" }?.let { "${it}P" },
+                qualityLabel = mvQualityLabel,
                 onQuality = { showMvQualitySheet = true },
                 onControlsVisibleChange = { controlsVisible = it }
             )
@@ -534,12 +559,21 @@ internal fun DetailMusicVideoScreen(
             onDismissRequest = { showMvQualitySheet = false }
         ) {
             com.ella.music.ui.components.EllaMiuixSheetColumn(spacing = 8.dp, showHandle = false, scrollable = false) {
+                val isBilibiliMv = source.scheme == "halcyon-bilibili-mv"
+                val options = if (isBilibiliMv) listOf(
+                    120 to "4K", 116 to "1080P60", 80 to "1080P",
+                    64 to "720P", 32 to "480P", 16 to "360P"
+                ) else listOf(1080, 720, 480, 240).map { it to it.toString() + "P" }
                 com.ella.music.ui.components.EllaCheckOptionGroup(
-                    options = listOf(1080, 720, 480, 240).map { it to "${it}P" },
-                    selected = neteaseMvResolution ?: 720,
+                    options = options,
+                    selected = if (isBilibiliMv) (bilibiliMvQuality ?: 80) else (neteaseMvResolution ?: 720),
                     onSelect = { resolution ->
                         showMvQualitySheet = false
-                        if (neteaseMvResolution != resolution) neteaseMvResolution = resolution
+                        if (isBilibiliMv) {
+                            if (bilibiliMvQuality != resolution) bilibiliMvQuality = resolution
+                        } else {
+                            if (neteaseMvResolution != resolution) neteaseMvResolution = resolution
+                        }
                     }
                 )
             }
