@@ -100,7 +100,7 @@ internal class BilibiliApiClient(context: Context) {
                 id = row.optLong("id"),
                 title = row.optString("title"),
                 mediaCount = row.optInt("media_count"),
-                cover = normalizeImage(row.optString("cover"))
+                cover = normalizeImage(row.optString("cover").takeUnless { it == "null" || it == "undefined" })
             )
         }.filter { it.id > 0 }
     }
@@ -618,7 +618,7 @@ internal class BilibiliApiClient(context: Context) {
 
 private fun normalizeImage(url: String): String {
     val value = url.trim()
-    if (value.isBlank()) return ""
+    if (value.isBlank() || value == "null" || value == "undefined") return ""
     return when {
         value.startsWith("//") -> "https:$value"
         value.startsWith("http://") -> "https://" + value.removePrefix("http://")
