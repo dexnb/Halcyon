@@ -366,7 +366,19 @@ class PlaybackService : MediaLibraryService() {
             if (dataSpec.uri.scheme == "halcyon-netease") {
                 val id = dataSpec.uri.lastPathSegment.orEmpty()
                 val url = runBlocking(Dispatchers.IO) {
-                    com.ella.music.data.netease.NeteaseLibraryStore.getInstance(this@PlaybackService).streamUrl(id)
+                    val store = com.ella.music.data.netease.NeteaseLibraryStore.getInstance(this@PlaybackService)
+                    // 首次取流可能因会话/网络抖动失败；失败时清掉缓存并重试一次，
+                    // 避免「必须切歌/切歌词才加载」。
+                    runCatching { store.streamUrl(id) }
+                        .recoverCatching {
+                            android.util.Log.w("PlaybackService", "Netease stream resolve failed for " + id, it)
+                            kotlinx.coroutines.delay(350L)
+                            store.streamUrl(id)
+                        }
+                        .getOrElse {
+                            android.util.Log.e("PlaybackService", "Netease stream resolve failed twice for " + id, it)
+                            throw it
+                        }
                 }
                 dataSpec.withUri(android.net.Uri.parse(url))
             } else if (dataSpec.uri.scheme == "halcyon-bilibili") {
