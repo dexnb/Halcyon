@@ -93,8 +93,28 @@ class NeteaseLibraryStore private constructor(private val context: Context) {
     }
     suspend fun streamUrl(songId: String): String {
         val account = accounts.account.value
-        if (!account.loggedIn) throw IOException(context.getString(com.ella.music.R.string.netease_session_expired))
-        val resolved = client.resolveStream(songId, account.cookie, com.ella.music.data.SettingsManager.getInstance(context).neteaseQuality.first())
+        if (!account.loggedIn) {
+            android.util.Log.w("NeteasePlayback", "streamUrl($songId): not logged in")
+            throw IOException(context.getString(com.ella.music.R.string.netease_session_expired))
+        }
+        val startedAt = android.os.SystemClock.elapsedRealtime()
+        val quality = com.ella.music.data.SettingsManager.getInstance(context).neteaseQuality.first()
+        val resolved = try {
+            client.resolveStream(songId, account.cookie, quality)
+        } catch (t: Throwable) {
+            android.util.Log.e(
+                "NeteasePlayback",
+                "streamUrl($songId) failed after " + (android.os.SystemClock.elapsedRealtime() - startedAt) + "ms quality=" + quality,
+                t
+            )
+            throw t
+        }
+        android.util.Log.i(
+            "NeteasePlayback",
+            "streamUrl($songId) ok in " + (android.os.SystemClock.elapsedRealtime() - startedAt) +
+                "ms quality=" + quality + " mime=" + resolved.mimeType +
+                " host=" + runCatching { android.net.Uri.parse(resolved.url).host }.getOrNull()
+        )
         mutableStreamInfo.update { current ->
             val next = current + (songId to resolved)
             if (next.size > 64) next.entries.drop(next.size - 64).associate { it.key to it.value } else next
