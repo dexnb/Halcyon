@@ -282,10 +282,28 @@ internal fun DetailMusicVideoScreen(
             try {
                 val store = com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context)
                 val qn = bilibiliMvQuality ?: store.videoQuality().also { bilibiliMvQuality = it }
-                val url = com.ella.music.data.bilibili.BilibiliApiClient(context)
-                    .videoUrl(source.lastPathSegment.orEmpty(), qn)
+                val client = com.ella.music.data.bilibili.BilibiliApiClient(context)
+                val bvid = source.lastPathSegment.orEmpty()
                 val resumeAt = player.currentPosition.takeIf { player.mediaItemCount > 0 } ?: 0L
-                player.setMediaItem(context.buildMusicVideoMediaItem(Uri.parse(url)), resumeAt)
+                // 与 PiliPlus 一致：DASH 的 video / audio 两路分别作为独立源，再用
+                // MergingMediaSource 合成一条时间线播放（不必依赖 MPD）。
+                val tracks = runCatching { client.videoTracks(bvid, qn) }.getOrNull()
+                if (tracks != null) {
+                    val dataSourceFactory = bilibiliMvDataSourceFactory(context)
+                    val videoSource = androidx.media3.exoplayer.source.ProgressiveMediaSource
+                        .Factory(dataSourceFactory)
+                        .createMediaSource(androidx.media3.common.MediaItem.fromUri(tracks.videoUrl))
+                    val audioSource = androidx.media3.exoplayer.source.ProgressiveMediaSource
+                        .Factory(dataSourceFactory)
+                        .createMediaSource(androidx.media3.common.MediaItem.fromUri(tracks.audioUrl))
+                    player.setMediaSource(
+                        androidx.media3.exoplayer.source.MergingMediaSource(videoSource, audioSource),
+                        resumeAt
+                    )
+                } else {
+                    val url = client.videoUrl(bvid, qn)
+                    player.setMediaItem(context.buildMusicVideoMediaItem(Uri.parse(url)), resumeAt)
+                }
                 player.prepare()
                 player.playWhenReady = true
             } catch (cancel: kotlinx.coroutines.CancellationException) {
@@ -2085,7 +2103,7 @@ private fun openArtistFromVideo(context: Context, artist: String) {
 
 
 /** 哔哩哔哩 CDN 需要 Referer，MV 播放器单独挂一个带该头的数据源。 */
-internal fun bilibiliMvMediaSourceFactory(context: android.content.Context): androidx.media3.exoplayer.source.MediaSource.Factory {
+internal fun bilibiliMvDataSourceFactory(context: android.content.Context): androidx.media3.datasource.DataSource.Factory {
     val client = okhttp3.OkHttpClient.Builder()
         .addInterceptor { chain ->
             val host = chain.request().url.host.orEmpty()
@@ -2106,10 +2124,11 @@ internal fun bilibiliMvMediaSourceFactory(context: android.content.Context): and
             }
         }
         .build()
-    return androidx.media3.exoplayer.source.DefaultMediaSourceFactory(
-        androidx.media3.datasource.DefaultDataSource.Factory(
-            context,
-            androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(client)
-        )
+    return androidx.media3.datasource.DefaultDataSource.Factory(
+        context,
+        androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(client)
     )
 }
+
+internal fun bilibiliMvMediaSourceFactory(context: android.content.Context): androidx.media3.exoplayer.source.MediaSource.Factory =
+    androidx.media3.exoplayer.source.DefaultMediaSourceFactory(bilibiliMvDataSourceFactory(context))

@@ -140,8 +140,10 @@ internal fun rememberPlayerDynamicCoverSource(
             val store = com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context)
             val url = withContext(Dispatchers.IO) {
                 runCatching {
+                    // 封面是静音的，只取 DASH 的视频轨即可（PiliPlus 同一套分轨思路），
+                    // 避免再依赖 MPD 或整段下载。
                     com.ella.music.data.bilibili.BilibiliApiClient(context)
-                        .videoUrl(song.onlineId, store.videoQuality())
+                        .videoTracks(song.onlineId, store.videoQuality()).videoUrl
                 }.getOrNull()
             }
             if (url != null) {

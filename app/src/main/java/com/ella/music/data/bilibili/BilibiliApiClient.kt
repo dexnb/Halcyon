@@ -376,6 +376,56 @@ internal class BilibiliApiClient(context: Context) {
         post("/x/v2/reply/del", body, account.cookie)
     }
 
+    /** DASH 分轨（video/audio），与 PiliPlus 一致：两路一起喂给播放器。 */
+    data class BilibiliVideoTracks(val videoUrl: String, val audioUrl: String)
+
+    suspend fun videoTracks(bvid: String, qualityQn: Int = 80): BilibiliVideoTracks = withContext(Dispatchers.IO) {
+        val account = accounts.account.value
+        val view = get("/x/web-interface/view", mapOf("bvid" to bvid), account.cookie)
+        val cid = view.optLong("cid").takeIf { it > 0 }
+            ?: view.optJSONArray("pages")?.optJSONObject(0)?.optLong("cid")?.takeIf { it > 0 }
+            ?: throw IOException("Video cid unavailable")
+        val query = wbi.sign(
+            mapOf(
+                "bvid" to bvid,
+                "cid" to cid.toString(),
+                "qn" to qualityQn.toString(),
+                "fnval" to "4048",
+                "fnver" to "0",
+                "fourk" to "1",
+                "voice_balance" to "1"
+            )
+        )
+        val play = getRaw("/x/player/wbi/playurl?$query", account.cookie)
+        val dash = play.optJSONObject("dash") ?: throw IOException("Video stream unavailable")
+        val videos = dash.optJSONArray("video")?.let { array ->
+            (0 until array.length()).mapNotNull { array.optJSONObject(it) }
+        }.orEmpty()
+        val audios = dash.optJSONArray("audio")?.let { array ->
+            (0 until array.length()).mapNotNull { array.optJSONObject(it) }
+        }.orEmpty()
+        val video = videos.firstOrNull { it.optInt("id") == qualityQn }
+            ?: videos.filter { it.optInt("id") <= qualityQn }.maxByOrNull { it.optInt("id") }
+            ?: videos.maxByOrNull { it.optLong("bandwidth", 0L) }
+            ?: throw IOException("Video stream unavailable")
+        val audio = audios.firstOrNull { it.optInt("id") == 30280 }
+            ?: audios.maxByOrNull { it.optLong("bandwidth", 0L) }
+            ?: throw IOException("Audio stream unavailable")
+        val videoUrl = baseStreamUrl(video) ?: throw IOException("Video stream unavailable")
+        val audioUrl = baseStreamUrl(audio) ?: throw IOException("Audio stream unavailable")
+        BilibiliVideoTracks(videoUrl, audioUrl)
+    }
+
+    private fun baseStreamUrl(node: JSONObject): String? {
+        node.optString("baseUrl").takeIf { it.isNotBlank() }?.let { return it }
+        val backups = node.optJSONArray("backupUrl") ?: return null
+        for (i in 0 until backups.length()) {
+            val candidate = backups.optString(i)
+            if (candidate.isNotBlank()) return candidate
+        }
+        return null
+    }
+
     /**
      * 视频（MV）可播放地址。
      * 优先 MP4 durl（fnval=1）；老接口对多数稿件已不再提供 MP4，回退到把 DASH 组装成本地 MPD
