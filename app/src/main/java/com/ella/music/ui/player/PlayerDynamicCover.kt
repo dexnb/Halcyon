@@ -109,7 +109,9 @@ internal data class DynamicCoverSource(
     val aspectRatio: Float? = null,
     val preferLandscapeBackground: Boolean = false,
     val playbackOwnerKey: String = "",
-    val role: PlayerVideoRole = PlayerVideoRole.DynamicCover
+    val role: PlayerVideoRole = PlayerVideoRole.DynamicCover,
+    /** 只有本地 MV 文件需要跟音频时钟对齐；在线视频（哔哩哔哩）按普通循环封面播放。 */
+    val syncWithAudio: Boolean = true
 )
 
 internal fun Song.dynamicCoverResolutionKey(): String =
@@ -151,7 +153,8 @@ internal fun rememberPlayerDynamicCoverSource(
                     failureKey = "bilibili-mv:" + song.onlineId,
                     aspectRatio = 16f / 9f,
                     playbackOwnerKey = songKey.orEmpty(),
-                    role = PlayerVideoRole.MusicVideo
+                    role = PlayerVideoRole.MusicVideo,
+                    syncWithAudio = false
                 ).takeUnless { it.failureKey == failedPath }
                 return@produceState
             }
@@ -199,7 +202,7 @@ internal fun DynamicCoverVideo(
     }
 
     val context = LocalContext.current
-    val followsAudioClock = source.role == PlayerVideoRole.MusicVideo
+    val followsAudioClock = source.role == PlayerVideoRole.MusicVideo && source.syncWithAudio
     val importedMvOffsets by SettingsManager.getInstance(context).musicVideoOffsetsJson
         .collectAsState(initial = "")
     val mvDelayMs = remember(source.uri, importedMvOffsets, followsAudioClock) {
