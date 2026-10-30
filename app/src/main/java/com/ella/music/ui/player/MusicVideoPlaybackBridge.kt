@@ -30,11 +30,7 @@ internal object MusicVideoPlaybackBridge {
         @Volatile var manualOverrideUntilMs: Long = 0L,
         @Volatile var syncPositionMs: Long? = null,
         @Volatile var syncDurationMs: Long? = null,
-        @Volatile var player: Player? = null,
-        /** 上一次请求的音频位置，用来识别「用户拖动」造成的大跳。 */
-        @Volatile var lastTargetMs: Long = Long.MIN_VALUE,
-        /** 上一次下发 seek 的时刻，避免连续 seek 抖动。 */
-        @Volatile var lastSeekAtMs: Long = 0L
+        @Volatile var player: Player? = null
     )
 
     private val entries = ConcurrentHashMap<String, Entry>()
@@ -194,38 +190,17 @@ internal object MusicVideoPlaybackBridge {
         } else {
             nonNegativePosition.coerceAtMost(audioDuration)
         }
-        // 正常播放让视频走自己的时钟；只有漂移超过阈值才纠正，避免频繁 seek 造成卡顿。
-        // 用户拖动进度条会表现为「目标位置大幅跳变」，此时必须立刻对齐，不能等阈值。
-        val now = SystemClock.elapsedRealtime()
-        val targetJumped = entry.lastTargetMs == Long.MIN_VALUE ||
-            kotlin.math.abs(target - entry.lastTargetMs) >= SEEK_JUMP_MS
-        entry.lastTargetMs = target
-        val drift = target - player.currentPosition
-        val driftAbs = kotlin.math.abs(drift)
-        val seekingRecently = now - entry.lastSeekAtMs < SEEK_SETTLE_MS
-        val shouldSeek = when {
-            targetJumped -> driftAbs > SEEK_MIN_DRIFT_MS
-            driftAbs > BIG_DRIFT_MS -> true
-            driftAbs > MUSIC_VIDEO_RESYNC_TOLERANCE_MS -> !seekingRecently
-            else -> false
-        }
-        if (shouldSeek) {
+        // Normal playback advances on the video player's own clock. Seeking every UI position
+        // update caused decoder flushes and made MV playback visibly stutter.
+        if (kotlin.math.abs(player.currentPosition - target) > MUSIC_VIDEO_RESYNC_TOLERANCE_MS ||
+            (!entry.playWhenReady && player.currentPosition != target)
+        ) {
             player.seekTo(target)
-            entry.lastSeekAtMs = now
         }
         player.playWhenReady = entry.playWhenReady && requestedPosition >= 0L &&
             requestedPosition < videoDuration && requestedPosition < audioDuration
     }
 
-    /** 允许的稳态漂移；超过就纠正。 */
-    private const val MUSIC_VIDEO_RESYNC_TOLERANCE_MS = 150L
-    /** 超过这个漂移无条件纠正（即使刚 seek 过）。 */
-    private const val BIG_DRIFT_MS = 900L
-    /** 目标位置跳变超过这个值视为用户拖动，立即对齐。 */
-    private const val SEEK_JUMP_MS = 600L
-    /** 跳转后仍允许的最小误差，避免无意义的极小 seek。 */
-    private const val SEEK_MIN_DRIFT_MS = 80L
-    /** 一次 seek 之后的稳定窗口，窗口内不做小幅纠正。 */
-    private const val SEEK_SETTLE_MS = 400L
+    private const val MUSIC_VIDEO_RESYNC_TOLERANCE_MS = 750L
     private const val MANUAL_OVERRIDE_GUARD_MS = 3_000L
 }
