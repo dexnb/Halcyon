@@ -91,13 +91,35 @@ class NeteaseLibraryStore private constructor(private val context: Context) {
             }
         }
     }
-    suspend fun streamUrl(songId: String): String {
+    /** 最近解析结果，避免「切歌预热」和「播放器取流」重复请求同一首。 */
+    private val recentStreams = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, NeteaseStreamInfo>>()
+
+    /** 每首歌一把锁，避免「切歌预热」与「播放器取流」并发重复请求。 */
+    private val songLocks = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
+
+    /** 切歌时预热该曲目的流信息（元数据 + 音频地址）。 */
+    suspend fun prefetchStream(songId: String) {
+        if (audioInfoFor(songId) != null) return
+        runCatching { streamUrl(songId) }
+    }
+
+    suspend fun streamUrl(songId: String): String =
+        songLocks.getOrPut(songId) { kotlinx.coroutines.sync.Mutex() }.withLock { resolveStreamUrl(songId) }
+
+    private suspend fun resolveStreamUrl(songId: String): String {
         val account = accounts.account.value
         if (!account.loggedIn) {
             android.util.Log.w("NeteasePlayback", "streamUrl($songId): not logged in")
             throw IOException(context.getString(com.ella.music.R.string.netease_session_expired))
         }
         val startedAt = android.os.SystemClock.elapsedRealtime()
+        recentStreams[songId]?.let { (at, info) ->
+            if (info.url.isNotBlank() && startedAt - at in 0..8_000L) {
+                mutableStreamInfo.update { current -> current + (songId to info) }
+                rememberServedQuality(songId, info)
+                return info.url
+            }
+        }
         val quality = com.ella.music.data.SettingsManager.getInstance(context).neteaseQuality.first()
         val resolved = try {
             // 先用用户选择的音质；失败再用 auto 全量降级一次（某些音质在账号无权限时
@@ -122,6 +144,11 @@ class NeteaseLibraryStore private constructor(private val context: Context) {
                 "ms quality=" + quality + " type=" + resolved.type + " level=" + resolved.level +
                 " host=" + runCatching { android.net.Uri.parse(resolved.url).host }.getOrNull()
         )
+        recentStreams[songId] = startedAt to resolved
+        if (recentStreams.size > 32) {
+            recentStreams.entries.sortedBy { it.value.first }.drop(recentStreams.size - 32)
+                .forEach { recentStreams.remove(it.key) }
+        }
         mutableStreamInfo.update { current ->
             val next = current + (songId to resolved)
             if (next.size > 64) next.entries.drop(next.size - 64).associate { it.key to it.value } else next
