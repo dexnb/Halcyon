@@ -112,7 +112,7 @@ class NeteaseLibraryStore private constructor(private val context: Context) {
         android.util.Log.i(
             "NeteasePlayback",
             "streamUrl($songId) ok in " + (android.os.SystemClock.elapsedRealtime() - startedAt) +
-                "ms quality=" + quality + " mime=" + resolved.mimeType +
+                "ms quality=" + quality + " type=" + resolved.type + " level=" + resolved.level +
                 " host=" + runCatching { android.net.Uri.parse(resolved.url).host }.getOrNull()
         )
         mutableStreamInfo.update { current ->
