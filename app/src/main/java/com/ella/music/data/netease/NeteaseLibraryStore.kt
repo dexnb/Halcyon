@@ -100,7 +100,14 @@ class NeteaseLibraryStore private constructor(private val context: Context) {
         val startedAt = android.os.SystemClock.elapsedRealtime()
         val quality = com.ella.music.data.SettingsManager.getInstance(context).neteaseQuality.first()
         val resolved = try {
-            client.resolveStream(songId, account.cookie, quality)
+            // 先用用户选择的音质；失败再用 auto 全量降级一次（某些音质在账号无权限时
+            // 会直接抛 301/404，而 auto 走标准音质通常仍可取到）。
+            runCatching { client.resolveStream(songId, account.cookie, quality) }
+                .recoverCatching { first ->
+                    android.util.Log.w("NeteasePlayback", "streamUrl($songId) quality=$quality failed, retry auto", first)
+                    client.resolveStream(songId, account.cookie, "auto")
+                }
+                .getOrThrow()
         } catch (t: Throwable) {
             android.util.Log.e(
                 "NeteasePlayback",
