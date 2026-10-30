@@ -100,7 +100,7 @@ internal class BilibiliApiClient(context: Context) {
                 id = row.optLong("id"),
                 title = row.optString("title"),
                 mediaCount = row.optInt("media_count"),
-                cover = normalizeImage(row.optString("cover").takeUnless { it == "null" || it == "undefined" })
+                cover = normalizeImage(row.optString("cover").takeUnless { it == "null" || it == "undefined" }.orEmpty())
             )
         }.filter { it.id > 0 }
     }
