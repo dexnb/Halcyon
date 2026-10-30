@@ -400,7 +400,8 @@ internal fun Song.audioFormatLabel(
     val fallbackName = path.substringBefore('?').substringBefore('#').substringAfterLast('/')
     // 在线音源的 fileName 往往是视频/歌曲标题，绝不能当作格式提示，否则标题会被识别成
     // 音频格式显示到播放页的音质位置。
-    val fileNameSource = if (onlineSource.isNotBlank()) "" else fileName.ifBlank { fallbackName }.lowercase()
+    // 仅哔哩哔哩：其 fileName 是视频标题，不能当格式提示；其它在线源（含网易云）保持原行为。
+    val fileNameSource = if (onlineSource == "bilibili") "" else fileName.ifBlank { fallbackName }.lowercase()
     val extensionSource = fileName.takeIf { it.substringAfterLast('.', "").isNotBlank() } ?: fallbackName
     val extension = extensionSource.substringAfterLast('.', "").lowercase()
     val hintSource = listOf(declaredSource, fileNameSource)
