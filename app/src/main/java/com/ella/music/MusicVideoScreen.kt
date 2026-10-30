@@ -2085,7 +2085,7 @@ private fun openArtistFromVideo(context: Context, artist: String) {
 
 
 /** 哔哩哔哩 CDN 需要 Referer，MV 播放器单独挂一个带该头的数据源。 */
-private fun bilibiliMvMediaSourceFactory(context: android.content.Context): androidx.media3.exoplayer.source.MediaSource.Factory {
+internal fun bilibiliMvMediaSourceFactory(context: android.content.Context): androidx.media3.exoplayer.source.MediaSource.Factory {
     val client = okhttp3.OkHttpClient.Builder()
         .addInterceptor { chain ->
             val host = chain.request().url.host.orEmpty()
