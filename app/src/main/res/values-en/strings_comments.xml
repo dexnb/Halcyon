@@ -29,4 +29,6 @@
     <string name="netease_comments_send_failed">Couldn\'t send. Try again later</string>
     <string name="netease_comments_send_failed_code">Couldn\'t send (error %1$d)</string>
     <string name="netease_comments_sent">Sent</string>
+
+    <string name="bilibili_comments_login_required">Please sign in to Bilibili first</string>
 </resources>

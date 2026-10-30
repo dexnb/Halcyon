@@ -100,8 +100,10 @@ internal fun PlayerCommentHeaderAction(
     useAppleIcons: Boolean = false
 ) {
     val current = song ?: return
-    val songId = current.neteaseCommentSongId() ?: return
-    var showComments by rememberSaveable(songId) { mutableStateOf(false) }
+    val neteaseId = current.neteaseCommentSongId()
+    val bilibiliId = current.bilibiliCommentSongId()
+    if (neteaseId == null && bilibiliId == null) return
+    var showComments by rememberSaveable(current.onlineSource, current.onlineId) { mutableStateOf(false) }
     val contentColor = LocalPlayerContentColor.current
     Box(
         modifier = Modifier
@@ -135,11 +137,19 @@ internal fun PlayerCommentHeaderAction(
             )
         }
     }
-    NeteaseCommentsSheet(
-        show = showComments,
-        song = current,
-        onDismiss = { showComments = false }
-    )
+    if (neteaseId != null) {
+        NeteaseCommentsSheet(
+            show = showComments,
+            song = current,
+            onDismiss = { showComments = false }
+        )
+    } else {
+        BilibiliCommentsSheet(
+            show = showComments,
+            song = current,
+            onDismiss = { showComments = false }
+        )
+    }
 }
 
 @Composable

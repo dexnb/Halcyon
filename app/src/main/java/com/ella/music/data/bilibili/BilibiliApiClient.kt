@@ -238,6 +238,102 @@ internal class BilibiliApiClient(context: Context) {
         return ""
     }
 
+    // ---- 评论 ----
+
+    private val aidCache = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    private suspend fun aidOf(bvid: String): Long {
+        aidCache[bvid]?.let { return it }
+        val view = get("/x/web-interface/view", mapOf("bvid" to bvid), accounts.account.value.cookie)
+        val aid = view.optLong("aid").takeIf { it > 0 } ?: throw IOException("Video aid unavailable")
+        aidCache[bvid] = aid
+        return aid
+    }
+
+    fun signedInAccount(): BilibiliAccount? = accounts.account.value.takeIf { it.loggedIn }
+
+    suspend fun songComments(
+        songId: String,
+        resource: BilibiliCommentResource,
+        sortType: Int,
+        pageNo: Int,
+        cursor: String = ""
+    ): BilibiliCommentPage = withContext(Dispatchers.IO) {
+        val oid = aidOf(songId)
+        val root = executeRoot(
+            "https://api.bilibili.com/x/v2/reply?type=1&oid=" + oid +
+                "&pn=" + pageNo.coerceAtLeast(1) + "&ps=20&sort=" + sortType,
+            accounts.account.value.cookie
+        )
+        val code = root.optInt("code", 0)
+        if (code != 0) throw BilibiliApiException(code)
+        parseBilibiliCommentPage(root, sortType, pageNo)
+    }
+
+    suspend fun commentFloor(
+        songId: String,
+        resource: BilibiliCommentResource,
+        parentCommentId: Long,
+        time: Long
+    ): BilibiliFloorPage = withContext(Dispatchers.IO) {
+        val oid = aidOf(songId)
+        val pageNo = time.toInt().coerceAtLeast(1)
+        val root = executeRoot(
+            "https://api.bilibili.com/x/v2/reply/reply?type=1&oid=" + oid +
+                "&root=" + parentCommentId + "&pn=" + pageNo + "&ps=20",
+            accounts.account.value.cookie
+        )
+        val code = root.optInt("code", 0)
+        if (code != 0) throw BilibiliApiException(code)
+        parseBilibiliFloorPage(root, pageNo + 1)
+    }
+
+    suspend fun likeComment(
+        songId: String,
+        resource: BilibiliCommentResource,
+        commentId: Long,
+        like: Boolean
+    ) = withContext(Dispatchers.IO) {
+        val account = accounts.account.value
+        check(account.loggedIn) { "Bilibili login required" }
+        val csrf = bilibiliCookies(account.cookie)["bili_jct"].orEmpty()
+        require(csrf.isNotBlank()) { "CSRF token (bili_jct) required" }
+        val oid = aidOf(songId)
+        val body = FormBody.Builder()
+            .add("oid", oid.toString())
+            .add("type", "1")
+            .add("rpid", commentId.toString())
+            .add("action", if (like) "1" else "0")
+            .add("csrf", csrf)
+            .build()
+        post("/x/v2/reply/action", body, account.cookie)
+    }
+
+    suspend fun postComment(
+        songId: String,
+        resource: BilibiliCommentResource,
+        content: String,
+        replyToCommentId: Long,
+        parentCommentId: Long
+    ): BilibiliComment? = withContext(Dispatchers.IO) {
+        val account = accounts.account.value
+        check(account.loggedIn) { "Bilibili login required" }
+        val csrf = bilibiliCookies(account.cookie)["bili_jct"].orEmpty()
+        require(csrf.isNotBlank()) { "CSRF token (bili_jct) required" }
+        val oid = aidOf(songId)
+        val builder = FormBody.Builder()
+            .add("oid", oid.toString())
+            .add("type", "1")
+            .add("message", content)
+            .add("csrf", csrf)
+        if (parentCommentId > 0) {
+            builder.add("root", parentCommentId.toString())
+            builder.add("parent", (if (replyToCommentId > 0) replyToCommentId else parentCommentId).toString())
+        }
+        val data = post("/x/v2/reply/add", builder.build(), account.cookie)
+        data.optJSONObject("reply")?.let { parseBilibiliComment(it) }
+    }
+
     // ---- 字幕（CC 字幕）----
 
     /** 拉取视频的全部 CC 字幕轨道（含 AI 字幕），每个轨道转换为 LRC 文本。 */
@@ -331,10 +427,11 @@ internal class BilibiliApiClient(context: Context) {
         return executeRequest(request)
     }
 
-    private fun executeRoot(url: String): JSONObject {
+    private fun executeRoot(url: String, cookie: String = ""): JSONObject {
         val request = Request.Builder().url(url)
             .header("Referer", "https://www.bilibili.com/")
             .header("User-Agent", BILIBILI_USER_AGENT)
+            .apply { if (cookie.isNotBlank()) header("Cookie", cookie) }
             .build()
         return http.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Bilibili HTTP " + response.code)

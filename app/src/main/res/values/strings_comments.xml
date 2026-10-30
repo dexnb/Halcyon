@@ -29,4 +29,6 @@
     <string name="netease_comments_send_failed">发送失败，请稍后重试</string>
     <string name="netease_comments_send_failed_code">发送失败（错误码 %1$d）</string>
     <string name="netease_comments_sent">已发送</string>
+
+    <string name="bilibili_comments_login_required">请先登录哔哩哔哩账号</string>
 </resources>
