@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+      - name: Install SDK
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "cmake;3.22.1" "ndk;28.2.13676358"
+          if ! sdkmanager --channel=3 "platforms;android-37"; then
+            sdkmanager "platforms;android-36"
+            mkdir -p "$ANDROID_HOME/platforms/android-37"
+            cp -a "$ANDROID_HOME/platforms/android-36/." "$ANDROID_HOME/platforms/android-37/"
+            sed -i 's/AndroidVersion.ApiLevel=36/AndroidVersion.ApiLevel=37/' "$ANDROID_HOME/platforms/android-37/source.properties"
+          fi
+          sdkmanager --channel=3 "build-tools;37.0.0" || sdkmanager "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x ./gradlew
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 -d > release.jks
+      - name: Build release APK
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          RELEASE_STORE_FILE: ${{ github.workspace }}/release.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:assembleRelease -PellaAbi=arm64-v8a --stacktrace
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/*arm64-v8a*.apk out/Halcyon-1.3.0-bilibili-arm64-v8a.apk
+          ls -lh out
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 1.3.0-bilibili
+          name: Halcyon 1.3.0 · 哔哩哔哩版
+          body: |
+            ## Halcyon 1.3.0 · 哔哩哔哩版
+
+            基于上游 Kifranei/Halcyon **1.3.0**，加入哔哩哔哩音乐来源。
+
+            ### 🎵 音乐库
+            - 收藏夹歌单作为在线曲库，支持**多选同步**任意歌单
+            - 曲库来源可在 本地 / 网易云 / 哔哩哔哩 等之间切换
+
+            ### 🔐 登录
+            - **PC 二维码扫码登录**：应用内直接渲染二维码，用哔哩哔哩 App 扫码确认即可，无需打开网页
+            - 支持 **Cookie（SESSDATA）登录**
+            - 账号凭据使用 Android Keystore 加密保存
+
+            ### ▶️ 播放
+            - 解析 DASH 音频流播放视频音轨（参考 BBPlayer）
+            - 音频优先级：杜比全景声 → Hi-Res → 最高码率 AAC，失败回退 durl
+            - 提供「杜比全景声」「Hi-Res」开关，设备不支持时自动回退
+            - 播放请求自动携带 Referer，保证 CDN 可播放
+
+            ### 🔍 搜索
+            - 哔哩哔哩在线搜索视频，支持分页加载更多
+
+            ### 💬 歌词（CC 字幕）
+            - 自动抓取视频全部 CC 字幕轨道（含 AI 字幕）
+            - 多轨道映射为 **主歌词 / 副歌词 / 注音**，可配置语言优先级与回退
+            - 支持「优先非 AI 字幕」
+
+            ### 🎨 界面
+            - 与 Halcyon 原生 Miuix 风格一致：底部弹窗、设置卡片、歌单选择面板均使用应用内组件
+
+            > 版本号保持 **1.3.0** 不变。release 签名，可直接覆盖安装旧版。
+          files: out/*.apk
+          draft: false
+          prerelease: false
+          overwrite_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
