@@ -380,6 +380,11 @@ class PlaybackService : MediaLibraryService() {
                             throw it
                         }
                 }
+                android.util.Log.i(
+                    "NeteasePlayback",
+                    "resolved uri for " + id + " -> " + runCatching { android.net.Uri.parse(url).host }.getOrNull() +
+                        " scheme=" + runCatching { android.net.Uri.parse(url).scheme }.getOrNull()
+                )
                 dataSpec.withUri(android.net.Uri.parse(url))
             } else if (dataSpec.uri.scheme == "halcyon-bilibili") {
                 // 仅哔哩哔哩需要附带的请求头，通过在 DataSpec 上挂 header 实现，
