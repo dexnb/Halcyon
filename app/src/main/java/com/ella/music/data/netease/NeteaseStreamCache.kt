@@ -72,27 +72,7 @@ internal object NeteaseStreamCache {
         override fun open(dataSpec: DataSpec): Long {
             val target = if (dataSpec.uri.scheme == NETEASE_SCHEME) cached else direct
             active = target
-            val startedAt = android.os.SystemClock.elapsedRealtime()
-            return try {
-                val length = target.open(dataSpec)
-                if (dataSpec.uri.scheme == NETEASE_SCHEME) {
-                    android.util.Log.i(
-                        "NeteasePlayback",
-                        "open ok uri=" + dataSpec.uri + " len=" + length +
-                            " pos=" + dataSpec.position + " in " +
-                            (android.os.SystemClock.elapsedRealtime() - startedAt) + "ms"
-                    )
-                }
-                length
-            } catch (t: Throwable) {
-                android.util.Log.e(
-                    "NeteasePlayback",
-                    "open FAILED uri=" + dataSpec.uri + " after " +
-                        (android.os.SystemClock.elapsedRealtime() - startedAt) + "ms",
-                    t
-                )
-                throw t
-            }
+            return target.open(dataSpec)
         }
 
         override fun read(buffer: ByteArray, offset: Int, length: Int): Int =

@@ -1,5 +1,8 @@
 name: Preview APK
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -52,8 +55,13 @@ jobs:
           mkdir -p out
           cp app/build/outputs/apk/release/*arm64-v8a*.apk out/Halcyon-1.3.0-bilibili-arm64-v8a-preview.apk
           ls -lh out
-      - uses: actions/upload-artifact@v4
+      - name: Publish preview APK
+        uses: softprops/action-gh-release@v2
         with:
-          name: Halcyon-preview-arm64-v8a
-          path: out/*.apk
-          if-no-files-found: error
+          tag_name: preview-latest
+          name: Halcyon Preview (latest)
+          prerelease: true
+          files: out/*.apk
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
