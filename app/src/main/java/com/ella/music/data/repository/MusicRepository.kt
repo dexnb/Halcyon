@@ -205,27 +205,7 @@ class MusicRepository(private val context: Context) {
             when {
                 song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE && song.onlineId.isNotBlank() ->
                     com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).audioInfoFor(song.onlineId)
-                // 哔哩哔哩是流媒体，没有本地文件可探测；按所选音质直接给出确定的音频信息，
-                // 否则会退化到用文件名（= 视频标题）猜格式，标题就会显示在音质位置。
-                song.onlineSource == SettingsManager.LIBRARY_SOURCE_BILIBILI && song.onlineId.isNotBlank() -> {
-                    val quality = com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context).audioQuality()
-                    com.ella.music.data.model.AudioInfo(
-                        format = when (quality) {
-                            30250 -> "EC3"
-                            30251 -> "FLAC"
-                            else -> "AAC"
-                        },
-                        bitRate = when (quality) {
-                            30280 -> 192_000
-                            30232 -> 132_000
-                            30216 -> 64_000
-                            else -> 0
-                        },
-                        sampleRate = 44_100,
-                        channels = 2
-                    )
-                }
-                else -> null
+                else -> com.ella.music.data.bilibili.BilibiliIntegration.streamInfo(context, song)
             }
         }
     )
@@ -677,7 +657,10 @@ class MusicRepository(private val context: Context) {
             return publishLibrarySnapshot(generation, cached)
         }
 
-        if (source != SettingsManager.LIBRARY_SOURCE_NETEASE && source != SettingsManager.LIBRARY_SOURCE_BILIBILI && !forceRefresh && applyCache()) {
+        if (source != SettingsManager.LIBRARY_SOURCE_NETEASE &&
+            !com.ella.music.data.bilibili.BilibiliIntegration.bypassLibraryCache(source) &&
+            !forceRefresh && applyCache()
+        ) {
             return@withContext MusicScanSummary(total = _songs.value.size)
         }
         if (!isCurrentLibrarySnapshotLoad(generation)) {
@@ -689,9 +672,8 @@ class MusicRepository(private val context: Context) {
                 SettingsManager.LIBRARY_SOURCE_NETEASE -> {
                     com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).refresh(forceRefresh)
                 }
-                SettingsManager.LIBRARY_SOURCE_BILIBILI -> {
-                    com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context).refresh(forceRefresh)
-                }
+                SettingsManager.LIBRARY_SOURCE_BILIBILI ->
+                    com.ella.music.data.bilibili.BilibiliIntegration.refresh(context, forceRefresh)
                 SettingsManager.LIBRARY_SOURCE_NAVIDROME -> {
                     val config = settingsManager.navidromeConfig.first()
                     if (!config.isConfigured) return@runCatching null
@@ -826,13 +808,10 @@ class MusicRepository(private val context: Context) {
         return if (value == Long.MIN_VALUE) 1L else kotlin.math.abs(value).takeIf { it != 0L } ?: 1L
     }
 
-    private suspend fun onlineLyricsSong(song: Song): Song = when {
-        song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE ->
+    private suspend fun onlineLyricsSong(song: Song): Song =
+        if (song.onlineSource == SettingsManager.LIBRARY_SOURCE_NETEASE)
             com.ella.music.data.netease.NeteaseLibraryStore.getInstance(context).lyrics(song)
-        song.onlineSource == SettingsManager.LIBRARY_SOURCE_BILIBILI ->
-            com.ella.music.data.bilibili.BilibiliLibraryStore.getInstance(context).lyrics(song)
-        else -> song
-    }
+        else com.ella.music.data.bilibili.BilibiliIntegration.lyrics(context, song)
 
     suspend fun getLyrics(
         song: Song,
