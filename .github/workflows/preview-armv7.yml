@@ -1,0 +1,84 @@
+name: Preview APK (armv7 / Android 9)
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/build-trigger-armv7'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+      - name: Install SDK
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "cmake;3.22.1" "ndk;28.2.13676358"
+          if ! sdkmanager --channel=3 "platforms;android-37"; then
+            sdkmanager "platforms;android-36"
+            mkdir -p "$ANDROID_HOME/platforms/android-37"
+            cp -a "$ANDROID_HOME/platforms/android-36/." "$ANDROID_HOME/platforms/android-37/"
+            sed -i 's/AndroidVersion.ApiLevel=36/AndroidVersion.ApiLevel=37/' "$ANDROID_HOME/platforms/android-37/source.properties"
+          fi
+          sdkmanager --channel=3 "build-tools;37.0.0" || sdkmanager "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x ./gradlew
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > release.jks
+          ls -l release.jks
+      - name: Build preview APK
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          RELEASE_STORE_FILE: ${{ github.workspace }}/release.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:assembleRelease -PellaAbi=armeabi-v7a -PellaMinSdk=28 --stacktrace
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/*armeabi-v7a*.apk out/Halcyon-1.3.0-bilibili-armv7-android9-preview.apk
+          ls -lh out
+      - name: Publish preview APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: preview-armv7-latest
+          name: Halcyon 预览版 armv7/Android9 pre-${{ github.sha }}
+          body: |
+            > **pre-1.3.0+${{ github.sha }}**　预览构建
+
+            | 项目 | 值 |
+            |---|---|
+            | 版本号 | 1.3.0 (40) |
+            | 预览标记 | **pre-${{ github.sha }}** |
+            | 构建运行 | [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+            | 分支 | ${{ github.ref_name }} |
+            | ABI | armeabi-v7a |
+            | minSdk | 28 (Android 9) |
+            | 包名 | com.halcyon.dexnb |
+
+            下载下方 APK 直接安装（与历史构建同签名，可覆盖升级）。
+
+            *预览构建，功能仍在调整。*
+          prerelease: false
+          make_latest: true
+          files: out/*.apk
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

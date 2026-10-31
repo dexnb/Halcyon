@@ -126,7 +126,8 @@ android {
 
     defaultConfig {
         applicationId = appId
-        minSdk = 29
+        // 允许按构建降级（例如 Android 9 / API 28 的 armv7 版本）。
+        minSdk = providers.gradleProperty("ellaMinSdk").orNull?.toIntOrNull() ?: 29
         targetSdk = 37
         versionCode = 40
         versionName = appVersionName
