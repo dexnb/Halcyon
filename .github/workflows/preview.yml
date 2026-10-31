@@ -59,10 +59,22 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: preview-latest
-          name: Halcyon 预览版（最新）
+          name: Halcyon 预览版 pre-${{ github.sha }}
           body: |
-            直接下载 APK：Halcyon-1.3.0-bilibili-arm64-v8a-preview.apk
-            每次构建覆盖本页 APK，链接固定不变。
+            > **pre-1.3.0+${{ github.sha }}**　预览构建
+
+            | 项目 | 值 |
+            |---|---|
+            | 版本号 | 1.3.0 (40) |
+            | 预览标记 | **pre-${{ github.sha }}** |
+            | 构建运行 | [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+            | 分支 | ${{ github.ref_name }} |
+            | ABI | arm64-v8a |
+            | 包名 | com.halcyon.dexnb |
+
+            下载下方 APK 直接安装（与历史构建同签名，可覆盖升级）。
+
+            *预览构建，功能仍在调整。*
           prerelease: false
           make_latest: true
           files: out/*.apk
